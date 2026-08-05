@@ -1,2 +1,38 @@
+# Local environment
 config/database.local.php
 .env
+# PHP Core and Package Manager
+/vendor/
+.phpunit.result.cache
+
+# Environment and Credentials
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.config.php
+!config.example.php
+
+# Application Runtime Data
+/logs/
+*.log
+/uploads/
+/cache/
+/sessions/
+/temp/
+/tmp/
+
+# Development Tools & IDEs
+.idea/
+.cursor/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
