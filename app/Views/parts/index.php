@@ -14,7 +14,7 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Part #</th>
+                        <th>Code</th>
                         <th>Name</th>
                         <th>Category</th>
                         <th>Price</th>
@@ -25,11 +25,11 @@
                 <tbody>
                     <?php foreach ($parts as $part): ?>
                         <tr>
-                            <td><?= e($part['part_number']) ?></td>
+                            <td><?= e($part['product_code']) ?></td>
                             <td><?= e($part['name']) ?></td>
-                            <td><?= e($part['category']) ?></td>
-                            <td>$<?= e(number_format((float) $part['price'], 2)) ?></td>
-                            <td><?= (int) $part['quantity'] ?></td>
+                            <td><?= e($part['category_name']) ?></td>
+                            <td>Rs. <?= e(number_format((float) $part['selling_price'], 2)) ?></td>
+                            <td><?= (int) $part['quantity_on_hand'] ?></td>
                             <td class="actions-cell">
                                 <a href="<?= url('parts/edit/' . $part['id']) ?>" class="btn btn-sm btn-secondary">Edit</a>
                                 <form method="POST" action="<?= url('parts/delete/' . $part['id']) ?>" class="inline-form" data-confirm="Delete this part?">

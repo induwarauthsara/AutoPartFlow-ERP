@@ -12,11 +12,10 @@ class HomeController extends Controller
     public function index(): void
     {
         $partModel = new Part();
-        $totalParts = count($partModel->findAll());
 
         $this->view('home/index', [
             'title'      => 'Dashboard',
-            'totalParts' => $totalParts,
+            'totalParts' => count($partModel->findAll()),
             'flash'      => $this->getFlash(),
         ]);
     }
