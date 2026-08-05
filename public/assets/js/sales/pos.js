@@ -111,23 +111,17 @@
             card.dataset.productId = product.id;
 
             card.innerHTML =
-                '<div class="product-card__media">' +
-                    (product.image ? '<img src="' + product.image + '" alt="">' : '') +
-                    '<svg class="icon" aria-hidden="true" style="width:40px;height:40px;z-index:1">' +
-                        '<use href="#' + product.icon + '"></use>' +
-                    '</svg>' +
+                '<div class="product-card__icon-wrap">' +
+                    '<svg class="product-card__icon" aria-hidden="true"><use href="#' + product.icon + '"></use></svg>' +
                 '</div>' +
-                '<div class="product-card__body">' +
-                    '<div>' +
-                        '<p class="product-card__name">' + escapeHtml(product.shortName) + '</p>' +
-                        '<p class="product-card__price">' + formatCurrency(product.price) + '</p>' +
-                    '</div>' +
-                    '<div class="product-card__footer">' +
-                        '<span class="status-badge ' + status.className + '">' + status.label + '</span>' +
-                        '<button type="button" class="btn-add" data-add-id="' + product.id + '" aria-label="Add ' + escapeHtml(product.shortName) + '">' +
-                            '<svg class="icon icon--sm" aria-hidden="true"><use href="#icon-add"></use></svg>' +
-                        '</button>' +
-                    '</div>' +
+                '<div class="product-card__details">' +
+                    '<p class="product-card__name">' + escapeHtml(product.shortName) + '</p>' +
+                    '<p class="product-card__code">#' + escapeHtml(product.code) + '</p>' +
+                    '<p class="product-card__price">' + formatCurrency(product.price) + '</p>' +
+                '</div>' +
+                '<div class="product-card__action">' +
+                    '<span class="status-badge ' + status.className + '">' + status.label + '</span>' +
+                    '<span class="product-card__add-label">+ Add</span>' +
                 '</div>';
 
             productGrid.appendChild(card);
@@ -153,17 +147,15 @@
             li.innerHTML =
                 '<div class="cart-item__info">' +
                     '<p class="cart-item__name">' + escapeHtml(item.shortName) + '</p>' +
-                    '<p class="cart-item__code">#' + escapeHtml(item.code) + '</p>' +
-                    '<p class="cart-item__price">' + formatCurrency(item.price) + '</p>' +
+                    '<p class="cart-item__meta">#' + escapeHtml(item.code) + ' &middot; ' + formatCurrency(item.price) + ' each</p>' +
                 '</div>' +
-                '<div class="qty-control">' +
-                    '<button type="button" class="qty-control__btn" data-qty-minus="' + item.id + '" aria-label="Decrease quantity">' +
-                        '<svg class="icon icon--sm" aria-hidden="true"><use href="#icon-remove"></use></svg>' +
-                    '</button>' +
-                    '<span class="qty-control__value">' + item.quantity + '</span>' +
-                    '<button type="button" class="qty-control__btn" data-qty-plus="' + item.id + '" aria-label="Increase quantity">' +
-                        '<svg class="icon icon--sm" aria-hidden="true"><use href="#icon-add"></use></svg>' +
-                    '</button>' +
+                '<div class="cart-item__right">' +
+                    '<div class="qty-control">' +
+                        '<button type="button" class="qty-control__btn" data-qty-minus="' + item.id + '" aria-label="Decrease">&minus;</button>' +
+                        '<span class="qty-control__value">' + item.quantity + '</span>' +
+                        '<button type="button" class="qty-control__btn" data-qty-plus="' + item.id + '" aria-label="Increase">&plus;</button>' +
+                    '</div>' +
+                    '<span class="cart-item__subtotal">' + formatCurrency(item.price * item.quantity) + '</span>' +
                 '</div>';
 
             cartList.appendChild(li);
@@ -175,7 +167,7 @@
     function updateCheckoutBar() {
         const totals = getCartTotals();
         checkoutItemCount.textContent = totals.itemCount + (totals.itemCount === 1 ? ' Item' : ' Items');
-        checkoutTotal.innerHTML = '<strong>' + formatCurrency(totals.total) + '</strong>';
+        checkoutTotal.textContent = formatCurrency(totals.total);
     }
 
     function updateCheckoutModal() {
@@ -357,9 +349,9 @@
     });
 
     productGrid.addEventListener('click', function (e) {
-        const addBtn = e.target.closest('[data-add-id]');
-        if (addBtn) {
-            addToCart(parseInt(addBtn.dataset.addId, 10));
+        const card = e.target.closest('.product-card');
+        if (card && card.dataset.productId) {
+            addToCart(parseInt(card.dataset.productId, 10));
         }
     });
 
@@ -401,12 +393,6 @@
     // -------------------------------------------------------------------------
     // Init
     // -------------------------------------------------------------------------
-
-    document.getElementById('pos-today').textContent = new Date().toLocaleDateString('en-LK', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
 
     renderProducts();
     renderCart();

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($title ?? 'Sales Representative') ?> | AutoPartFlow ERP</title>
     <link rel="stylesheet" href="<?= asset('css/sales/sales.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/sales/pos.css') ?>">
 </head>
 <body class="sales-app">
     <aside class="sales-sidebar" id="sales-sidebar" aria-label="Sales Representative navigation">
@@ -18,25 +19,21 @@
 
         <nav class="sales-nav">
             <p class="sales-nav__label">Workspace</p>
-            <a class="sales-nav__link" href="#" data-nav-page="dashboard">
+            <a class="sales-nav__link <?= ($title ?? '') === 'Sales Representative Dashboard' ? 'sales-nav__link--active' : '' ?>" href="<?= url('sales') ?>" data-nav-page="dashboard">
                 <svg class="sales-icon"><use href="#sales-icon-dashboard"></use></svg>
                 Dashboard
             </a>
-            <a class="sales-nav__link" href="#" data-nav-page="pos">
+            <a class="sales-nav__link <?= str_contains(($title ?? ''), 'POS') ? 'sales-nav__link--active' : '' ?>" href="<?= url('sales/pos') ?>" data-nav-page="pos">
                 <svg class="sales-icon"><use href="#sales-icon-pos"></use></svg>
                 Point of Sale
             </a>
-            <a class="sales-nav__link" href="#" data-nav-page="orders">
+            <a class="sales-nav__link <?= str_contains(($title ?? ''), 'Orders') ? 'sales-nav__link--active' : '' ?>" href="<?= url('sales/orders') ?>" data-nav-page="orders">
                 <svg class="sales-icon"><use href="#sales-icon-orders"></use></svg>
                 Orders
             </a>
-            <a class="sales-nav__link" href="#" data-nav-page="customers">
+            <a class="sales-nav__link <?= str_contains(($title ?? ''), 'Customer') ? 'sales-nav__link--active' : '' ?>" href="<?= url('sales/customers') ?>" data-nav-page="customers">
                 <svg class="sales-icon"><use href="#sales-icon-customers"></use></svg>
                 Customers
-            </a>
-            <a class="sales-nav__link" href="#" data-nav-page="inventory">
-                <svg class="sales-icon"><use href="#sales-icon-inventory"></use></svg>
-                Inventory
             </a>
         </nav>
 
@@ -53,13 +50,13 @@
         <button class="sales-icon-button sales-header__menu" type="button" id="sales-menu-toggle" aria-label="Open navigation" aria-controls="sales-sidebar" aria-expanded="false">
             <svg class="sales-icon"><use href="#sales-icon-menu"></use></svg>
         </button>
-        <strong class="sales-header__brand">AutoPartFlow</strong>
+        <strong class="sales-header__brand">AutoPartFlow ERP</strong>
         <div class="sales-header__actions">
             <button class="sales-icon-button" type="button" aria-label="Notifications">
                 <svg class="sales-icon"><use href="#sales-icon-bell"></use></svg>
                 <span class="sales-notification-dot" aria-hidden="true"></span>
             </button>
-            <span class="sales-avatar sales-avatar--small">SR</span>
+            <a href="<?= url('login') ?>" class="sales-avatar sales-avatar--small" title="Sign Out">SR</a>
         </div>
     </header>
 
@@ -68,19 +65,19 @@
     <?= $content ?>
 
     <nav class="sales-mobile-nav" aria-label="Mobile navigation">
-        <a href="#" class="sales-mobile-nav__item" data-mobile-page="dashboard">
+        <a href="<?= url('sales') ?>" class="sales-mobile-nav__item <?= ($title ?? '') === 'Sales Representative Dashboard' ? 'sales-mobile-nav__item--active' : '' ?>">
             <svg class="sales-icon"><use href="#sales-icon-dashboard"></use></svg>
             <span>Home</span>
         </a>
-        <a href="#" class="sales-mobile-nav__item" data-mobile-page="pos">
+        <a href="<?= url('sales/pos') ?>" class="sales-mobile-nav__item <?= str_contains(($title ?? ''), 'POS') ? 'sales-mobile-nav__item--active' : '' ?>">
             <svg class="sales-icon"><use href="#sales-icon-pos"></use></svg>
             <span>POS</span>
         </a>
-        <a href="#" class="sales-mobile-nav__item" data-mobile-page="orders">
+        <a href="<?= url('sales/orders') ?>" class="sales-mobile-nav__item <?= str_contains(($title ?? ''), 'Orders') ? 'sales-mobile-nav__item--active' : '' ?>">
             <svg class="sales-icon"><use href="#sales-icon-orders"></use></svg>
             <span>Orders</span>
         </a>
-        <a href="#" class="sales-mobile-nav__item" data-mobile-page="customers">
+        <a href="<?= url('sales/customers') ?>" class="sales-mobile-nav__item <?= str_contains(($title ?? ''), 'Customer') ? 'sales-mobile-nav__item--active' : '' ?>">
             <svg class="sales-icon"><use href="#sales-icon-customers"></use></svg>
             <span>Customers</span>
         </a>
@@ -105,9 +102,20 @@
         <symbol id="sales-icon-mail" viewBox="0 0 24 24"><path d="M3 4h18v16H3V4Zm2 3v11h14V7l-7 5-7-5Zm1.2-1L12 10.1 17.8 6H6.2Z"/></symbol>
         <symbol id="sales-icon-location" viewBox="0 0 24 24"><path d="M12 22S5 15.5 5 9a7 7 0 1 1 14 0c0 6.5-7 13-7 13Zm0-17a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></symbol>
         <symbol id="sales-icon-close" viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></symbol>
+        <!-- Additional POS Symbols -->
+        <symbol id="icon-storefront" viewBox="0 0 24 24"><path d="M4 4h16l1 4H3L4 4zm0 6h16v10H4V10zm2 2v6h12v-6H6z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="m20 18.6-4.4-4.4a7 7 0 1 0-1.4 1.4l4.4 4.4 1.4-1.4ZM5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z"/></symbol>
+        <symbol id="icon-person" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+        <symbol id="icon-badge" viewBox="0 0 24 24"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5z"/></symbol>
+        <symbol id="icon-tag" viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></symbol>
+        <symbol id="icon-arrow-forward" viewBox="0 0 24 24"><path d="m12 4-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></symbol>
     </svg>
 
     <script src="<?= asset('js/sales/sales-mock-data.js') ?>"></script>
     <script src="<?= asset('js/sales/sales.js') ?>"></script>
+    <?php if (str_contains(($title ?? ''), 'POS')): ?>
+        <script src="<?= asset('js/sales/mock-data.js') ?>"></script>
+        <script src="<?= asset('js/sales/pos.js') ?>"></script>
+    <?php endif; ?>
 </body>
 </html>
