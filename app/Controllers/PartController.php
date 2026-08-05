@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\Category;
 use App\Models\Part;
 
 class PartController extends Controller
 {
     private Part $partModel;
+    private Category $categoryModel;
 
     public function __construct()
     {
         $this->partModel = new Part();
+        $this->categoryModel = new Category();
     }
 
     public function index(): void
@@ -28,8 +31,9 @@ class PartController extends Controller
     public function create(): void
     {
         $this->view('parts/create', [
-            'title' => 'Add New Part',
-            'flash' => $this->getFlash(),
+            'title'      => 'Add New Part',
+            'categories' => $this->categoryModel->findAllActive(),
+            'flash'      => $this->getFlash(),
         ]);
     }
 
@@ -43,6 +47,11 @@ class PartController extends Controller
         $data = $this->validatePartInput();
 
         if ($data === null) {
+            $this->redirect('/parts/create');
+        }
+
+        if ($this->partModel->productCodeExists($data['product_code'])) {
+            $this->setFlash('error', 'That product code is already in use.');
             $this->redirect('/parts/create');
         }
 
@@ -61,9 +70,10 @@ class PartController extends Controller
         }
 
         $this->view('parts/edit', [
-            'title' => 'Edit Part',
-            'part'  => $part,
-            'flash' => $this->getFlash(),
+            'title'      => 'Edit Part',
+            'part'       => $part,
+            'categories' => $this->categoryModel->findAllActive(),
+            'flash'      => $this->getFlash(),
         ]);
     }
 
@@ -87,6 +97,11 @@ class PartController extends Controller
             $this->redirect('/parts/edit/' . $id);
         }
 
+        if ($this->partModel->productCodeExists($data['product_code'], (int) $id)) {
+            $this->setFlash('error', 'That product code is already in use.');
+            $this->redirect('/parts/edit/' . $id);
+        }
+
         $this->partModel->updatePart((int) $id, $data);
         $this->setFlash('success', 'Part updated successfully.');
         $this->redirect('/parts');
@@ -106,14 +121,19 @@ class PartController extends Controller
 
     private function validatePartInput(): ?array
     {
-        $partNumber = trim((string) $this->input('part_number', ''));
-        $name       = trim((string) $this->input('name', ''));
-        $category   = trim((string) $this->input('category', ''));
-        $price      = $this->input('price', '');
-        $quantity   = $this->input('quantity', '');
+        $productCode = trim((string) $this->input('product_code', ''));
+        $name        = trim((string) $this->input('name', ''));
+        $categoryId  = $this->input('category_id', '');
+        $price       = $this->input('selling_price', '');
+        $quantity    = $this->input('quantity_on_hand', '');
 
-        if ($partNumber === '' || $name === '' || $category === '') {
-            $this->setFlash('error', 'Part number, name, and category are required.');
+        if ($productCode === '' || $name === '' || $categoryId === '') {
+            $this->setFlash('error', 'Product code, name, and category are required.');
+            return null;
+        }
+
+        if (!ctype_digit((string) $categoryId) || (int) $categoryId < 1) {
+            $this->setFlash('error', 'Please select a valid category.');
             return null;
         }
 
@@ -128,11 +148,11 @@ class PartController extends Controller
         }
 
         return [
-            'part_number' => $partNumber,
-            'name'        => $name,
-            'category'    => $category,
-            'price'       => number_format((float) $price, 2, '.', ''),
-            'quantity'    => (int) $quantity,
+            'product_code'     => $productCode,
+            'name'             => $name,
+            'category_id'      => (int) $categoryId,
+            'selling_price'    => number_format((float) $price, 2, '.', ''),
+            'quantity_on_hand' => (int) $quantity,
         ];
     }
 }
