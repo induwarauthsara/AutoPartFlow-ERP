@@ -27,7 +27,7 @@
     const checkoutTotal = document.getElementById('checkout-total');
     const btnCompleteSale = document.getElementById('btn-complete-sale');
     const btnClearCart = document.getElementById('btn-clear-cart');
-    const btnDiscount = document.getElementById('btn-discount');
+    const btnDiscount = document.getElementById('btn-discount');    // optional
     const discountModal = document.getElementById('discount-modal');
     const discountForm = document.getElementById('discount-form');
     const checkoutModal = document.getElementById('checkout-modal');
@@ -167,7 +167,10 @@
     function updateCheckoutBar() {
         const totals = getCartTotals();
         checkoutItemCount.textContent = totals.itemCount + (totals.itemCount === 1 ? ' Item' : ' Items');
-        checkoutTotal.textContent = formatCurrency(totals.total);
+        // Show subtotal (after any discount, before tax).
+        // Tax breakdown is shown in the checkout modal only.
+        const displayAmount = totals.subtotal - totals.discountAmount;
+        checkoutTotal.textContent = formatCurrency(displayAmount);
     }
 
     function updateCheckoutModal() {
@@ -362,27 +365,28 @@
         if (plus) updateQuantity(parseInt(plus.dataset.qtyPlus, 10), 1);
     });
 
-    btnClearCart.addEventListener('click', clearCart);
-
-    btnDiscount.addEventListener('click', function () {
-        document.getElementById('discount-type').value = state.discount.type;
-        document.getElementById('discount-value').value = state.discount.value || '';
-        discountModal.showModal();
-    });
-
-    discountForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        state.discount = {
-            type: document.getElementById('discount-type').value,
-            value: parseFloat(document.getElementById('discount-value').value) || 0
-        };
-        discountModal.close();
-        renderCart();
-    });
-
+    if (btnClearCart) btnClearCart.addEventListener('click', clearCart);
     btnCompleteSale.addEventListener('click', openCheckout);
-    btnConfirmSale.addEventListener('click', confirmSale);
-    amountPaidInput.addEventListener('input', updateChangeAmount);
+    if (btnConfirmSale) btnConfirmSale.addEventListener('click', confirmSale);
+    if (amountPaidInput) amountPaidInput.addEventListener('input', updateChangeAmount);
+
+    if (btnDiscount && discountModal && discountForm) {
+        btnDiscount.addEventListener('click', function () {
+            document.getElementById('discount-type').value = state.discount.type;
+            document.getElementById('discount-value').value = state.discount.value || '';
+            discountModal.showModal();
+        });
+
+        discountForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            state.discount = {
+                type: document.getElementById('discount-type').value,
+                value: parseFloat(document.getElementById('discount-value').value) || 0
+            };
+            discountModal.close();
+            renderCart();
+        });
+    }
 
     document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
         btn.addEventListener('click', function () {

@@ -780,6 +780,7 @@ body.pos-app {
 .modal {
     border: none;
     padding: 0;
+    margin: auto;
     max-width: calc(100vw - 32px);
     width: 400px;
     border-radius: var(--radius-lg);

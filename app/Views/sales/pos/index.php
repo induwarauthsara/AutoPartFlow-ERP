@@ -88,7 +88,7 @@
 
                 <div class="checkout-footer">
                     <div class="checkout-summary-row">
-                        <span class="summary-label">Total Amount</span>
+                        <span class="summary-label">Subtotal <small style="font-weight:400;font-size:0.7rem;color:#94a3b8;">(excl. tax)</small></span>
                         <span id="checkout-total" class="summary-value">Rs. 0.00</span>
                     </div>
                     <button type="button" class="sales-primary-btn" id="btn-complete-sale" disabled>
