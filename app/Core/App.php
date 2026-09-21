@@ -27,6 +27,9 @@ class App
         $this->router->get('/sales/orders', 'SalesController@orders');
         $this->router->get('/sales/orders/create', 'SalesController@createOrder');
         $this->router->get('/sales/customers', 'SalesController@customers');
+
+        // Inventory / Store Workspace
+        $this->router->get('/inventory', 'InventoryController@index');
     }
 
     public function run(): void
