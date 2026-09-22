@@ -20,6 +20,13 @@ class App
         $this->router->get('/', 'HomeController@index');
         $this->router->get('/login', 'HomeController@login');
         $this->router->post('/login', 'HomeController@doLogin');
+        $this->router->get('/catalog', 'CatalogController@index');
+        $this->router->get('/catalog/compatibility', 'CatalogController@compatibility');
+        $this->router->get('/catalog/details', 'CatalogController@details');
+        $this->router->get('/checkout', 'OrderController@checkout');
+        $this->router->post('/checkout/place', 'OrderController@placeOrder');
+        $this->router->get('/track-order', 'OrderController@track');
+        $this->router->post('/track-order', 'OrderController@track');
 
         // Sales Representative Workspace
         $this->router->get('/sales', 'SalesController@dashboard');
