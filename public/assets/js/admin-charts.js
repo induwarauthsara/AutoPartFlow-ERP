@@ -67,6 +67,7 @@ function drawLineChart(canvasId, labels, values) {
         const x = pad.left + stepX * i;
         ctx.fillText(lbl, x, h - 6);
     });
+}
     function drawDonut(canvasId, value, max) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
@@ -93,4 +94,4 @@ function drawLineChart(canvasId, labels, values) {
     ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
     ctx.stroke();
 }
-}
+
