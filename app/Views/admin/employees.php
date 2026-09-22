@@ -25,6 +25,13 @@ table{width:100%;border-collapse:collapse;}
 th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--slate-500);padding:10px 12px;border-bottom:1px solid var(--slate-100);}
 td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
 .badge{display:inline-flex;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--green-bg);color:var(--green);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.bar-track{height:6px;background:var(--slate-100);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:var(--indigo-500);}
+.stat-mini{display:flex;gap:24px;margin-top:14px;}
+.stat-mini .num{font-size:16px;font-weight:700;}
+.stat-mini .label{font-size:12px;color:var(--slate-500);}
+@media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -46,9 +53,28 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                 <h1>Employees</h1>
                 <p>Manage team performance, attendance, and assignments.</p>
             </div>
+                   <div class="grid-2">
+                <div class="card">
+                    <h3 style="margin-top:0;">Today's Attendance</h3>
+                    <div style="font-size:30px;font-weight:700;">42 <span style="font-size:15px;font-weight:500;color:var(--slate-500);">/ 45 Present</span></div>
+                    <div class="bar-track" style="margin:12px 0;"><div class="bar-fill" style="width:93%"></div></div>
+                    <div class="stat-mini">
+                        <div><div class="num" style="color:#d97706;">2</div><div class="label">On Leave</div></div>
+                        <div><div class="num" style="color:#dc2626;">1</div><div class="label">Late</div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0;">Team Performance (Q3)</h3>
+                    <div class="stat-mini" style="gap:32px;">
+                        <div><div class="num">$1.2M</div><div class="label">Total Sales Volume</div></div>
+                        <div><div class="num">4.2 Hrs</div><div class="label">Avg Fulfillment</div></div>
+                        <div><div class="num">98%</div><div class="label">Satisfaction</div></div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <table>
-                    <thead><tr><th>Employee</th><th>Designation</th><th>Department</th><th>Hire Date</th><th>Commission</th></tr></thead>
+                    <thead><tr><th>Employee</th><th>Designation</th><th>Department</th><th>Hire Date</th><th>Performance</th></tr></thead>
                     <tbody>
                     <?php foreach ($rows as $emp): ?>
                         <tr>
@@ -56,7 +82,12 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                             <td><?= e($emp['designation']) ?></td>
                             <td><span class="badge"><?= ucfirst($emp['department']) ?></span></td>
                             <td><?= date('M j, Y', strtotime($emp['hire_date'])) ?></td>
-                            <td><?= number_format((float) $emp['commission_rate'], 1) ?>%</td>
+                                                        <td>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="bar-track" style="width:70px;"><div class="bar-fill" style="width:<?= min(100, (float) $emp['commission_rate'] * 10) ?>%"></div></div>
+                                    <span style="font-size:12px;font-weight:600;"><?= number_format((float) $emp['commission_rate'], 1) ?>%</span>
+                                </div>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$rows): ?><tr><td colspan="5">No employees found.</td></tr><?php endif; ?>
