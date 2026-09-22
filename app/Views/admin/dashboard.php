@@ -35,6 +35,14 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
 .badge.critical{background:var(--red-bg);color:var(--red);}
 .badge.low{background:var(--amber-bg);color:var(--amber);}
 .chart-box{height:220px;}
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
+.bar-row{margin-bottom:12px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+.bar-label span:last-child{font-weight:700;color:#334155;}
+.bar-track{height:6px;background:var(--slate-100);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:var(--indigo-500);}
+@media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -62,11 +70,19 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                 <div class="card"><div class="stat-value">18.5%</div><div class="stat-label">Gross Profit Margin</div></div>
                 <div class="card"><div class="stat-value">42</div><div class="stat-label">Active Orders</div></div>
             </div>
-            <div class="card" style="margin-bottom:18px;">
-                <h3 style="margin-top:0;">Sales vs Revenue</h3>
-                <div style="height:220px;">
-                    <canvas id="salesChart" style="width:100%;height:100%;"></canvas>
+                <div class="grid-2" style="margin:18px 0;">
+                <div class="card">
+                    <h3 style="margin-top:0;">Sales vs Revenue</h3>
+                    <div class="chart-box"><canvas id="salesChart" style="width:100%;height:100%;"></canvas></div>
                 </div>
+                <div class="card">
+                    <h3 style="margin-top:0;">Top Categories</h3>
+                    <div class="bar-row"><div class="bar-label"><span>Brake Systems</span><span>42%</span></div><div class="bar-track"><div class="bar-fill" style="width:42%"></div></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Engine Components</span><span>28%</span></div><div class="bar-track"><div class="bar-fill" style="width:28%"></div></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Suspension</span><span>18%</span></div><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Filters &amp; Fluids</span><span>12%</span></div><div class="bar-track"><div class="bar-fill" style="width:12%;background:var(--slate-300);"></div></div></div>
+                </div>
+            </div>
             </div>
             <div class="card">
                 <h3>Low Stock Alerts</h3>
