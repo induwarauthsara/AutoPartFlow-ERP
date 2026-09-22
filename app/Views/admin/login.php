@@ -13,7 +13,7 @@
 body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--slate-900);font-size:14px;}
 .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
 .auth-card{width:100%;max-width:900px;background:#fff;border-radius:20px;box-shadow:0 4px 16px rgba(15,23,42,.08);display:flex;overflow:hidden;border:1px solid #eef0f5;}
-.auth-visual{flex:1;background:linear-gradient(180deg,rgba(11,18,32,0) 45%,rgba(11,18,32,.65)),linear-gradient(160deg,#1c2544,#3a4a86);min-height:460px;display:flex;align-items:flex-end;padding:26px;color:#fff;}
+.auth-visual{flex:1;background-image:linear-gradient(180deg,rgba(11,18,32,0) 45%,rgba(11,18,32,.65)),url('<?= asset('images/warehouse.jpg') ?>');background-size:cover;background-position:center;min-height:460px;display:flex;align-items:flex-end;padding:26px;color:#fff;}
 .auth-visual .tag{font-size:13px;font-weight:600;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;}
 .auth-form{flex:1;padding:46px 44px;display:flex;flex-direction:column;justify-content:center;}
 .brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--indigo-500),#7c8cf0);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;}
