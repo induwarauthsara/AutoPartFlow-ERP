@@ -101,8 +101,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                     <h1>User Management</h1>
                     <p>Control system access, roles, and review audit logs.</p>
                 </div>
-                <button class="btn btn-primary">+ Add User</button>
-            </div>
+                <button class="btn btn-primary" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
 
             <div class="grid-2">
                 <div class="card">
@@ -164,6 +163,13 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                 </div>
             </div>
         </div>
+    </div>
+</div>
+<div id="addUserModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);align-items:center;justify-content:center;z-index:50;">
+    <div class="card" style="width:400px;max-width:92vw;">
+        <div class="card-head"><h3>Add New User</h3><span style="cursor:pointer;" onclick="document.getElementById('addUserModal').style.display='none'">✕</span></div>
+        <p style="color:var(--slate-500);font-size:13px;">User creation form eka connect karanna Sashik/Induwara ge system eka ekka integrate wena welawe.</p>
+        <button class="btn" style="width:100%;" onclick="document.getElementById('addUserModal').style.display='none'">Close</button>
     </div>
 </div>
 <script src="<?= asset('js/admin-charts.js') ?>"></script>
