@@ -94,4 +94,45 @@ function drawLineChart(canvasId, labels, values) {
     ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
     ctx.stroke();
 }
+function drawBarChart(canvasId, labels, values) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
 
+    const pad = { top: 14, right: 14, bottom: 26, left: 14 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
+    const max = Math.max(...values) * 1.15 || 1;
+    const gap = 14;
+    const barW = (plotW / labels.length) - gap;
+
+    ctx.strokeStyle = '#eef0f5';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.top + (plotH / 4) * i;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    }
+
+    values.forEach((v, i) => {
+        const x = pad.left + i * (barW + gap) + gap / 2;
+        const barH = (v / max) * plotH;
+        const y = pad.top + plotH - barH;
+        ctx.fillStyle = '#c7cbf5';
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, barH, 4);
+        ctx.fill();
+    });
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    labels.forEach((lbl, i) => {
+        const x = pad.left + i * (barW + gap) + gap / 2 + barW / 2;
+        ctx.fillText(lbl, x, h - 6);
+    });
+}
