@@ -24,6 +24,22 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 table{width:100%;border-collapse:collapse;}
 th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--slate-500);padding:10px 12px;border-bottom:1px solid var(--slate-100);}
 td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:18px;}
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:18px;}
+.stat-value{font-size:22px;font-weight:700;}
+.stat-label{color:var(--slate-500);font-size:12.5px;}
+.stat-badge{display:inline-flex;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:20px;margin-top:6px;}
+.stat-badge.up{background:#e7f8ee;color:#16a34a;}
+.stat-badge.down{background:#fdecec;color:#dc2626;}
+.bar-row{margin-bottom:12px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+.bar-label span:last-child{font-weight:700;color:#334155;}
+.bar-track{height:6px;background:var(--slate-100);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:var(--indigo-500);}
+@media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
 </style>
 </head>
 <body>
@@ -44,6 +60,40 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
             <div class="page-head">
                 <h1>Reports & Analytics</h1>
                 <p>Employee sales performance and commission overview.</p>
+            </div>
+            <div class="grid-4">
+                <div class="card">
+                    <div class="stat-value">$1.2M</div>
+                    <div class="stat-label">Gross Revenue</div>
+                    <span class="stat-badge up">↑ 14.5% vs last month</span>
+                </div>
+                <div class="card">
+                    <div class="stat-value">18.2%</div>
+                    <div class="stat-label">Net Profit Margin</div>
+                    <span class="stat-badge up">↑ 2.1% vs last month</span>
+                </div>
+                <div class="card">
+                    <div class="stat-value">3,492</div>
+                    <div class="stat-label">Active Orders</div>
+                    <span class="stat-badge down">↓ 1.5% vs last month</span>
+                </div>
+                <div class="card">
+                    <div class="stat-value">2.4h</div>
+                    <div class="stat-label">Avg Fulfillment</div>
+                    <span class="stat-badge up">↓ 0.3h (improved)</span>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3 style="margin-top:0;">Sales vs Profit (Monthly)</h3>
+                    <div style="height:220px;"><canvas id="reportChart" style="width:100%;height:100%;"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0;">Category Profitability</h3>
+                    <div class="bar-row"><div class="bar-label"><span>Engine Components</span><span>45%</span></div><div class="bar-track"><div class="bar-fill" style="width:45%"></div></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Braking Systems</span><span>30%</span></div><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Electrical</span><span>15%</span></div><div class="bar-track"><div class="bar-fill" style="width:15%;background:var(--slate-300);"></div></div></div>
+                </div>
             </div>
             <div class="card">
                 <h3 style="margin-top:0;">Employee Sales Performance</h3>
@@ -66,4 +116,8 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
     </div>
 </div>
 </body>
+<script src="<?= asset('js/admin-charts.js') ?>"></script>
+<script>
+drawLineChart('reportChart', ['Jan','Feb','Mar','Apr','May','Jun'], [58000,64000,49000,72000,81000,93000]);
+</script>
 </html>
