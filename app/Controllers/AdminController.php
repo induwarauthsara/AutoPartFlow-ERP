@@ -13,10 +13,9 @@ class AdminController extends Controller
 
     public function __construct()
     {
-        $currentMethod = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? '';
-        $publicMethods = ['loginPage', 'doLogin'];
+        $isLoginRoute = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/admin/login');
 
-        if (!in_array($currentMethod, $publicMethods, true)) {
+        if (!$isLoginRoute) {
             if (empty($_SESSION['user_id']) || ($_SESSION['role_slug'] ?? '') !== 'owner') {
                 header('Location: /admin/login');
                 exit;
