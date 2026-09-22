@@ -140,7 +140,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                             <td><?= e($u['role_name']) ?></td>
                             <td><span class="badge <?= $u['is_active'] ? 'active' : 'suspended' ?>"><?= $u['is_active'] ? 'Active' : 'Suspended' ?></span></td>
                             <td><?= $u['last_login_at'] ? date('M j, g:i A', strtotime($u['last_login_at'])) : 'Never' ?></td>
-                            <td>✏️</td>
+                            <td><a href="#" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:var(--slate-500);text-decoration:none;" onmouseover="this.style.background='var(--slate-100)'" onmouseout="this.style.background='transparent'" title="Edit user"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a></td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (!$rows): ?><tr><td colspan="5">No users found.</td></tr><?php endif; ?>
