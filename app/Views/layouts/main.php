@@ -22,6 +22,8 @@
             
             <nav class="main-nav">
                 <a href="<?= url() ?>" class="nav-link">Home</a>
+                <a href="<?= url('catalog') ?>" class="nav-link">Catalog</a>
+                <a href="<?= url('track-order') ?>" class="nav-link">Track Order</a>
                 <a href="<?= url('sales') ?>" class="nav-link">Sales Workspace</a>
                 <a href="<?= url('sales/pos') ?>" class="nav-link">POS</a>
                 <a href="<?= url('sales/orders') ?>" class="nav-link">Orders</a>
