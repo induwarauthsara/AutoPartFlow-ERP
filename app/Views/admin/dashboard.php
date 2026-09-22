@@ -68,12 +68,12 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                     <thead><tr><th>Item</th><th>Brand</th><th>Stock</th><th>Status</th></tr></thead>
                     <tbody>
                     <?php foreach ($lowStock as $item): ?>
-                        <tr>
-                            <td><?= e($item['item_name']) ?></td>
-                            <td><?= e($item['brand']) ?></td>
-                            <td><?= (int) $item['stock_qty'] ?> units</td>
-                            <td><span class="badge <?= e($item['status']) ?>"><?= ucfirst($item['status']) ?></span></td>
-                        </tr>
+                      <tr>
+                         <td><?= e($item['name']) ?></td>
+                         <td><?= e($item['category']) ?></td>
+                         <td><?= (int) $item['quantity_on_hand'] ?> units</td>
+                         <td><span class="badge critical">Reorder ≤ <?= (int) $item['reorder_level'] ?></span></td>
+                      </tr>
                     <?php endforeach; ?>
                     <?php if (!$lowStock): ?><tr><td colspan="4">No alerts.</td></tr><?php endif; ?>
                     </tbody>

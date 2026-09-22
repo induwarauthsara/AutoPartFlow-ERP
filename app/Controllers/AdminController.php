@@ -20,12 +20,12 @@ class AdminController extends Controller
     public function dashboard(): void
     {
         $salesByDay = $this->db->query(
-            "SELECT DATE_FORMAT(sale_date,'%a') d, SUM(amount) total FROM demo_sales
-             WHERE sale_date >= CURDATE() - INTERVAL 6 DAY GROUP BY sale_date ORDER BY sale_date"
+            "SELECT DATE_FORMAT(sale_day,'%a') d, gross_sales total FROM v_daily_sales_summary
+             WHERE sale_day >= CURDATE() - INTERVAL 6 DAY ORDER BY sale_day"
         )->fetchAll();
 
         $lowStock = $this->db->query(
-            "SELECT * FROM demo_inventory_alerts WHERE status IN ('critical','low') ORDER BY status LIMIT 6"
+            "SELECT * FROM v_low_stock_products ORDER BY quantity_on_hand ASC LIMIT 6"
         )->fetchAll();
 
         $labels = $salesByDay ? array_column($salesByDay, 'd') : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -43,8 +43,8 @@ class AdminController extends Controller
     public function users(): void
     {
         $stmt = $this->db->query(
-            "SELECT u.*, r.role_name FROM users u JOIN roles r ON r.role_id = u.role_id
-             WHERE u.is_deleted = 0 ORDER BY u.created_at DESC LIMIT 8"
+            "SELECT u.*, r.name AS role_name FROM users u JOIN roles r ON r.id = u.role_id
+             WHERE u.deleted_at IS NULL ORDER BY u.created_at DESC LIMIT 8"
         );
         $rows = $stmt->fetchAll();
 
@@ -55,8 +55,8 @@ class AdminController extends Controller
     public function employees(): void
     {
         $stmt = $this->db->query(
-            "SELECT e.*, u.full_name FROM employees e JOIN users u ON u.user_id = e.user_id
-             WHERE e.is_deleted = 0 ORDER BY e.created_at DESC LIMIT 8"
+            "SELECT e.*, u.full_name FROM employees e JOIN users u ON u.id = e.user_id
+             WHERE e.deleted_at IS NULL ORDER BY e.created_at DESC LIMIT 8"
         );
         $rows = $stmt->fetchAll();
 
@@ -66,13 +66,18 @@ class AdminController extends Controller
     /** GET /admin/reports */
     public function reports(): void
     {
-        $this->view('admin.reports', ['title' => 'Reports & Analytics - AutoPartFlow'], null);
+        $performance = $this->db->query("SELECT * FROM v_employee_sales_performance ORDER BY total_revenue DESC LIMIT 5")->fetchAll();
+
+        $this->view('admin.reports', [
+            'title' => 'Reports & Analytics - AutoPartFlow',
+            'performance' => $performance,
+        ], null);
     }
 
     /** GET /admin/notifications */
     public function notifications(): void
     {
-        $stmt = $this->db->query("SELECT * FROM notifications ORDER BY created_at DESC");
+        $stmt = $this->db->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20");
         $rows = $stmt->fetchAll();
 
         $this->view('admin.notifications', ['title' => 'Notification Center - AutoPartFlow', 'rows' => $rows], null);
