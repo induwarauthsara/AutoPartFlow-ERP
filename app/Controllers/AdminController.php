@@ -13,9 +13,14 @@ class AdminController extends Controller
 
     public function __construct()
     {
-        if (empty($_SESSION['user_id']) || ($_SESSION['role_slug'] ?? '') !== 'owner') {
-            header('Location: /login');
-            exit;
+        $currentMethod = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? '';
+        $publicMethods = ['loginPage', 'doLogin'];
+
+        if (!in_array($currentMethod, $publicMethods, true)) {
+            if (empty($_SESSION['user_id']) || ($_SESSION['role_slug'] ?? '') !== 'owner') {
+                header('Location: /admin/login');
+                exit;
+            }
         }
         $this->db = Database::getConnection();
     }
@@ -97,5 +102,44 @@ class AdminController extends Controller
         }
 
         $this->view('admin.settings', ['title' => 'Settings - AutoPartFlow', 'settings' => $settings], null);
+    }
+        /** GET /admin/login */
+    public function loginPage(): void
+    {
+        if (!empty($_SESSION['user_id']) && ($_SESSION['role_slug'] ?? '') === 'owner') {
+            $this->redirect('/admin/dashboard');
+        }
+        $this->view('admin.login', ['title' => 'Login - AutoPartFlow', 'flash' => $this->getFlash()], null);
+    }
+
+    /** POST /admin/login */
+    public function doLogin(): void
+    {
+        $db = Database::getConnection();
+        $email = trim($this->input('email', ''));
+        $password = (string) $this->input('password', '');
+
+        $stmt = $db->prepare(
+            "SELECT u.id, u.full_name, u.password_hash, u.role_id, u.is_active, r.slug AS role_slug
+             FROM users u JOIN roles r ON r.id = u.role_id
+             WHERE u.email = :email AND u.deleted_at IS NULL LIMIT 1"
+        );
+        $stmt->execute(['email' => $email]);
+        $user = $stmt->fetch();
+
+        if (!$user || !password_verify($password, $user['password_hash']) || $user['role_slug'] !== 'owner') {
+            $this->setFlash('error', 'Invalid email or password.');
+            $this->redirect('/admin/login');
+        }
+
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['role_id'] = $user['role_id'];
+        $_SESSION['role_slug'] = $user['role_slug'];
+        $_SESSION['full_name'] = $user['full_name'];
+
+        $db->prepare("UPDATE users SET last_login_at = NOW() WHERE id = :id")->execute(['id' => $user['id']]);
+
+        $this->redirect('/admin/dashboard');
     }
 }

@@ -13,7 +13,7 @@ class App
         $this->router = new Router();
         $this->registerRoutes();
     }
-
+    
     private function registerRoutes(): void
     {
         // Landing & Auth
@@ -30,6 +30,8 @@ class App
         $this->router->get('/sales/customers', 'SalesController@customers');
 
                 // Admin & BI (Chathumi's module)
+        $this->router->get('/admin/login', 'AdminController@loginPage');
+        $this->router->post('/admin/login', 'AdminController@doLogin');       
         $this->router->get('/admin/dashboard', 'AdminController@dashboard');
         $this->router->get('/admin/users', 'AdminController@users');
         $this->router->get('/admin/employees', 'AdminController@employees');
