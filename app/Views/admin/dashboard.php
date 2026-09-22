@@ -62,6 +62,12 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                 <div class="card"><div class="stat-value">18.5%</div><div class="stat-label">Gross Profit Margin</div></div>
                 <div class="card"><div class="stat-value">42</div><div class="stat-label">Active Orders</div></div>
             </div>
+            <div class="card" style="margin-bottom:18px;">
+                <h3 style="margin-top:0;">Sales vs Revenue</h3>
+                <div style="height:220px;">
+                    <canvas id="salesChart" style="width:100%;height:100%;"></canvas>
+                </div>
+            </div>
             <div class="card">
                 <h3>Low Stock Alerts</h3>
                 <table>
@@ -83,4 +89,9 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
     </div>
 </div>
 </body>
+<script src="<?= asset('js/admin-charts.js') ?>"></script>
+<script>
+drawLineChart('salesChart', <?= json_encode($labels) ?>, <?= json_encode($values) ?>);
+window.addEventListener('resize', () => drawLineChart('salesChart', <?= json_encode($labels) ?>, <?= json_encode($values) ?>));
+</script>
 </html>
