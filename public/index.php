@@ -11,7 +11,14 @@ require APP_PATH . '/bootstrap.php';
 $appConfig = require CONFIG_PATH . '/app.php';
 $dbConfig  = require CONFIG_PATH . '/database.php';
 
-define('BASE_URL', $appConfig['base_url']);
+// Auto-detect BASE_URL for XAMPP subdirectories and standalone servers
+if (empty($appConfig['base_url']) || $appConfig['base_url'] === '/') {
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $detectedBase = ($scriptDir === '/' || $scriptDir === '.') ? '/' : rtrim($scriptDir, '/') . '/';
+    define('BASE_URL', $detectedBase);
+} else {
+    define('BASE_URL', rtrim($appConfig['base_url'], '/') . '/');
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

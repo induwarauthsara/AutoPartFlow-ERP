@@ -25,12 +25,13 @@ function e(?string $value): string
 
 function asset(string $path): string
 {
-    return BASE_URL . 'assets/' . ltrim($path, '/');
+    return rtrim(BASE_URL, '/') . '/assets/' . ltrim($path, '/');
 }
 
 function url(string $path = ''): string
 {
-    return BASE_URL . ltrim($path, '/');
+    $trimmedPath = ltrim($path, '/');
+    return rtrim(BASE_URL, '/') . '/' . $trimmedPath;
 }
 
 function csrf_token(): string

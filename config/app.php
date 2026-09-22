@@ -6,5 +6,5 @@ return [
     'name'    => 'AutoPartFlow ERP',
     'env'     => 'development',
     'debug'   => true,
-    'base_url' => '/AutoPartFlow-ERP/public/',
+    'base_url' => '/',
 ];

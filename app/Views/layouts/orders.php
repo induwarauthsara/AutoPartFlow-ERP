@@ -18,24 +18,24 @@
 
         <nav class="sidebar-nav">
             <p class="sidebar-nav__label">Workspace</p>
-            <a class="sidebar-nav__link" href="#" data-route="dashboard">
+            <a class="sidebar-nav__link" href="<?= url('sales') ?>" data-route="dashboard">
                 <svg class="ui-icon"><use href="#icon-dashboard"></use></svg>
                 Dashboard
             </a>
-            <a class="sidebar-nav__link" href="#" data-route="pos">
+            <a class="sidebar-nav__link" href="<?= url('sales/pos') ?>" data-route="pos">
                 <svg class="ui-icon"><use href="#icon-pos"></use></svg>
                 Point of Sale
             </a>
-            <a class="sidebar-nav__link sidebar-nav__link--active" href="#" data-route="orders" aria-current="page">
+            <a class="sidebar-nav__link sidebar-nav__link--active" href="<?= url('sales/orders') ?>" data-route="orders" aria-current="page">
                 <svg class="ui-icon"><use href="#icon-orders"></use></svg>
                 Orders
             </a>
-            <a class="sidebar-nav__link" href="#" data-route="customers">
+            <a class="sidebar-nav__link" href="<?= url('sales/customers') ?>" data-route="customers">
                 <svg class="ui-icon"><use href="#icon-customers"></use></svg>
                 Customers
             </a>
-            <a class="sidebar-nav__link" href="#" data-route="inventory">
-                <svg class="ui-icon"><use href="#icon-inventory"></use></svg>
+            <a class="sidebar-nav__link" href="<?= url('parts') ?>" data-route="inventory">
+                <svg class="sidebar-icon"><use href="#icon-inventory"></use></svg>
                 Inventory
             </a>
         </nav>
