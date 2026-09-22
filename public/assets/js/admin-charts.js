@@ -67,4 +67,30 @@ function drawLineChart(canvasId, labels, values) {
         const x = pad.left + stepX * i;
         ctx.fillText(lbl, x, h - 6);
     });
+    function drawDonut(canvasId, value, max) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2, cy = h / 2, r = Math.min(w, h) / 2 - 8;
+    const pct = Math.max(0, Math.min(1, value / (max || 1)));
+
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#eef0f5';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#4f5bd5';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke();
+}
 }

@@ -27,6 +27,14 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
 .badge{display:inline-flex;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;}
 .badge.active{background:var(--green-bg);color:var(--green);}
 .badge.inactive{background:var(--amber-bg);color:var(--amber);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.donut-center{font-size:20px;font-weight:700;}
+.role-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.role-num{font-size:19px;font-weight:700;}
+.role-label{font-size:12px;color:var(--slate-500);}
+@media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
+
 </style>
 </head>
 <body>
@@ -48,6 +56,29 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                 <h1>User Management</h1>
                 <p>Control system access, roles, and review audit logs.</p>
             </div>
+                        <div class="grid-2">
+                <div class="card">
+                    <h3 style="margin-top:0;">Active Users</h3>
+                    <div class="donut-wrap">
+                        <div style="width:150px;height:150px;position:relative;">
+                            <canvas id="userDonut" style="width:100%;height:100%;"></canvas>
+                            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                                <div class="donut-center"><?= count($rows) ?></div>
+                                <div style="color:var(--slate-500);font-size:11px;">Total</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0;">Role Distribution</h3>
+                    <div class="role-grid">
+                        <div><div class="role-num">12</div><div class="role-label">Administrators</div></div>
+                        <div><div class="role-num">45</div><div class="role-label">Store Managers</div></div>
+                        <div><div class="role-num">115</div><div class="role-label">Sales Reps</div></div>
+                        <div><div class="role-num">76</div><div class="role-label">Shop Customers</div></div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <table>
                     <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th></tr></thead>
@@ -68,4 +99,8 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
     </div>
 </div>
 </body>
+<script src="<?= asset('js/admin-charts.js') ?>"></script>
+<script>
+drawDonut('userDonut', <?= count($rows) ?>, Math.max(<?= count($rows) ?>, 1) || 1);
+</script>
 </html>
