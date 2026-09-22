@@ -13,6 +13,10 @@ class AdminController extends Controller
 
     public function __construct()
     {
+        if (empty($_SESSION['user_id']) || ($_SESSION['role_slug'] ?? '') !== 'owner') {
+            header('Location: /login');
+            exit;
+        }
         $this->db = Database::getConnection();
     }
 

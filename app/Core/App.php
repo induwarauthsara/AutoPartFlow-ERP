@@ -20,6 +20,7 @@ class App
         $this->router->get('/', 'HomeController@index');
         $this->router->get('/login', 'HomeController@login');
         $this->router->post('/login', 'HomeController@doLogin');
+        $this->router->get('/logout', 'HomeController@logout');
 
         // Sales Representative Workspace
         $this->router->get('/sales', 'SalesController@dashboard');
