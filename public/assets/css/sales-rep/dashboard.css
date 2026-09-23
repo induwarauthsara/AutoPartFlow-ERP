@@ -1,0 +1,295 @@
+/**
+ * Sales Rep Dashboard only.
+ * Safe to edit: KPI grid, chart bars, route/delivery lists, Recent Sales card.
+ */
+
+.dashboard-date {
+    color: var(--sales-on-surface-variant);
+    font-weight: 600;
+}
+
+.pos-shortcut {
+    max-width: 1640px;
+    min-height: 70px;
+    margin: 0 auto 16px;
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    color: var(--sales-on-primary);
+    background: var(--sales-primary);
+    border-radius: var(--sales-radius-lg);
+    text-decoration: none;
+    box-shadow: var(--sales-shadow);
+}
+
+.pos-shortcut:hover { background: var(--sales-primary-container); }
+
+.pos-shortcut__icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--sales-radius-md);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.pos-shortcut strong,
+.pos-shortcut small { display: block; }
+
+.pos-shortcut small {
+    margin-top: 2px;
+    color: var(--sales-inverse-primary);
+}
+
+.dashboard-kpis {
+    max-width: 1640px;
+    margin: 0 auto 16px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.kpi-card { min-height: 128px; padding: 16px; }
+
+.kpi-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--sales-on-surface-variant);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.kpi-card__top .sales-icon { color: var(--sales-secondary); }
+
+.kpi-card > strong {
+    display: block;
+    margin: 14px 0 5px;
+    color: var(--sales-primary);
+    font-size: 25px;
+    line-height: 1.05;
+}
+
+.kpi-card small {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--sales-on-surface-variant);
+}
+
+.kpi-card small .sales-icon { width: 16px; height: 16px; }
+.kpi-card small.positive { color: var(--sales-success); }
+.kpi-card small.warning { color: var(--sales-warning); }
+
+.dashboard-grid {
+    max-width: 1640px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.7fr);
+    gap: 16px;
+}
+
+.chart-card,
+.target-card,
+.route-card,
+.deliveries-card,
+.recent-sales-card { overflow: hidden; }
+
+.recent-sales-card { grid-column: 1 / -1; }
+
+.sales-card__header select {
+    min-height: 36px;
+    padding: 6px 30px 6px 10px;
+    color: var(--sales-on-surface);
+    background: var(--sales-surface-lowest);
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: var(--sales-radius-md);
+}
+
+.sales-chart {
+    min-height: 270px;
+    padding: 24px 18px 14px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.chart-column {
+    min-width: 42px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 7px;
+}
+
+.chart-column__track {
+    width: min(48px, 80%);
+    height: 200px;
+    display: flex;
+    align-items: flex-end;
+    border-radius: var(--sales-radius-sm) var(--sales-radius-sm) 0 0;
+    background: var(--sales-surface-low);
+}
+
+.chart-column__bar {
+    position: relative;
+    width: 100%;
+    min-height: 3px;
+    border-radius: var(--sales-radius-sm) var(--sales-radius-sm) 0 0;
+    background: var(--sales-secondary-container);
+    transition: height 0.3s ease;
+}
+
+.chart-column__bar--current { background: var(--sales-primary); }
+
+.chart-column__value {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    color: var(--sales-primary);
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.chart-column__label {
+    color: var(--sales-on-surface-variant);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.target-card { padding-bottom: 16px; }
+.target-card .sales-card__header { border: 0; }
+.target-card .sales-card__header > strong { color: var(--sales-primary); font-size: 28px; }
+
+.target-progress {
+    height: 12px;
+    margin: 14px 16px 18px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--sales-surface-high);
+}
+
+.target-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--sales-secondary);
+}
+
+.target-values {
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.target-values span {
+    padding: 11px;
+    border-radius: var(--sales-radius-md);
+    background: var(--sales-surface-low);
+}
+
+.target-values small,
+.target-values strong { display: block; }
+.target-values small { color: var(--sales-on-surface-variant); }
+.target-values strong { margin-top: 3px; color: var(--sales-primary); font-size: 18px; }
+.target-message { margin: 14px 16px 0; color: var(--sales-on-surface-variant); font-size: 12px; }
+
+.route-list,
+.delivery-list,
+.recent-sales-list { display: grid; }
+
+.route-item,
+.recent-sale-item {
+    min-height: 78px;
+    padding: 13px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 11px;
+    border-bottom: 1px solid var(--sales-surface-high);
+    text-decoration: none;
+    color: inherit;
+    background: transparent;
+    border-left: 0;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.route-item:last-child,
+.delivery-item:last-child,
+.recent-sale-item:last-child { border-bottom: 0; }
+
+.route-item:hover,
+.delivery-item:hover,
+.recent-sale-item:hover { background: var(--sales-surface-low); }
+
+.route-item div strong,
+.route-item div span,
+.recent-sale-item div strong,
+.recent-sale-item div span { display: block; }
+
+.route-item div span,
+.recent-sale-item div span {
+    color: var(--sales-on-surface-variant);
+    font-size: 12px;
+}
+
+.delivery-item {
+    min-height: 86px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--sales-surface-high);
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    cursor: pointer;
+}
+
+.delivery-item__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.delivery-item p {
+    margin: 5px 0 0;
+    color: var(--sales-on-surface-variant);
+    font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+    .dashboard-kpis { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+    .dashboard-date { align-self: flex-start; }
+    .kpi-card { min-height: 116px; padding: 13px; }
+    .kpi-card > strong { font-size: 20px; }
+    .sales-chart { min-height: 240px; padding-inline: 8px; gap: 4px; }
+    .chart-column { min-width: 0; }
+    .chart-column__track { height: 175px; }
+    .chart-column__value { display: none; }
+}
+
+@media (max-width: 340px) {
+    .dashboard-kpis { grid-template-columns: 1fr; }
+    .route-item { grid-template-columns: auto 1fr; }
+    .route-status { grid-column: 2; justify-self: start; }
+}

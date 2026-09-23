@@ -199,3 +199,6 @@
     .inventory-kpis { grid-template-columns: 1fr; }
     .inventory-main .sales-page-heading .sales-button { display: none; }
 }
+/* Location chips wrap without widening the phone viewport. */
+.inventory-locations { min-width: 0; flex-wrap: wrap; }
+.inventory-toolbar__actions { min-width: 0; flex-wrap: wrap; }

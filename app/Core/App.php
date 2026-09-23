@@ -20,6 +20,8 @@ class App
         $this->router->get('/', 'HomeController@index');
         $this->router->get('/login', 'HomeController@login');
         $this->router->post('/login', 'HomeController@doLogin');
+        $this->router->get('/register', 'HomeController@register');
+        $this->router->post('/register', 'HomeController@doRegister');
         $this->router->get('/logout', 'HomeController@logout');
         $this->router->get('/catalog', 'CatalogController@index');
         $this->router->get('/catalog/compatibility', 'CatalogController@compatibility');
@@ -35,6 +37,12 @@ class App
         $this->router->get('/sales/orders', 'SalesController@orders');
         $this->router->get('/sales/orders/create', 'SalesController@createOrder');
         $this->router->get('/sales/customers', 'SalesController@customers');
+        $this->router->post('/sales/customers/save', 'SalesController@saveCustomer');
+        $this->router->post('/sales/customers/delete', 'SalesController@deleteCustomer');
+        $this->router->post('/sales/orders/save', 'SalesController@saveOrder');
+        $this->router->post('/sales/orders/status', 'SalesController@updateOrderStatus');
+        $this->router->post('/sales/orders/delete', 'SalesController@deleteOrder');
+        $this->router->post('/sales/pos/complete', 'SalesController@completeSale');
 
                 // Admin & BI (Chathumi's module)
         $this->router->get('/admin/login', 'AdminController@loginPage');

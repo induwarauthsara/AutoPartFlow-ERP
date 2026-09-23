@@ -2,6 +2,10 @@
 
 Pure **HTML, CSS, JavaScript, PHP, and MySQL** MVC application — no frameworks or libraries.
 
+## UI Standards
+
+Follow [the UI style guide](Docs/UI-Style-Guide.md) for colors, typography, logo, components, navigation, and responsive layouts. The companion project rule is `.cursor/rules/ui-consistency.mdc`.
+
 ## Project Structure
 
 ```

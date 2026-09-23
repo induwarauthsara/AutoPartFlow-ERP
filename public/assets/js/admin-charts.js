@@ -13,7 +13,7 @@ function drawLineChart(canvasId, labels, values) {
     const plotH = h - pad.top - pad.bottom;
     const max = Math.max(...values) * 1.15 || 1;
     const stepX = plotW / (labels.length - 1);
-    const color = '#4f5bd5';
+    const color = '#002045';
 
     ctx.strokeStyle = '#eef0f5';
     ctx.lineWidth = 1;
@@ -61,7 +61,7 @@ function drawLineChart(canvasId, labels, values) {
     });
 
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px sans-serif';
+    ctx.font = '12px Inter, sans-serif';
     ctx.textAlign = 'center';
     labels.forEach((lbl, i) => {
         const x = pad.left + stepX * i;
@@ -88,7 +88,7 @@ function drawLineChart(canvasId, labels, values) {
     ctx.stroke();
 
     ctx.lineWidth = 10;
-    ctx.strokeStyle = '#4f5bd5';
+    ctx.strokeStyle = '#002045';
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
@@ -122,14 +122,14 @@ function drawBarChart(canvasId, labels, values) {
         const x = pad.left + i * (barW + gap) + gap / 2;
         const barH = (v / max) * plotH;
         const y = pad.top + plotH - barH;
-        ctx.fillStyle = '#c7cbf5';
+        ctx.fillStyle = '#3b6090';
         ctx.beginPath();
         ctx.roundRect(x, y, barW, barH, 4);
         ctx.fill();
     });
 
     ctx.fillStyle = '#94a3b8';
-    ctx.font = '11px sans-serif';
+    ctx.font = '12px Inter, sans-serif';
     ctx.textAlign = 'center';
     labels.forEach((lbl, i) => {
         const x = pad.left + i * (barW + gap) + gap / 2 + barW / 2;

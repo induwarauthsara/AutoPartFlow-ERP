@@ -1,0 +1,370 @@
+/**
+ * Shared Sales Rep UI pieces: buttons, cards, chips, badges, forms, toast, dialog.
+ * Safe to edit: button sizes, badge colors, focus ring.
+ * Status map: pending=warning, processing=info, delivered=success, cancelled/returned=error.
+ */
+
+.sales-avatar {
+    width: 38px;
+    height: 38px;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: var(--sales-on-primary);
+    background: var(--sales-secondary);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.sales-avatar .sales-icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    display: block;
+}
+
+.sales-avatar--small {
+    width: 34px;
+    height: 34px;
+    text-decoration: none;
+}
+
+.sales-avatar--small .sales-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.sales-icon-button {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: var(--sales-on-surface-variant);
+    background: transparent;
+    cursor: pointer;
+}
+
+.sales-icon-button:hover { background: var(--sales-surface-container); }
+
+.sales-icon-button--danger:hover {
+    color: var(--sales-error);
+    background: var(--sales-error-container);
+}
+
+.sales-notification-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    border: 2px solid var(--sales-surface);
+    border-radius: 50%;
+    background: var(--sales-error);
+}
+
+.sales-card {
+    background: var(--sales-surface-lowest);
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: var(--sales-radius-lg);
+    box-shadow: var(--sales-shadow);
+}
+
+.sales-card__header {
+    min-height: 68px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--sales-outline-variant);
+}
+
+.sales-card__header h2 {
+    margin: 0;
+    color: var(--sales-primary);
+    font-size: 18px;
+}
+
+.sales-card__header p,
+.sales-card__subtitle {
+    margin: 2px 0 0;
+    color: var(--sales-on-surface-variant);
+    font-size: 12px;
+}
+
+.sales-button {
+    min-height: 40px;
+    padding: 8px 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--sales-radius-md);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.sales-button--primary {
+    color: var(--sales-on-primary);
+    background: var(--sales-primary);
+}
+
+.sales-button--primary:hover { background: var(--sales-primary-container); }
+
+.sales-button--secondary {
+    color: var(--sales-primary);
+    background: var(--sales-surface-lowest);
+    border-color: var(--sales-primary);
+}
+
+.sales-button--secondary:hover { background: var(--sales-surface-low); }
+
+.sales-button--danger {
+    color: var(--sales-error);
+    background: var(--sales-error-container);
+    border-color: var(--sales-error-container);
+}
+
+.sales-button--danger:hover {
+    color: var(--sales-on-primary);
+    background: var(--sales-error);
+    border-color: var(--sales-error);
+}
+
+.sales-button--compact { min-height: 36px; padding: 6px 12px; }
+.sales-button--full { width: 100%; }
+.sales-button:disabled { opacity: 0.48; cursor: not-allowed; }
+
+.sales-confirm__body { padding: 20px 24px 8px; }
+.sales-confirm__body h2 { margin: 0 0 8px; color: var(--sales-primary); }
+.sales-confirm__body p { margin: 0; color: var(--sales-on-surface-variant); }
+.sales-confirm__actions {
+    padding: 16px 24px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.sales-text-button {
+    padding: 4px 0;
+    color: var(--sales-secondary);
+    background: transparent;
+    border: 0;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.sales-button:focus-visible,
+.sales-icon-button:focus-visible,
+.sales-text-button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.sales-chip:focus-visible,
+.sales-filter:focus-visible {
+    outline: 0;
+    box-shadow: var(--sales-focus);
+}
+
+.sales-chip,
+.sales-filter {
+    min-height: 34px;
+    padding: 6px 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    color: var(--sales-on-surface-variant);
+    background: var(--sales-surface-low);
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sales-chip--active {
+    color: var(--sales-on-primary);
+    background: var(--sales-primary);
+    border-color: var(--sales-primary);
+}
+
+.sales-filter--active {
+    color: var(--sales-primary);
+    background: var(--sales-secondary-container);
+    border-color: var(--sales-secondary-container);
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sales-outline);
+}
+
+.status-dot--pending { background: var(--sales-warning); }
+.status-dot--processing { background: var(--sales-info); }
+.status-dot--delivered { background: var(--sales-success); }
+.status-dot--cancelled,
+.status-dot--returned { background: var(--sales-error); }
+
+.sales-badge {
+    padding: 4px 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.sales-badge--pending {
+    color: var(--sales-warning);
+    background: var(--sales-warning-container);
+}
+
+.sales-badge--processing,
+.sales-badge--info {
+    color: var(--sales-info);
+    background: var(--sales-info-container);
+}
+
+.sales-badge--delivered,
+.sales-badge--success,
+.sales-badge--in-stock {
+    color: var(--sales-success);
+    background: var(--sales-success-container);
+}
+
+.sales-badge--cancelled,
+.sales-badge--returned,
+.sales-badge--low-stock,
+.sales-badge--error {
+    color: var(--sales-error);
+    background: var(--sales-error-container);
+}
+
+.sales-search,
+.search-field {
+    position: relative;
+}
+
+.sales-search .sales-icon,
+.search-field .sales-icon,
+.search-field__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    color: var(--sales-outline);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.sales-search input,
+.search-field__input,
+.sales-field,
+.field-select,
+.field-input {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    color: var(--sales-on-surface);
+    background: var(--sales-surface-lowest);
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: var(--sales-radius-md);
+}
+
+.sales-search input,
+.search-field__input { padding-left: 40px; }
+
+.field-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--sales-on-surface-variant);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sales-empty {
+    margin: 0;
+    padding: 32px 16px;
+    color: var(--sales-on-surface-variant);
+    text-align: center;
+}
+
+.sales-empty__action {
+    display: block;
+    margin-top: 8px;
+    color: var(--sales-secondary);
+    font-weight: 700;
+}
+
+.sales-toast {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 100;
+    max-width: 360px;
+    padding: 12px 15px;
+    color: var(--sales-on-primary);
+    background: var(--sales-inverse-surface);
+    border-radius: var(--sales-radius-md);
+    box-shadow: var(--sales-shadow-overlay);
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.sales-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sales-dialog {
+    width: min(620px, calc(100% - 32px));
+    padding: 0;
+    color: var(--sales-on-surface);
+    background: var(--sales-surface-lowest);
+    border: 0;
+    border-radius: var(--sales-radius-lg);
+    box-shadow: var(--sales-shadow-overlay);
+}
+
+.sales-dialog::backdrop {
+    background: rgba(18, 28, 44, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 900px) {
+    .sales-toast { bottom: calc(var(--sales-mobile-nav) + 12px); }
+}

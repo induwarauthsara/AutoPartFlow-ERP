@@ -48,32 +48,33 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .form-control{width:100%;padding:9px 11px;border:1px solid var(--slate-300);border-radius:8px;background:#fff;}
 @media (max-width:900px){.settings-layout{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}}
 </style>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 </head>
 <body>
 <div class="app-shell">
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-mark">AP</div>
-            <div><div class="brand-title">AutoPartFlow</div><div class="brand-sub">Logistics ERP</div></div>
+            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
+            <div><div class="brand-title">AutoPartFlow</div><div class="brand-sub">Admin Workspace</div></div>
         </div>
-        <nav>
-            <a class="nav-link" href="<?= url('admin/dashboard') ?>">Dashboard</a>
-            <a class="nav-link" href="#">Sales</a>
-            <a class="nav-link" href="#">Products</a>
-            <a class="nav-link" href="#">Inventory</a>
-            <a class="nav-link" href="<?= url('admin/users') ?>">Customers</a>
-            <a class="nav-link" href="<?= url('admin/employees') ?>">Employees</a>
-            <a class="nav-link" href="<?= url('admin/reports') ?>">Reports</a>
-            <a class="nav-link active" href="<?= url('admin/settings') ?>">Settings</a>
-        </nav>
+        <nav aria-label="Admin navigation">
+<a class="nav-link" href="<?= url('admin/dashboard') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/></svg>Dashboard</a>
+<a class="nav-link" href="<?= url('admin/reports') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>Reports</a>
+<a class="nav-link" href="<?= url('admin/users') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Z"/></svg>User Management</a>
+<a class="nav-link" href="<?= url('admin/employees') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Zm16-7h4v7h-4v-7Z"/></svg>Employees</a>
+<a class="nav-link" href="<?= url('admin/notifications') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>Notifications</a>
+<a class="nav-link active" aria-current="page" href="<?= url('admin/settings') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>Settings</a>
+</nav>
         <div class="sidebar-footer"><span class="dot"></span>All Systems Operational</div>
     </aside>
 
     <div class="main">
         <header class="topbar">
             AutoPartFlow
-            <div class="search-box">🔍 <input type="text" placeholder="Search settings..."></div>
-            <div class="topbar-icons">🔔 📅 <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div></div>
+            <div class="search-box"> <input type="text" placeholder="Search settings..."></div>
+            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div></div>
         </header>
 
         <div class="content">
@@ -84,17 +85,17 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
                 </div>
                 <div class="head-actions">
                     <button class="btn">Discard Changes</button>
-                    <button class="btn btn-primary">💾 Save Configuration</button>
+                    <button class="btn btn-primary">Save Configuration</button>
                 </div>
             </div>
 
             <div class="settings-layout">
                 <div class="tab-card">
-                    <a class="tab-link active" href="#">📇 Business Info</a>
-                    <a class="tab-link" href="#">🧾 Invoice Settings</a>
-                    <a class="tab-link" href="#">🏛 Tax Config</a>
-                    <a class="tab-link" href="#">💾 Data Backup</a>
-                    <a class="tab-link" href="#">⚙️ Preferences</a>
+                    <a class="tab-link active" href="#"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3V4Zm3 3v4h4V7H6Zm7 0v2h5V7h-5ZM6 14v2h12v-2H6Z"/></svg> Business Info</a>
+                    <a class="tab-link" href="#"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h14v20l-3-2-4 2-4-2-3 2V2Zm3 4v2h8V6H8Zm0 5v2h8v-2H8Z"/></svg> Invoice Settings</a>
+                    <a class="tab-link" href="#"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 10 6H2l10-6ZM4 10h3v9H4v-9Zm6 0h4v9h-4v-9Zm7 0h3v9h-3v-9ZM2 21h20v2H2v-2Z"/></svg> Tax Config</a>
+                    <a class="tab-link" href="#"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h15l3 3v15H3V3Zm4 1v6h10V4H7Zm0 10v6h10v-6H7Z"/></svg> Data Backup</a>
+                    <a class="tab-link" href="#"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg> Preferences</a>
                 </div>
 
                 <div class="card">
@@ -103,7 +104,7 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
                     <div class="form-row">
                         <div>
                             <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;">Company Logo</label>
-                            <div class="logo-box">🖼️<span style="font-size:11px;text-align:center;">Click to upload<br>SVG, PNG, JPG (max 2MB)</span></div>
+                            <div class="logo-box"><img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40"></div>
                         </div>
                         <div>
                             <div class="form-group"><label>Company Name</label><input class="form-control" value="<?= e($settings['business_name'] ?? '') ?>" readonly></div>

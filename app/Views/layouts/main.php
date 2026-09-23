@@ -1,68 +1,73 @@
+<?php
+$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$base = rtrim(BASE_URL, '/');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($title ?? 'AutoPartFlow ERP') ?></title>
-    <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+    <title><?= e($title ?? 'AutoPartFlow') ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200" rel="stylesheet">
+    <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+<link rel="stylesheet" href="<?= asset('css/public/public.css') ?>">
+    <script>
+        window.APP_CONFIG = {
+            baseUrl: '<?= rtrim(url(), '/') ?>'
+        };
+    </script>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
 </head>
-<body class="site-body">
-    <header class="navbar">
-        <div class="container navbar-inner">
-            <a href="<?= url() ?>" class="brand-logo">
-                <span class="brand-badge">A</span>
-                <div class="brand-text">
-                    <strong>AutoPartFlow</strong>
-                    <span>Enterprise ERP</span>
-                </div>
+<body class="public-body">
+<header class="public-header">
+    <div class="public-header__inner">
+        <a class="public-brand" href="<?= url() ?>">
+            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
+            <span>AutoPartFlow</span>
+        </a>
+
+        <nav class="public-nav" aria-label="Public navigation">
+            <a class="<?= $currentPath === $base . '/' || $currentPath === '/' ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
+            <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
+            <a class="<?= str_contains($currentPath, '/track-order') ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
+        </nav>
+
+        <div class="public-actions">
+            <form class="public-search" action="<?= url('catalog') ?>" method="get">
+                <span class="material-symbols-outlined">search</span>
+                <input type="search" name="q" value="<?= e($filters['search'] ?? '') ?>" placeholder="Search parts..." aria-label="Search parts">
+            </form>
+            <a class="cart-button" href="<?= url('checkout') ?>" aria-label="Shopping cart">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span class="cart-count">0</span>
             </a>
-            
-            <nav class="main-nav">
-                <a href="<?= url() ?>" class="nav-link">Home</a>
-                <a href="<?= url('catalog') ?>" class="nav-link">Catalog</a>
-                <a href="<?= url('track-order') ?>" class="nav-link">Track Order</a>
-                <a href="<?= url('sales') ?>" class="nav-link">Sales Workspace</a>
-                <a href="<?= url('sales/pos') ?>" class="nav-link">POS</a>
-                <a href="<?= url('sales/orders') ?>" class="nav-link">Orders</a>
-            </nav>
-
-            <div class="header-actions">
-                <a href="<?= url('login') ?>" class="btn-login">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
-                    </svg>
-                    <span>Sign In</span>
-                </a>
-            </div>
+            <span class="header-divider"></span>
+            <a class="sign-in-button" href="<?= url('login') ?>">
+                <span class="material-symbols-outlined">login</span>
+                Sign In
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="page-content">
-        <?php if (!empty($flash)): ?>
-            <div class="container">
-                <div class="alert alert-<?= e($flash['type']) ?>">
-                    <span class="alert-icon">✓</span>
-                    <span><?= e($flash['message']) ?></span>
-                </div>
-            </div>
-        <?php endif; ?>
+<main class="public-main">
+<?php if (!empty($flash)): ?><div class="container"><div role="status" class="alert alert-<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div></div><?php endif; ?>
+<?= $content ?>
+</main>
 
-        <?= $content ?>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container footer-inner">
-            <div class="footer-brand">
-                <strong>AutoPartFlow ERP</strong>
-                <p>Automobile Spare Parts Distribution & Inventory Management System</p>
-            </div>
-            <p class="copyright">&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</p>
+<footer class="public-footer">
+    <div class="public-footer__bottom">
+        <span>&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</span>
+        <div>
+            <a href="<?= url('catalog') ?>">Catalog</a>
+            <a href="<?= url('track-order') ?>">Track Order</a>
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <script src="<?= asset('js/app.js') ?>"></script>
+<script src="<?= asset('js/public/catalog.js') ?>"></script>
 </body>
 </html>

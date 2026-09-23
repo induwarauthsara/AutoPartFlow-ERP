@@ -13,6 +13,8 @@
             baseUrl: '<?= rtrim(url(), '/') ?>'
         };
     </script>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
 </head>
 <body class="checkout-body">
 
@@ -20,7 +22,7 @@
 <header class="checkout-header">
     <div class="checkout-header__inner">
         <a class="checkout-brand" href="<?= url('catalog') ?>">
-            <span class="material-symbols-outlined fill text-primary">directions_car</span>
+            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
             <span>AutoPartFlow</span>
         </a>
 

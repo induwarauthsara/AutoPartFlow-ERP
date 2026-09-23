@@ -1,9 +1,9 @@
 <div class="auth-wrapper">
     <div class="auth-card">
         <div class="auth-card-header">
-            <span class="auth-brand-badge">A</span>
+            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
             <h2>Welcome Back</h2>
-            <p>Enter your credentials to access your ERP workspace</p>
+            <p>Sign in to your AutoPartFlow account</p>
         </div>
 
         <form method="POST" action="<?= url('login') ?>" class="auth-form">
@@ -20,8 +20,7 @@
                         type="text"
                         id="username"
                         name="username"
-                        placeholder="salesrep@autopartflow.com"
-                        value="salesrep@autopartflow.com"
+                        placeholder="Username or email"
                         required
                         autofocus
                     >
@@ -43,7 +42,6 @@
                         id="password"
                         name="password"
                         placeholder="••••••••"
-                        value="password123"
                         required
                     >
                 </div>
@@ -64,15 +62,7 @@
             </button>
         </form>
 
-        <div class="demo-credentials-box">
-            <span class="demo-title">Demo Account:</span>
-            <div class="demo-details">
-                <span><strong>Role:</strong> Sales Representative</span>
-                <span><strong>Email:</strong> salesrep@autopartflow.com</span>
-            </div>
-            <a href="<?= url('sales') ?>" class="btn-demo-quick">
-                Quick Access Sales Rep Workspace &rarr;
-            </a>
-        </div>
+        <p class="auth-switch">New to AutoPartFlow? <a href="<?= url('register') ?>">Create an account</a></p>
+
     </div>
 </div>
