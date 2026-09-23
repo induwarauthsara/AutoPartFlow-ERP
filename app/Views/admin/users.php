@@ -62,27 +62,22 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 .log-ip{color:var(--slate-500);font-size:11px;}
 @media (max-width:900px){.grid-2{grid-template-columns:1fr;}.role-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 </head>
 <body>
 <div class="app-shell">
     <aside class="sidebar">
-        <div class="brand"><div class="brand-mark">AP</div><div><div class="brand-title">AutoPartFlow</div><div class="brand-sub">Logistics ERP</div></div></div>
-        <nav>
-            <div class="nav-group">
-                <div class="nav-group-label">Operations</div>
-                <a class="nav-link" href="<?= url('admin/dashboard') ?>">Dashboard</a>
-                <a class="nav-link" href="#">Sales</a>
-                <a class="nav-link" href="#">Products</a>
-                <a class="nav-link" href="#">Inventory</a>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Administration</div>
-                <a class="nav-link active" href="<?= url('admin/users') ?>">Customers</a>
-                <a class="nav-link" href="<?= url('admin/employees') ?>">Employees</a>
-                <a class="nav-link" href="<?= url('admin/reports') ?>">Reports</a>
-                <a class="nav-link" href="<?= url('admin/settings') ?>">Settings</a>
-            </div>
-        </nav>
+        <div class="brand"><img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40"><div><div class="brand-title">AutoPartFlow</div><div class="brand-sub">Admin Workspace</div></div></div>
+        <nav aria-label="Admin navigation">
+<a class="nav-link" href="<?= url('admin/dashboard') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/></svg>Dashboard</a>
+<a class="nav-link" href="<?= url('admin/reports') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>Reports</a>
+<a class="nav-link active" aria-current="page" href="<?= url('admin/users') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Z"/></svg>User Management</a>
+<a class="nav-link" href="<?= url('admin/employees') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Zm16-7h4v7h-4v-7Z"/></svg>Employees</a>
+<a class="nav-link" href="<?= url('admin/notifications') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>Notifications</a>
+<a class="nav-link" href="<?= url('admin/settings') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>Settings</a>
+</nav>
         <div class="sidebar-footer">
             <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div>
             <div><div class="name"><?= e($_SESSION['full_name'] ?? 'Sarah Jenkins') ?></div><div class="role">Admin</div></div>
@@ -91,8 +86,8 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 
     <div class="main">
         <header class="topbar">
-            <div class="search-box">🔍 <input type="text" placeholder="Search users, roles..."></div>
-            <div class="topbar-icons">🔔 📅 <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div></div>
+            <div class="search-box"> <input type="text" placeholder="Search users, roles..."></div>
+            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div></div>
         </header>
 
         <div class="content">
@@ -148,17 +143,17 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
             </div>
 
             <div class="card">
-                <div class="card-head"><h3>Security Audit Log</h3><a href="#">⬇ Export CSV</a></div>
+                <div class="card-head"><h3>Security Audit Log</h3><a href="#">Export CSV</a></div>
                 <div class="log-item">
-                    <div class="log-icon">🔑</div>
+                    <div class="log-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3a5 5 0 1 0 4 8h5v3h3v-3h2V8H13a5 5 0 0 0-5-5Zm-2 5a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z"/></svg></div>
                     <div><strong>Admin</strong> changed permissions for role Warehouse Staff.<div class="log-ip">IP: 192.168.1.45 · 10 mins ago</div></div>
                 </div>
                 <div class="log-item">
-                    <div class="log-icon red">⚠</div>
+                    <div class="log-icon red"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21 12 2l11 19H1Zm10-4h2v2h-2v-2Zm0-7h2v5h-2v-5Z"/></svg></div>
                     <div>Failed login attempt for user alice.s@autopartflow.com.<div class="log-ip">IP: 45.33.12.98 (External) · 1 hour ago</div></div>
                 </div>
                 <div class="log-item">
-                    <div class="log-icon">➕</div>
+                    <div class="log-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4Z"/></svg></div>
                     <div>System Admin created new user account mike.t@autopartflow.com.<div class="log-ip">IP: 10.0.0.5 · Yesterday, 16:30</div></div>
                 </div>
             </div>
@@ -168,7 +163,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 <div id="addUserModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);align-items:center;justify-content:center;z-index:50;">
     <div class="card" style="width:400px;max-width:92vw;">
         <div class="card-head"><h3>Add New User</h3><span style="cursor:pointer;" onclick="document.getElementById('addUserModal').style.display='none'">✕</span></div>
-        <p style="color:var(--slate-500);font-size:13px;">User creation form eka connect karanna Sashik/Induwara ge system eka ekka integrate wena welawe.</p>
+        <p style="color:var(--slate-500);font-size:13px;">User creation is not available yet.</p>
         <button class="btn" style="width:100%;" onclick="document.getElementById('addUserModal').style.display='none'">Close</button>
     </div>
 </div>

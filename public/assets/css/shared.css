@@ -1,0 +1,82 @@
+/* Shared visual contract. Brand values come from the sales design tokens. */
+@import url('./sales-rep/tokens.css');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary: var(--sales-primary); --primary-container: var(--sales-primary-container);
+    --font: var(--sales-font); --font-sans: var(--sales-font);
+    --color-bg: var(--sales-surface); --color-surface: white;
+    --color-text: var(--sales-on-surface); --color-muted: var(--sales-on-surface-variant);
+    --color-border: var(--sales-outline-variant); --color-primary: var(--sales-primary);
+    --color-primary-hover: var(--sales-primary-container); --color-accent: var(--sales-secondary);
+    --navy-900: var(--sales-primary); --navy-800: var(--sales-primary);
+    --indigo-500: var(--sales-primary); --indigo-600: var(--sales-primary-container);
+    --indigo-50: var(--sales-surface-low); --bg: var(--sales-surface);
+    --radius-lg: 12px; --shadow-card: var(--sales-shadow);
+}
+body { font-family: var(--sales-font); color: var(--sales-on-surface); line-height: 1.5; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { accent-color: var(--sales-primary); }
+:focus-visible { outline: 2px solid var(--sales-secondary); outline-offset: 3px; }
+.app-logo { width: 40px; height: 40px; object-fit: contain; background: white; border-radius: 9px; padding: 3px; flex-shrink: 0; }
+.public-header, .checkout-header { background: var(--sales-primary); color: white; box-shadow: none; }
+.public-header__inner, .checkout-header__inner { min-height: 72px; }
+.checkout-brand, .checkout-header .header-icon-btn { color: white; }
+.public-nav a, .public-brand, .checkout-brand { text-decoration: none; }
+.public-nav a.active { color: white; border-bottom: 2px solid var(--sales-inverse-primary); }
+.public-footer { margin-top: auto; }
+.public-main { flex: 1; }
+.public-body .auth-wrapper { padding: 48px 20px; }
+.public-body .auth-card { margin: auto; background: white; color: var(--sales-on-surface); }
+.public-body .input-with-icon input { background: white; color: var(--sales-on-surface); }
+.public-body .btn-auth-submit { background: var(--sales-primary); box-shadow: none; }
+.public-body .auth-card-header .app-logo { width: 56px; height: 56px; }
+.public-body .auth-card--wide { max-width: 760px; }
+.auth-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.auth-form-grid .form-group { margin: 0; }
+.auth-form-grid__full { grid-column: 1 / -1; }
+.auth-form-grid input, .auth-form-grid select { width: 100%; min-height: 48px; border: 1px solid #d8dee8; border-radius: 8px; padding: 0 14px; font: inherit; background: #fff; }
+.auth-switch { margin: 20px 0 0; text-align: center; color: #596579; }
+.auth-switch a { color: var(--sales-primary); font-weight: 700; }
+.alert-error { color: var(--sales-error); background: var(--sales-error-container); }
+.alert-success { color: var(--sales-success); background: var(--sales-success-container); }
+.error-page { max-width: 520px; margin: 15vh auto; padding: 32px; background: white; border-radius: 12px; }
+.customer-form input:not([type="hidden"]), .customer-form select, .customer-form textarea {
+    width: 100%; min-height: 42px; padding: 9px 12px; color: var(--sales-on-surface);
+    background: white; border: 1px solid var(--sales-outline-variant); border-radius: 9px;
+}
+.material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.public-body .checkout-card { background: white; border: 1px solid var(--sales-outline-variant); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.public-body .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.public-body .form-input { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--sales-outline-variant); border-radius: 9px; background: white; color: var(--sales-on-surface); }
+.catalog-heading h1, .checkout-heading h1 { font-size: 28px; letter-spacing: -.025em; }
+.catalog-hero { background: var(--sales-surface-low); color: var(--sales-primary); box-shadow: none; border: 1px solid var(--sales-outline-variant); }
+.catalog-hero h2 { font-size: 20px; }
+.catalog-hero p { color: var(--sales-on-surface-variant); }
+.catalog-hero__watermark { display: none; }
+.hero-register { background: var(--sales-primary); color: white; }
+.sales-header__brand { display: flex; align-items: center; gap: 10px; }
+.public-nav a { flex-shrink: 0; }
+@media (max-width: 900px) {
+    .public-header__inner { flex-wrap: wrap; padding: 12px 0; gap: 12px; }
+    .public-nav { display: flex; order: 3; width: 100%; overflow-x: auto; gap: 20px; padding: 8px 0; justify-content: flex-start; }
+    .public-nav a { white-space: nowrap; }
+    .public-actions { margin-left: auto; }
+    .public-search { display: none; }
+}
+@media (max-width: 620px) {
+    .public-brand { font-size: 17px; }
+    .public-actions { width: auto; gap: 16px; }
+    .public-body .auth-card { padding: 24px; }
+    .public-body .checkout-card .form-group { min-width: 0 !important; flex-basis: 100% !important; }
+    .auth-form-grid { grid-template-columns: 1fr; }
+    .auth-form-grid__full { grid-column: auto; }
+}
+@media (max-width: 420px) {
+    .sales-header__brand { font-size: 0; gap: 0; }
+    .sales-header__brand .app-logo { width: 32px; height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

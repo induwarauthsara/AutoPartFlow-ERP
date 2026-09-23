@@ -1,0 +1,30 @@
+/**
+ * Invoice print only. Hides Sales Rep chrome and shows #invoice-preview.
+ * Works on body.sales-app (POS no longer uses body.pos-app).
+ */
+
+@media print {
+    body.sales-app * { visibility: hidden; }
+
+    .invoice-preview,
+    .invoice-preview * { visibility: visible; }
+
+    .invoice-preview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 24px;
+        background: #fff;
+        color: #000;
+    }
+
+    .sales-sidebar,
+    .sales-header,
+    .sales-mobile-nav,
+    .pos-sticky-bar,
+    .modal__header,
+    .modal__footer { display: none !important; }
+
+    dialog.modal { display: block; position: static; }
+}

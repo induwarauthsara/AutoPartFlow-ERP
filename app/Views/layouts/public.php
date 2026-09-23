@@ -17,21 +17,21 @@ $base = rtrim(BASE_URL, '/');
             baseUrl: '<?= rtrim(url(), '/') ?>'
         };
     </script>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
 </head>
 <body class="public-body">
 <header class="public-header">
     <div class="public-header__inner">
         <a class="public-brand" href="<?= url() ?>">
-            <span class="material-symbols-outlined public-brand__icon">settings</span>
+            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
             <span>AutoPartFlow</span>
         </a>
 
         <nav class="public-nav" aria-label="Public navigation">
             <a class="<?= $currentPath === $base . '/' || $currentPath === '/' ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
-            <a class="<?= str_contains($currentPath, '/finder') ? 'active' : '' ?>" href="<?= url('finder') ?>">Spare Parts Finder</a>
             <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
             <a class="<?= str_contains($currentPath, '/track-order') ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
-            <a class="<?= str_contains($currentPath, '/help') ? 'active' : '' ?>" href="<?= url('help') ?>">Help Center</a>
         </nav>
 
         <div class="public-actions">
@@ -46,7 +46,7 @@ $base = rtrim(BASE_URL, '/');
             <span class="header-divider"></span>
             <a class="sign-in-button" href="<?= url('login') ?>">
                 <span class="material-symbols-outlined">login</span>
-                Sign In / Register
+                Sign In
             </a>
         </div>
     </div>
@@ -60,8 +60,8 @@ $base = rtrim(BASE_URL, '/');
     <div class="public-footer__bottom">
         <span>&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</span>
         <div>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="<?= url('catalog') ?>">Catalog</a>
+            <a href="<?= url('track-order') ?>">Track Order</a>
         </div>
     </div>
 </footer>

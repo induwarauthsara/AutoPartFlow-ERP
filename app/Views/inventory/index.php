@@ -85,7 +85,7 @@
         <p class="sales-empty hidden" id="inventory-empty">No inventory items match your search.</p>
     </section>
 
-    <dialog class="customer-dialog" id="stock-in-dialog">
+    <dialog class="customer-dialog sales-dialog" id="stock-in-dialog" aria-labelledby="stock-in-dialog-title">
         <form class="customer-form" id="stock-in-form" method="dialog">
             <div class="customer-dialog__header">
                 <div>

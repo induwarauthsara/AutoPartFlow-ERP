@@ -1,0 +1,63 @@
+/**
+ * Sales Rep — Kinetic Enterprise design tokens
+ * Safe to edit: brand colors, type, spacing, radii.
+ * Used by every Sales Rep CSS file via --sales-* variables.
+ * Do not add component styles here.
+ */
+
+:root {
+    /* Surfaces (page canvas and card layers) */
+    --sales-surface: #f9f9ff;
+    --sales-surface-lowest: #ffffff;
+    --sales-surface-low: #f0f3ff;
+    --sales-surface-container: #e7eeff;
+    --sales-surface-high: #dee8ff;
+    --sales-surface-highest: #d9e3f9;
+    --sales-surface-dim: #d0daf0;
+    --sales-on-surface: #121c2c;
+    --sales-on-surface-variant: #43474e;
+    --sales-inverse-surface: #273141;
+    --sales-inverse-on-surface: #ebf1ff;
+
+    /* Brand navy — primary actions and sidebar */
+    --sales-primary: #002045;
+    --sales-primary-container: #1a365d;
+    --sales-on-primary: #ffffff;
+    --sales-on-primary-container: #86a0cd;
+    --sales-inverse-primary: #adc7f7;
+
+    /* Supporting blue */
+    --sales-secondary: #3b6090;
+    --sales-secondary-container: #a5c8ff;
+    --sales-on-secondary: #ffffff;
+    --sales-on-secondary-container: #2e5484;
+
+    --sales-tertiary: #00213e;
+    --sales-tertiary-container: #003762;
+    --sales-on-tertiary-container: #58a2f0;
+
+    --sales-outline: #74777f;
+    --sales-outline-variant: #c4c6cf;
+
+    /* Status — reserved for meaning, not decoration */
+    --sales-error: #ba1a1a;
+    --sales-error-container: #ffdad6;
+    --sales-success: #146c43;
+    --sales-success-container: #d1fae5;
+    --sales-warning: #875500;
+    --sales-warning-container: #fff0c2;
+    --sales-info: #1e4f91;
+    --sales-info-container: #e3efff;
+
+    /* Type and layout */
+    --sales-font: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    --sales-sidebar: 256px;
+    --sales-header: 64px;
+    --sales-mobile-nav: 68px;
+    --sales-radius-sm: 6px;
+    --sales-radius-md: 9px;
+    --sales-radius-lg: 12px;
+    --sales-shadow: 0 1px 3px rgba(0, 32, 69, 0.08);
+    --sales-shadow-overlay: 0 18px 48px rgba(0, 20, 48, 0.22);
+    --sales-focus: 0 0 0 3px rgba(59, 96, 144, 0.2);
+}

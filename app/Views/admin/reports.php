@@ -63,35 +63,28 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 @media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
 </style>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 </head>
 <body>
 <div class="app-shell">
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-mark">AP</div>
+            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
             <div>
                 <div class="brand-title">AutoPartFlow</div>
-                <div class="brand-sub">Logistics ERP</div>
+                <div class="brand-sub">Admin Workspace</div>
             </div>
         </div>
-        <nav>
-            <div class="nav-group">
-                <div class="nav-group-label">Overview</div>
-                <a class="nav-link" href="<?= url('admin/dashboard') ?>">Dashboard</a>
-                <a class="nav-link" href="#">Sales</a>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Operations</div>
-                <a class="nav-link" href="#">Products</a>
-                <a class="nav-link" href="#">Inventory</a>
-                <a class="nav-link" href="<?= url('admin/users') ?>">Customers</a>
-            </div>
-            <div class="nav-group">
-                <div class="nav-group-label">Insights</div>
-                <a class="nav-link active" href="<?= url('admin/reports') ?>">Reports</a>
-                <a class="nav-link" href="<?= url('admin/employees') ?>">Employees</a>
-            </div>
-        </nav>
+        <nav aria-label="Admin navigation">
+<a class="nav-link" href="<?= url('admin/dashboard') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/></svg>Dashboard</a>
+<a class="nav-link active" aria-current="page" href="<?= url('admin/reports') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>Reports</a>
+<a class="nav-link" href="<?= url('admin/users') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Z"/></svg>User Management</a>
+<a class="nav-link" href="<?= url('admin/employees') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Zm16-7h4v7h-4v-7Z"/></svg>Employees</a>
+<a class="nav-link" href="<?= url('admin/notifications') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>Notifications</a>
+<a class="nav-link" href="<?= url('admin/settings') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>Settings</a>
+</nav>
         <div class="sidebar-footer">
             <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div>
             <div>
@@ -103,9 +96,9 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 
     <div class="main">
         <header class="topbar">
-            <div class="search-box">🔍 <input type="text" placeholder="Search reports..."></div>
+            <div class="search-box"> <input type="text" placeholder="Search reports..."></div>
             <div class="topbar-icons">
-                🔔 📅 <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div>
+                <a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div>
             </div>
         </header>
 
@@ -123,7 +116,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
             <div class="grid-4">
                 <div class="card">
                     <div class="stat-icon">$</div>
-                    <div class="stat-value">$1.2M</div>
+                    <div class="stat-value">Rs. 1.2M</div>
                     <div class="stat-label">Gross Revenue</div>
                     <span class="stat-badge up">↑ 14.5% vs last month</span>
                 </div>
@@ -140,7 +133,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                     <span class="stat-badge down">↓ 1.5% vs last month</span>
                 </div>
                 <div class="card">
-                    <div class="stat-icon">⏱</div>
+                    <div class="stat-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 11H7v-2h4V6h2v7Z"/></svg></div>
                     <div class="stat-value">2.4h</div>
                     <div class="stat-label">Avg Fulfillment</div>
                     <span class="stat-badge up">↓ 0.3h (improved)</span>

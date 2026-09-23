@@ -17,10 +17,10 @@ $brands = $brands ?? [];
         <!-- Hero Banner -->
         <section class="catalog-hero">
             <div class="catalog-hero__content">
-                <h2>Welcome to AutoPartFlow</h2>
-                <p>Find the best genuine and aftermarket spare parts for your vehicle. Register for an account to unlock exclusive wholesale pricing and track your orders easily.</p>
+                <h2>Parts for your next repair</h2>
+                <p>Browse by category or brand, then check compatibility in the part details. Have an account? Sign in below.</p>
             </div>
-            <a class="hero-register" href="<?= url('login') ?>">Register Now</a>
+            <a class="hero-register" href="<?= url('login') ?>">Sign In</a>
             <span class="material-symbols-outlined catalog-hero__watermark">directions_car</span>
         </section>
 

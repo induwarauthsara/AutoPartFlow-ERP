@@ -31,6 +31,9 @@ h2{margin:0 0 6px;font-size:22px;}
 .alert-success{background:var(--green-bg);color:#0f7a37;}
 .auth-footer-note{text-align:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--slate-100);font-size:13px;color:var(--slate-500);}
 </style>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 </head>
 <body>
 <div class="auth-wrap">
@@ -38,7 +41,7 @@ h2{margin:0 0 6px;font-size:22px;}
         <div class="auth-visual"><span class="tag">Real-time inventory. Zero guesswork.</span></div>
         <div class="auth-form">
             <div class="logo-row">
-                <div class="brand-mark">AP</div>
+                <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
                 <strong>AutoPartFlow</strong>
             </div>
             <h2>Welcome Back</h2>
