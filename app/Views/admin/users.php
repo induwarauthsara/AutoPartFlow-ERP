@@ -1,175 +1,393 @@
-<?php
-/** @var array $rows */
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= e($title ?? 'User Management') ?></title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Management</title>
 <style>
-:root{--navy-900:#0b1220;--navy-800:#101a30;--indigo-500:#4f5bd5;--indigo-50:#eef0fd;--slate-900:#0f172a;--slate-500:#64748b;--slate-100:#f1f5f9;--slate-300:#cbd5e1;--bg:#f5f6fb;--radius-lg:16px;--shadow:0 1px 3px rgba(15,23,42,.06);--green:#16a34a;--green-bg:#e7f8ee;--red:#dc2626;--red-bg:#fdecec;}
-*{box-sizing:border-box;}
-body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--slate-900);font-size:14px;}
-.app-shell{display:flex;min-height:100vh;}
-.sidebar{width:230px;flex-shrink:0;background:linear-gradient(180deg,var(--navy-900),var(--navy-800));color:#cbd5e1;padding:18px 12px;display:flex;flex-direction:column;}
-.brand{display:flex;align-items:center;gap:9px;padding:6px 8px 20px;}
-.brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--indigo-500),#7c8cf0);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;}
-.brand-title{color:#fff;font-weight:700;font-size:14px;}
-.brand-sub{font-size:10.5px;color:#8590b3;text-transform:uppercase;letter-spacing:.04em;}
-.nav-group{margin-top:12px;}
-.nav-group-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5b6689;padding:0 10px;margin-bottom:6px;font-weight:600;}
-.nav-link{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#b7c0dd;font-size:13px;font-weight:500;margin-bottom:2px;text-decoration:none;}
-.nav-link.active{background:var(--indigo-500);color:#fff;}
-.sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:9px;}
-.avatar{width:30px;height:30px;border-radius:50%;background:var(--indigo-500);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;flex-shrink:0;}
-.sidebar-footer .name{color:#fff;font-size:12.5px;font-weight:600;}
-.sidebar-footer .role{color:#7f8bb0;font-size:11px;}
-.main{flex:1;min-width:0;}
-.topbar{background:#fff;border-bottom:1px solid var(--slate-100);display:flex;align-items:center;gap:16px;padding:12px 24px;}
-.search-box{flex:1;max-width:380px;display:flex;align-items:center;gap:8px;background:var(--slate-100);border-radius:9px;padding:8px 12px;color:var(--slate-500);}
-.search-box input{border:none;background:transparent;outline:none;flex:1;font-size:13px;}
-.topbar-icons{display:flex;align-items:center;gap:14px;margin-left:auto;color:var(--slate-500);}
-.content{padding:24px;}
-.page-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
-.page-head h1{font-size:22px;margin:0 0 4px;}
-.page-head p{margin:0;color:var(--slate-500);font-size:13px;}
-.btn{padding:9px 16px;border-radius:9px;font-size:12.5px;font-weight:600;border:1px solid var(--slate-300);background:#fff;cursor:pointer;}
-.btn-primary{background:var(--navy-900);color:#fff;border-color:var(--navy-900);}
-.grid-2{display:grid;grid-template-columns:1fr 1.6fr;gap:16px;margin-bottom:16px;}
-.card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;border:1px solid #eef0f5;margin-bottom:16px;}
-.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.card-head h3{margin:0;font-size:15px;}
-.card-head a{font-size:12px;color:var(--indigo-500);text-decoration:none;font-weight:600;}
-.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
-.donut-center{font-size:20px;font-weight:700;}
-.legend{font-size:11.5px;color:var(--slate-500);}
-.role-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.role-box{background:var(--slate-100);border-radius:10px;padding:12px;text-align:center;}
-.role-num{font-size:17px;font-weight:700;}
-.role-label{font-size:10.5px;color:var(--slate-500);}
-table{width:100%;border-collapse:collapse;}
-th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--slate-500);padding:10px 12px;border-bottom:1px solid var(--slate-100);}
-td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
-.table-user{display:flex;align-items:center;gap:9px;}
-.badge{display:inline-flex;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
-.badge.active{background:var(--green-bg);color:var(--green);}
-.badge.suspended{background:var(--red-bg);color:var(--red);}
-.log-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--slate-100);font-size:12.5px;}
-.log-item:last-child{border-bottom:none;}
-.log-icon{width:28px;height:28px;border-radius:8px;background:var(--indigo-50);color:var(--indigo-500);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.log-icon.red{background:var(--red-bg);color:var(--red);}
-.log-ip{color:var(--slate-500);font-size:11px;}
-@media (max-width:900px){.grid-2{grid-template-columns:1fr;}.role-grid{grid-template-columns:repeat(2,1fr);}}
+:root{
+  --bg:#f4f5f9; --surface:#ffffff; --box:#f1f3f7; --text:#111827; --muted:#6b7280;
+  --line:#eceef3; --accent:#5157d9; --link:#3f51d9; --btn:#111827;
+  --ok:#16a34a; --ok-soft:#dcfce7; --bad:#dc2626; --bad-soft:#fde8e8;
+  --key-soft:#eef0fb; --plus:#7c5ce0; --plus-soft:#ede9fe;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;font-size:15px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+
+.topbar{background:var(--surface);display:flex;align-items:center;gap:1rem;padding:15px 30px}
+.search{flex:0 1 475px;display:flex;align-items:center;gap:.7rem;background:var(--box);border-radius:10px;padding:10px 16px}
+.search input{border:0;background:transparent;outline:none;width:100%;font-size:16px}
+.spacer{flex:1}
+.top-icons{display:flex;gap:12px;font-size:18px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;flex-shrink:0}
+
+main{padding:32px 30px 40px;display:grid;gap:22px;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);align-items:start}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
+.head h1{margin:0;font-size:28px;font-weight:700}
+.head p{margin:8px 0 0;color:var(--muted)}
+.btn{border:0;border-radius:8px;padding:11px 20px;font-weight:700;background:var(--btn);color:#fff;white-space:nowrap;font-size:16px}
+.btn.ghost{background:var(--box);color:var(--text)}
+.btn.danger{background:var(--bad)}
+.link{border:0;background:none;color:var(--link);font-weight:500;padding:0;font-size:15px}
+
+.card{background:var(--surface);border-radius:16px;padding:26px 25px;box-shadow:0 1px 3px rgba(17,24,39,.05)}
+.card h2{margin:0 0 20px;font-size:19px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.users-card{grid-column:1 / span 2}
+.log-card{grid-column:3}
+
+.donut{display:grid;place-items:center;position:relative;margin:0 auto 18px;width:184px;height:184px}
+.donut svg{transform:rotate(-90deg)}
+.donut .c{position:absolute;text-align:center}
+.donut .c b{display:block;font-size:24px}
+.donut .c span{font-size:14px;color:var(--muted)}
+.legend{display:flex;justify-content:center;gap:16px;color:var(--muted);font-size:14px}
+
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.role{border:1px solid transparent;background:var(--box);border-radius:12px;padding:16px 6px;text-align:center}
+.role b{display:block;font-size:21px}
+.role span{font-size:13px;color:var(--muted)}
+.role[aria-pressed="true"]{border-color:var(--accent)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th{text-align:left;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;padding:10px 15px;border-bottom:1px solid var(--line)}
+td{padding:16px 15px;border-bottom:1px solid var(--line);vertical-align:middle}
+.who{display:flex;align-items:center;gap:12px}
+.who .avatar{width:38px;height:38px}
+.who b{display:block;font-weight:600}
+.who small{color:var(--muted);font-size:13px}
+.pill{border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600;border:0}
+.pill.on{background:var(--ok-soft);color:var(--ok)}
+.pill.off{background:var(--box);color:var(--muted)}
+.actions{display:flex;gap:4px}
+.icon-btn{border:0;background:none;padding:6px;border-radius:6px;color:var(--muted);display:grid;place-items:center}
+.icon-btn:hover{background:var(--box)}
+.icon-btn.del:hover{color:var(--bad)}
+.empty{text-align:center;color:var(--muted);padding:24px}
+
+.log{list-style:none;margin:0;padding:0;max-height:420px;overflow-y:auto}
+.log li{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.log li:last-child{border-bottom:0}
+.log .ic{width:34px;height:34px;flex-shrink:0;border-radius:8px;display:grid;place-items:center;font-size:15px}
+.ic.update{background:var(--key-soft)}
+.ic.delete{background:var(--bad-soft);color:var(--bad)}
+.ic.create{background:var(--plus-soft);color:var(--plus);font-weight:700}
+.log small{color:var(--muted);display:block;font-size:13px;margin-top:2px}
+
+dialog{border:0;border-radius:16px;padding:0;width:min(440px,92vw)}
+dialog::backdrop{background:rgba(17,24,39,.45)}
+.dlg{padding:24px}
+.dlg h3{margin:0 0 16px;font-size:20px}
+.field{display:grid;gap:5px;margin-bottom:12px}
+.field label{font-size:14px;font-weight:600}
+.field input,.field select{border:1px solid var(--line);background:var(--box);border-radius:8px;padding:10px 12px;width:100%}
+.err{color:var(--bad);font-size:13px;min-height:1em}
+.dlg-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--btn);color:#fff;padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+
+@media (max-width:1100px){
+  main{grid-template-columns:1fr 1fr}
+  .head,.users-card,.log-card{grid-column:span 2}
+}
+@media (max-width:700px){
+  main{grid-template-columns:1fr;padding:20px 16px}
+  .head,.users-card,.log-card{grid-column:auto}
+  .roles{grid-template-columns:repeat(2,1fr)}
+  .topbar{padding:12px 16px}
+}
 </style>
-<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
-<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
-<link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 </head>
 <body>
-<div class="app-shell">
-    <aside class="sidebar">
-        <div class="brand"><img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40"><div><div class="brand-title">AutoPartFlow</div><div class="brand-sub">Admin Workspace</div></div></div>
-        <nav aria-label="Admin navigation">
-<a class="nav-link" href="<?= url('admin/dashboard') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/></svg>Dashboard</a>
-<a class="nav-link" href="<?= url('admin/reports') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>Reports</a>
-<a class="nav-link active" aria-current="page" href="<?= url('admin/users') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Z"/></svg>User Management</a>
-<a class="nav-link" href="<?= url('admin/employees') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Zm16-7h4v7h-4v-7Z"/></svg>Employees</a>
-<a class="nav-link" href="<?= url('admin/notifications') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>Notifications</a>
-<a class="nav-link" href="<?= url('admin/settings') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>Settings</a>
-</nav>
-        <div class="sidebar-footer">
-            <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div>
-            <div><div class="name"><?= e($_SESSION['full_name'] ?? 'Sarah Jenkins') ?></div><div class="role">Admin</div></div>
-        </div>
-    </aside>
 
-    <div class="main">
-        <header class="topbar">
-            <div class="search-box"> <input type="text" placeholder="Search users, roles..."></div>
-            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div></div>
-        </header>
+<header class="topbar">
+  <div class="search">
+    <span>🔍</span>
+    <input id="q" type="search" placeholder="Search users, roles...">
+  </div>
+  <div class="spacer"></div>
+  <div class="top-icons"><span>🔔</span><span>📅</span></div>
+  <div class="avatar">S</div>
+</header>
 
-        <div class="content">
-            <div class="page-head">
-                <div>
-                    <h1>User Management</h1>
-                    <p>Control system access, roles, and review audit logs.</p>
-                </div>
-                <button class="btn btn-primary" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
-
-            <div class="grid-2">
-                <div class="card">
-                    <div class="card-head"><h3>Active Users</h3></div>
-                    <div class="donut-wrap">
-                        <div style="width:150px;height:150px;position:relative;">
-                            <canvas id="userDonut" style="width:100%;height:100%;"></canvas>
-                            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                                <div class="donut-center"><?= count($rows) ?></div>
-                                <div style="color:var(--slate-500);font-size:11px;">Total</div>
-                            </div>
-                        </div>
-                        <div class="legend">● Active (<?= count($rows) ?>) &nbsp;&nbsp; ○ Inactive (0)</div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-head"><h3>Role Distribution</h3><a href="#">Manage Roles</a></div>
-                    <div class="role-grid">
-                        <div class="role-box"><div class="role-num">12</div><div class="role-label">Administrators</div></div>
-                        <div class="role-box"><div class="role-num">45</div><div class="role-label">Managers</div></div>
-                        <div class="role-box"><div class="role-num">115</div><div class="role-label">Warehouse Staff</div></div>
-                        <div class="role-box"><div class="role-num">76</div><div class="role-label">Sales/Support</div></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-head"><h3>System Users</h3></div>
-                <table>
-                    <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
-                    <tbody>
-                    <?php foreach ($rows as $u): ?>
-                        <tr>
-                            <td><div class="table-user"><div class="avatar"><?= strtoupper(substr($u['full_name'],0,1)) ?></div><div><strong><?= e($u['full_name']) ?></strong><br><span style="color:var(--slate-500);font-size:11.5px;"><?= e($u['email']) ?></span></div></div></td>
-                            <td><?= e($u['role_name']) ?></td>
-                            <td><span class="badge <?= $u['is_active'] ? 'active' : 'suspended' ?>"><?= $u['is_active'] ? 'Active' : 'Suspended' ?></span></td>
-                            <td><?= $u['last_login_at'] ? date('M j, g:i A', strtotime($u['last_login_at'])) : 'Never' ?></td>
-                            <td><a href="#" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:var(--slate-500);text-decoration:none;" onmouseover="this.style.background='var(--slate-100)'" onmouseout="this.style.background='transparent'" title="Edit user"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <?php if (!$rows): ?><tr><td colspan="5">No users found.</td></tr><?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card">
-                <div class="card-head"><h3>Security Audit Log</h3><a href="#">Export CSV</a></div>
-                <div class="log-item">
-                    <div class="log-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3a5 5 0 1 0 4 8h5v3h3v-3h2V8H13a5 5 0 0 0-5-5Zm-2 5a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z"/></svg></div>
-                    <div><strong>Admin</strong> changed permissions for role Warehouse Staff.<div class="log-ip">IP: 192.168.1.45 · 10 mins ago</div></div>
-                </div>
-                <div class="log-item">
-                    <div class="log-icon red"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21 12 2l11 19H1Zm10-4h2v2h-2v-2Zm0-7h2v5h-2v-5Z"/></svg></div>
-                    <div>Failed login attempt for user alice.s@autopartflow.com.<div class="log-ip">IP: 45.33.12.98 (External) · 1 hour ago</div></div>
-                </div>
-                <div class="log-item">
-                    <div class="log-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4Z"/></svg></div>
-                    <div>System Admin created new user account mike.t@autopartflow.com.<div class="log-ip">IP: 10.0.0.5 · Yesterday, 16:30</div></div>
-                </div>
-            </div>
-        </div>
+<main>
+  <section class="head">
+    <div>
+      <h1>User Management</h1>
+      <p>Control system access, roles, and review audit logs.</p>
     </div>
-</div>
-<div id="addUserModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);align-items:center;justify-content:center;z-index:50;">
-    <div class="card" style="width:400px;max-width:92vw;">
-        <div class="card-head"><h3>Add New User</h3><span style="cursor:pointer;" onclick="document.getElementById('addUserModal').style.display='none'">✕</span></div>
-        <p style="color:var(--slate-500);font-size:13px;">User creation is not available yet.</p>
-        <button class="btn" style="width:100%;" onclick="document.getElementById('addUserModal').style.display='none'">Close</button>
+    <button class="btn" id="addBtn">+ Add User</button>
+  </section>
+
+  <section class="card">
+    <h2>Active Users</h2>
+    <div class="donut">
+      <svg width="184" height="184" viewBox="0 0 184 184">
+        <circle cx="92" cy="92" r="84" fill="none" stroke="var(--box)" stroke-width="12"/>
+        <circle id="arc" cx="92" cy="92" r="84" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="0 999"/>
+      </svg>
+      <div class="c"><b id="total">0</b><span>Total</span></div>
     </div>
-</div>
-<script src="<?= asset('js/admin-charts.js') ?>"></script>
+    <div class="legend">
+      <span>● Active (<span id="nAct">0</span>)</span>
+      <span>○ Inactive (<span id="nIn">0</span>)</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Role Distribution <button class="link" id="manageRoles">Manage Roles</button></h2>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <section class="card users-card">
+    <h2>System Users</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card log-card">
+    <h2>Security Audit Log <button class="link" id="exportBtn">⬇ Export CSV</button></h2>
+    <ul class="log" id="log"></ul>
+  </section>
+</main>
+
+<dialog id="userDlg">
+  <form class="dlg" id="userForm" novalidate>
+    <h3 id="dlgTitle">Add user</h3>
+    <div class="field">
+      <label for="fName">Full name</label>
+      <input id="fName" autocomplete="off">
+      <span class="err" id="eName"></span>
+    </div>
+    <div class="field">
+      <label for="fEmail">Email</label>
+      <input id="fEmail" type="email" autocomplete="off">
+      <span class="err" id="eEmail"></span>
+    </div>
+    <div class="field">
+      <label for="fRole">Role</label>
+      <select id="fRole"></select>
+    </div>
+    <label class="toggle"><input type="checkbox" id="fActive" checked> Account is active</label>
+    <div class="dlg-foot">
+      <button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn" id="saveBtn">Add user</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="delDlg">
+  <div class="dlg">
+    <h3>Delete user?</h3>
+    <p id="delText" style="margin:0 0 16px;color:var(--muted)"></p>
+    <div class="dlg-foot">
+      <button class="btn ghost" id="delCancel">Cancel</button>
+      <button class="btn danger" id="delConfirm">Delete user</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
 <script>
-drawDonut('userDonut', <?= count($rows) ?>, Math.max(<?= count($rows) ?>, 1));
+// Role cards shown on the page (same 4 as the design)
+const CARD_ROLES = [
+  {role:"Administrator",   label:"Administrators"},
+  {role:"Manager",         label:"Managers"},
+  {role:"Warehouse Staff", label:"Warehouse Staff"},
+  {role:"Sales/Support",   label:"Sales/Support"}
+];
+const ALL_ROLES = ["Business Owner", ...CARD_ROLES.map(r => r.role)];
+const KEY = "um-state-v2";
+
+let state = load() || {
+  users:[{id:uid(),name:"System Administrator",email:"admin@smartauto.lk",role:"Business Owner",active:true,lastLogin:Date.now()}],
+  log:[]
+};
+let roleFilter = null, editingId = null, deletingId = null;
+
+function uid(){return Math.random().toString(36).slice(2,10)}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmtDate(t){return t?new Date(t).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"Never"}
+function ago(t){
+  const m=Math.round((Date.now()-t)/60000);
+  if(m<1)return "Just now"; if(m<60)return m+" mins ago";
+  const h=Math.round(m/60); if(h<24)return h+(h===1?" hour ago":" hours ago");
+  return fmtDate(t);
+}
+function audit(type,text){
+  state.log.unshift({type,text,at:Date.now(),by:"Admin"});
+  state.log = state.log.slice(0,200);
+}
+
+function render(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const list = state.users.filter(u =>
+    (!roleFilter || u.role === roleFilter) &&
+    (!q || [u.name,u.email,u.role].some(v => v.toLowerCase().includes(q)))
+  );
+
+  // Active users donut
+  const total = state.users.length, act = state.users.filter(u => u.active).length;
+  document.getElementById("total").textContent = total;
+  document.getElementById("nAct").textContent = act;
+  document.getElementById("nIn").textContent = total - act;
+  const C = 2*Math.PI*84;
+  document.getElementById("arc").setAttribute("stroke-dasharray", `${C*(total?act/total:0)} ${C}`);
+
+  // Role cards
+  document.getElementById("roles").innerHTML = CARD_ROLES.map(r => {
+    const n = state.users.filter(u => u.role === r.role).length;
+    return `<button class="role" data-role="${esc(r.role)}" aria-pressed="${roleFilter===r.role}"><b>${n}</b><span>${esc(r.label)}</span></button>`;
+  }).join("");
+
+  // Users table
+  document.getElementById("rows").innerHTML = list.length ? list.map(u => `
+    <tr>
+      <td><div class="who"><div class="avatar">${esc((u.name[0]||"?").toUpperCase())}</div><div><b>${esc(u.name)}</b><small>${esc(u.email)}</small></div></div></td>
+      <td>${esc(u.role)}</td>
+      <td><button class="pill ${u.active?"on":"off"}" data-toggle="${u.id}" title="Click to change">${u.active?"Active":"Inactive"}</button></td>
+      <td>${fmtDate(u.lastLogin)}</td>
+      <td><div class="actions">
+        <button class="icon-btn" data-edit="${u.id}" title="Edit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4v16h16v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>
+        <button class="icon-btn del" data-del="${u.id}" title="Delete">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </div></td>
+    </tr>`).join("")
+    : `<tr><td colspan="5" class="empty">No users found.</td></tr>`;
+
+  // Audit log
+  const icons = {update:"🔑", delete:"⚠", create:"+"};
+  document.getElementById("log").innerHTML = state.log.length ? state.log.slice(0,50).map(l => `
+    <li><div class="ic ${l.type}">${icons[l.type]}</div>
+    <div><div><b>${esc(l.by)}</b> ${esc(l.text)}</div><small>${ago(l.at)}</small></div></li>`).join("")
+    : `<li class="empty" style="display:block">No activity yet.</li>`;
+}
+
+// ---- Add / Edit
+const dlg = document.getElementById("userDlg");
+document.getElementById("fRole").innerHTML = ALL_ROLES.map(r => `<option>${esc(r)}</option>`).join("");
+
+function openForm(u){
+  editingId = u ? u.id : null;
+  document.getElementById("dlgTitle").textContent = u ? "Edit user" : "Add user";
+  document.getElementById("saveBtn").textContent = u ? "Save changes" : "Add user";
+  document.getElementById("fName").value = u ? u.name : "";
+  document.getElementById("fEmail").value = u ? u.email : "";
+  document.getElementById("fRole").value = u ? u.role : "Sales/Support";
+  document.getElementById("fActive").checked = u ? u.active : true;
+  document.getElementById("eName").textContent = "";
+  document.getElementById("eEmail").textContent = "";
+  dlg.showModal();
+}
+
+document.getElementById("userForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = document.getElementById("fName").value.trim();
+  const email = document.getElementById("fEmail").value.trim().toLowerCase();
+  const role = document.getElementById("fRole").value;
+  const active = document.getElementById("fActive").checked;
+
+  let ok = true;
+  document.getElementById("eName").textContent = name ? "" : (ok=false, "Enter the user's full name.");
+  let emailErr = "";
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) emailErr = "Enter a valid email address.";
+  else if(state.users.some(u => u.email===email && u.id!==editingId)) emailErr = "Another user already has this email.";
+  if(emailErr) ok = false;
+  document.getElementById("eEmail").textContent = emailErr;
+  if(!ok) return;
+
+  if(editingId){
+    const u = state.users.find(x => x.id === editingId);
+    const changes = [];
+    if(u.role !== role) changes.push(`role to ${role}`);
+    if(u.active !== active) changes.push(active ? "status to Active" : "status to Inactive");
+    if(u.name !== name || u.email !== email) changes.push("profile details");
+    Object.assign(u, {name,email,role,active});
+    if(changes.length) audit("update", `changed ${changes.join(", ")} for ${email}.`);
+    toast("Changes saved");
+  } else {
+    state.users.push({id:uid(),name,email,role,active,lastLogin:null});
+    audit("create", `created new user account ${email}.`);
+    toast("User added");
+  }
+  save(); dlg.close(); render();
+});
+document.getElementById("cancelBtn").onclick = () => dlg.close();
+document.getElementById("addBtn").onclick = () => openForm(null);
+
+// ---- Delete
+const delDlg = document.getElementById("delDlg");
+document.getElementById("delCancel").onclick = () => delDlg.close();
+document.getElementById("delConfirm").onclick = () => {
+  const u = state.users.find(x => x.id === deletingId);
+  if(u){
+    state.users = state.users.filter(x => x.id !== deletingId);
+    audit("delete", `deleted user account ${u.email}.`);
+    save(); toast("User deleted"); render();
+  }
+  delDlg.close();
+};
+
+// ---- Table clicks
+document.getElementById("rows").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.edit) openForm(state.users.find(u => u.id === b.dataset.edit));
+  if(b.dataset.del){
+    const u = state.users.find(x => x.id === b.dataset.del);
+    if(u.role==="Business Owner" && state.users.filter(x => x.role==="Business Owner").length===1){
+      toast("You can't delete the only Business Owner."); return;
+    }
+    deletingId = u.id;
+    document.getElementById("delText").textContent = `${u.name} (${u.email}) will lose access. This can't be undone.`;
+    delDlg.showModal();
+  }
+  if(b.dataset.toggle){
+    const u = state.users.find(x => x.id === b.dataset.toggle);
+    u.active = !u.active;
+    audit("update", `changed status to ${u.active?"Active":"Inactive"} for ${u.email}.`);
+    save(); render();
+  }
+});
+
+// ---- Role filter + search
+document.getElementById("roles").addEventListener("click", e => {
+  const b = e.target.closest(".role"); if(!b) return;
+  roleFilter = roleFilter === b.dataset.role ? null : b.dataset.role;
+  render();
+});
+document.getElementById("manageRoles").onclick = () => { roleFilter = null; render(); };
+document.getElementById("q").addEventListener("input", render);
+
+// ---- Export CSV (downloads a file)
+document.getElementById("exportBtn").onclick = () => {
+  const rows = [["Time","User","Action"], ...state.log.map(l => [new Date(l.at).toLocaleString(), l.by, l.text])];
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"}));
+  a.download = "audit-log.csv";
+  a.click();
+};
+
+let tt;
+function toast(m){
+  const t = document.getElementById("toast");
+  t.textContent = m; t.classList.add("show");
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+render();
 </script>
 </body>
 </html>
