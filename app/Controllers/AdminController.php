@@ -169,10 +169,133 @@ class AdminController extends Controller
     /** GET /admin/notifications */
     public function notifications(): void
     {
-        $stmt = $this->db->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 20");
+        $groups = $this->notifGroups();
+        $type = (string) ($_GET['type'] ?? 'all');
+        if (!isset($groups[$type])) {
+            $type = 'all';
+        }
+        $status = (string) ($_GET['status'] ?? 'all');
+        if (!in_array($status, ['all', 'unread', 'read'], true)) {
+            $status = 'all';
+        }
+
+        $where = [];
+        $params = [];
+        if ($groups[$type]) {
+            $where[] = 'type IN (' . implode(',', array_fill(0, count($groups[$type]), '?')) . ')';
+            $params = array_merge($params, $groups[$type]);
+        }
+        if ($status === 'unread') {
+            $where[] = 'is_read = 0';
+        } elseif ($status === 'read') {
+            $where[] = 'is_read = 1';
+        }
+
+        $sql = 'SELECT * FROM notifications'
+             . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
+             . ' ORDER BY created_at DESC, id DESC LIMIT 50';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
-        $this->view('admin.notifications', ['title' => 'Notification Center - AutoPartFlow', 'rows' => $rows], null);
+        $unreadCount = (int) $this->db->query('SELECT COUNT(*) FROM notifications WHERE is_read = 0')->fetchColumn();
+
+        $flash = $_SESSION['notif_flash'] ?? null;
+        unset($_SESSION['notif_flash']);
+
+        $this->view('admin.notifications', [
+            'title'        => 'Notification Center - AutoPartFlow',
+            'rows'         => $rows,
+            'filterType'   => $type,
+            'filterStatus' => $status,
+            'unreadCount'  => $unreadCount,
+            'flash'        => $flash,
+        ], null);
+    }
+
+    /** POST /admin/notifications/store */
+    public function notificationStore(): void
+    {
+        $types = ['low_stock', 'new_order', 'pending_order', 'credit_due', 'purchase_arrival', 'delivery_update', 'system'];
+        $type = (string) ($_POST['type'] ?? 'system');
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $message = trim((string) ($_POST['message'] ?? ''));
+        $linkUrl = trim((string) ($_POST['link_url'] ?? ''));
+
+        if (!in_array($type, $types, true)) {
+            $this->notifBack('error', 'Choose a valid notification type.');
+        }
+        if ($title === '' || $message === '') {
+            $this->notifBack('error', 'Enter a title and a message.');
+        }
+        if ($linkUrl !== '' && !preg_match('#^(/|https?://)#i', $linkUrl)) {
+            $this->notifBack('error', 'The link must start with / or http.');
+        }
+
+        $stmt = $this->db->prepare(
+            'INSERT INTO notifications (type, title, message, link_url) VALUES (?, ?, ?, ?)'
+        );
+        $stmt->execute([$type, substr($title, 0, 200), $message, $linkUrl !== '' ? substr($linkUrl, 0, 255) : null]);
+
+        $this->notifBack('success', 'Notification created.');
+    }
+
+    /** POST /admin/notifications/read  (read <-> unread) */
+    public function notificationRead(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $stmt = $this->db->prepare(
+            'UPDATE notifications SET read_at = IF(is_read = 0, NOW(), NULL), is_read = 1 - is_read WHERE id = ?'
+        );
+        $stmt->execute([$id]);
+        $this->notifBack(null, '');
+    }
+
+    /** POST /admin/notifications/read-all */
+    public function notificationReadAll(): void
+    {
+        $stmt = $this->db->prepare('UPDATE notifications SET is_read = 1, read_at = NOW() WHERE is_read = 0');
+        $stmt->execute();
+        $count = $stmt->rowCount();
+        $this->notifBack('success', $count === 1 ? '1 notification marked as read.' : "{$count} notifications marked as read.");
+    }
+
+    /** POST /admin/notifications/delete */
+    public function notificationDelete(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $stmt = $this->db->prepare('DELETE FROM notifications WHERE id = ?');
+        $stmt->execute([$id]);
+        $this->notifBack('success', 'Notification deleted.');
+    }
+
+    private function notifGroups(): array
+    {
+        return [
+            'all'       => [],
+            'critical'  => ['low_stock', 'credit_due'],
+            'orders'    => ['new_order', 'pending_order', 'delivery_update'],
+            'inventory' => ['low_stock', 'purchase_arrival'],
+            'system'    => ['system'],
+        ];
+    }
+
+    private function notifBack(?string $type, string $msg): void
+    {
+        if ($type !== null) {
+            $_SESSION['notif_flash'] = ['type' => $type, 'msg' => $msg];
+        }
+        $q = [];
+        $t = (string) ($_POST['return_type'] ?? 'all');
+        $s = (string) ($_POST['return_status'] ?? 'all');
+        if ($t !== 'all' && isset($this->notifGroups()[$t])) {
+            $q['type'] = $t;
+        }
+        if (in_array($s, ['unread', 'read'], true)) {
+            $q['status'] = $s;
+        }
+        $this->redirect('/admin/notifications' . ($q ? '?' . http_build_query($q) : ''));
+        exit;
     }
 
     /** GET /admin/settings */

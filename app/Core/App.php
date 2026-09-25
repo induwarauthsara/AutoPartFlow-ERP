@@ -52,6 +52,10 @@ class App
         $this->router->get('/admin/employees', 'AdminController@employees');
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
+        $this->router->post('/admin/notifications/store', 'AdminController@notificationStore');
+        $this->router->post('/admin/notifications/read', 'AdminController@notificationRead');
+        $this->router->post('/admin/notifications/read-all', 'AdminController@notificationReadAll');
+        $this->router->post('/admin/notifications/delete', 'AdminController@notificationDelete');
         $this->router->get('/admin/settings', 'AdminController@settings');
         $this->router->post('/admin/settings/save', 'AdminController@settingsSave');
         // Inventory / Store Workspace
