@@ -141,4 +141,98 @@ class AdminController extends Controller
 
         $this->redirect('/admin/dashboard');
     }
+        /** POST /admin/employees/store */
+    public function employeeStore(): void
+    {
+        $data = $this->employeeInput();
+        $this->validateEmployee($data);
+
+        $check = $this->db->prepare("SELECT id FROM employees WHERE employee_code = ?");
+        $check->execute([$data['employee_code']]);
+        if ($check->fetch()) {
+            $this->employeeBack('error', 'Employee ID ' . $data['employee_code'] . ' is already used.');
+        }
+
+        $stmt = $this->db->prepare(
+            "INSERT INTO employees (full_name, employee_code, designation, base_salary, commission_rate, status)
+             VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([
+            $data['full_name'], $data['employee_code'], $data['designation'],
+            $data['base_salary'], $data['commission_rate'], $data['status'],
+        ]);
+
+        $this->employeeBack('success', $data['full_name'] . ' was added.');
+    }
+
+    /** POST /admin/employees/update */
+    public function employeeUpdate(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $data = $this->employeeInput();
+        $this->validateEmployee($data);
+
+        $check = $this->db->prepare("SELECT id FROM employees WHERE employee_code = ? AND id <> ?");
+        $check->execute([$data['employee_code'], $id]);
+        if ($check->fetch()) {
+            $this->employeeBack('error', 'Employee ID ' . $data['employee_code'] . ' is already used.');
+        }
+
+        $stmt = $this->db->prepare(
+            "UPDATE employees SET full_name = ?, employee_code = ?, designation = ?,
+             base_salary = ?, commission_rate = ?, status = ? WHERE id = ?"
+        );
+        $stmt->execute([
+            $data['full_name'], $data['employee_code'], $data['designation'],
+            $data['base_salary'], $data['commission_rate'], $data['status'], $id,
+        ]);
+
+        $this->employeeBack('success', 'Changes to ' . $data['full_name'] . ' were saved.');
+    }
+
+    /** POST /admin/employees/delete */
+    public function employeeDelete(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+
+        $stmt = $this->db->prepare("DELETE FROM employees WHERE id = ?");
+        $stmt->execute([$id]);
+
+        $this->employeeBack('success', 'Employee was deleted.');
+    }
+
+    private function employeeInput(): array
+    {
+        return [
+            'full_name'       => trim((string) ($_POST['full_name'] ?? '')),
+            'employee_code'   => trim((string) ($_POST['employee_code'] ?? '')),
+            'designation'     => trim((string) ($_POST['designation'] ?? '')),
+            'base_salary'     => (float) ($_POST['base_salary'] ?? 0),
+            'commission_rate' => (float) ($_POST['commission_rate'] ?? 0),
+            'status'          => (string) ($_POST['status'] ?? 'active'),
+        ];
+    }
+
+    private function validateEmployee(array $d): void
+    {
+        if ($d['full_name'] === '' || $d['employee_code'] === '' || $d['designation'] === '') {
+            $this->employeeBack('error', 'Fill in the name, employee ID and role.');
+        }
+        if ($d['base_salary'] < 0) {
+            $this->employeeBack('error', 'Base salary cannot be negative.');
+        }
+        if ($d['commission_rate'] < 0 || $d['commission_rate'] > 10) {
+            $this->employeeBack('error', 'Commission rate must be between 0 and 10.');
+        }
+        if (!in_array($d['status'], ['active', 'on_leave', 'inactive'], true)) {
+            $this->employeeBack('error', 'Choose a valid status.');
+        }
+    }
+
+    private function employeeBack(string $type, string $msg): void
+    {
+        $_SESSION['emp_flash'] = ['type' => $type, 'msg' => $msg];
+        $this->redirect('/admin/employees');
+        exit;
+    }
 }
