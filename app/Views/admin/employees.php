@@ -14,6 +14,24 @@ $employees = array_map(fn($r) => [
     'commission_rate' => (float) ($r['commission_rate'] ?? 0),
     'status'          => (string) ($r['status'] ?? 'active'),
 ], $rows);
+
+// Role dropdown eke options
+$roleOptions = [
+    'Store Manager',
+    'Sales Manager',
+    'Sales Executive',
+    'Cashier',
+    'Inventory Manager',
+    'Warehouse Staff',
+    'Delivery Driver',
+    'Accountant',
+];
+// Database eke dan thiyena roles list eke nathnam eewath add karanawa
+foreach ($employees as $emp) {
+    if ($emp['designation'] !== '' && !in_array($emp['designation'], $roleOptions, true)) {
+        $roleOptions[] = $emp['designation'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -178,7 +196,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
                                     <span style="font-size:12px;font-weight:600;"><?= round($score) ?>/100</span>
                                 </div>
                             </td>
-                            <td>Rs. <?= number_format($emp['base_salary']) ?></td>
+                            <td>Rs. <?= number_format($emp['base_salary'], 2) ?></td>
                             <td><span class="badge <?= e($emp['status']) ?>"><?= e($statusLabels[$emp['status']] ?? $emp['status']) ?></span></td>
                             <td>
                                 <div class="row-actions">
@@ -217,7 +235,12 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
             </div>
             <div class="field">
                 <label for="fRole">Role</label>
-                <input id="fRole" name="designation" required maxlength="60" placeholder="e.g. Sales Executive">
+                <select id="fRole" name="designation" required>
+                    <option value="">Choose a role</option>
+                    <?php foreach ($roleOptions as $role): ?>
+                        <option value="<?= e($role) ?>"><?= e($role) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="field">
                 <label for="fSalary">Base salary (Rs.)</label>
@@ -276,7 +299,7 @@ function openForm(emp) {
     document.getElementById('fName').value   = emp ? emp.full_name : '';
     document.getElementById('fCode').value   = emp ? emp.employee_code : '';
     document.getElementById('fRole').value   = emp ? emp.designation : '';
-    document.getElementById('fSalary').value = emp ? emp.base_salary : '';
+    document.getElementById('fSalary').value = emp ? emp.base_salary.toFixed(2) : '';
     document.getElementById('fRate').value   = emp ? emp.commission_rate : '';
     document.getElementById('fStatus').value = emp ? emp.status : 'active';
     empDlg.showModal();
@@ -310,7 +333,7 @@ document.getElementById('empSearch').addEventListener('input', e => {
 // ---- Export CSV
 document.getElementById('exportBtn').onclick = () => {
     const head = ['Employee ID', 'Full name', 'Role', 'Base salary', 'Commission rate', 'Status'];
-    const rows = EMPLOYEES.map(e => [e.employee_code, e.full_name, e.designation, e.base_salary, e.commission_rate, e.status]);
+    const rows = EMPLOYEES.map(e => [e.employee_code, e.full_name, e.designation, e.base_salary.toFixed(2), e.commission_rate, e.status]);
     const csv = [head, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));

@@ -207,8 +207,8 @@ class AdminController extends Controller
             'full_name'       => trim((string) ($_POST['full_name'] ?? '')),
             'employee_code'   => trim((string) ($_POST['employee_code'] ?? '')),
             'designation'     => trim((string) ($_POST['designation'] ?? '')),
-            'base_salary'     => (float) ($_POST['base_salary'] ?? 0),
-            'commission_rate' => (float) ($_POST['commission_rate'] ?? 0),
+            'base_salary'     => round((float) ($_POST['base_salary'] ?? 0), 2),
+            'commission_rate' => round((float) ($_POST['commission_rate'] ?? 0), 2),
             'status'          => (string) ($_POST['status'] ?? 'active'),
         ];
     }
