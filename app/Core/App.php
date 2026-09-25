@@ -53,6 +53,7 @@ class App
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
         $this->router->get('/admin/settings', 'AdminController@settings');
+        $this->router->post('/admin/settings/save', 'AdminController@settingsSave');
         // Inventory / Store Workspace
         $this->router->get('/inventory', 'InventoryController@index');
     }

@@ -235,4 +235,99 @@ class AdminController extends Controller
         $this->redirect('/admin/employees');
         exit;
     }
+
+    /** POST /admin/settings/save */
+    public function settingsSave(): void
+    {
+        $fields = [
+            'business_name'         => 'text',
+            'business_email'        => 'email',
+            'business_phone'        => 'text',
+            'business_address'      => 'text',
+            'invoice_prefix'        => 'text',
+            'invoice_next_number'   => 'int',
+            'invoice_due_days'      => 'int',
+            'invoice_footer_note'   => 'text',
+            'tax_enabled'           => 'bool',
+            'tax_name'              => 'text',
+            'tax_rate'              => 'percent',
+            'tax_registration_no'   => 'text',
+            'backup_frequency'      => ['off', 'daily', 'weekly', 'monthly'],
+            'backup_retention_days' => 'int',
+            'currency'              => ['LKR', 'USD'],
+            'date_format'           => ['Y-m-d', 'd/m/Y', 'm/d/Y'],
+            'low_stock_threshold'   => 'int',
+        ];
+
+        $tab = preg_replace('/[^a-z]/', '', (string) ($_POST['active_tab'] ?? 'business'));
+        $clean = [];
+
+        foreach ($fields as $key => $type) {
+            $raw = trim((string) ($_POST[$key] ?? ''));
+            $label = ucfirst(str_replace('_', ' ', $key));
+
+            if (is_array($type)) {
+                if (!in_array($raw, $type, true)) {
+                    $this->settingsBack($tab, 'error', "Choose a valid value for {$label}.");
+                }
+                $clean[$key] = $raw;
+                continue;
+            }
+
+            switch ($type) {
+                case 'bool':
+                    $clean[$key] = isset($_POST[$key]) ? '1' : '0';
+                    break;
+                case 'email':
+                    if ($raw !== '' && !filter_var($raw, FILTER_VALIDATE_EMAIL)) {
+                        $this->settingsBack($tab, 'error', 'Enter a valid contact email.');
+                    }
+                    $clean[$key] = $raw;
+                    break;
+                case 'int':
+                    if ($raw === '' || !ctype_digit($raw)) {
+                        $this->settingsBack($tab, 'error', "{$label} must be a whole number.");
+                    }
+                    $clean[$key] = $raw;
+                    break;
+                case 'percent':
+                    if (!is_numeric($raw) || (float) $raw < 0 || (float) $raw > 100) {
+                        $this->settingsBack($tab, 'error', "{$label} must be between 0 and 100.");
+                    }
+                    $clean[$key] = number_format((float) $raw, 2, '.', '');
+                    break;
+                default:
+                    $clean[$key] = substr($raw, 0, 500);
+            }
+        }
+
+        if ($clean['business_name'] === '') {
+            $this->settingsBack('business', 'error', 'Company name cannot be empty.');
+        }
+
+        $find   = $this->db->prepare("SELECT 1 FROM settings WHERE setting_key = ?");
+        $update = $this->db->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = ?");
+        $insert = $this->db->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)");
+
+        $this->db->beginTransaction();
+        foreach ($clean as $key => $value) {
+            $find->execute([$key]);
+            if ($find->fetchColumn()) {
+                $update->execute([$value, $key]);
+            } else {
+                $insert->execute([$key, $value]);
+            }
+            $find->closeCursor();
+        }
+        $this->db->commit();
+
+        $this->settingsBack($tab, 'success', 'Settings saved.');
+    }
+
+    private function settingsBack(string $tab, string $type, string $msg): void
+    {
+        $_SESSION['settings_flash'] = ['type' => $type, 'msg' => $msg];
+        $this->redirect('/admin/settings?tab=' . $tab);
+        exit;
+    }
 }
