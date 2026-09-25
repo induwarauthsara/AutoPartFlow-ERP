@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>User Management</title>
+<title>User Management | AutoPartFlow</title>
+<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
 <style>
 :root{
   --bg:#f4f5f9; --surface:#ffffff; --box:#f1f3f7; --text:#111827; --muted:#6b7280;
@@ -16,6 +19,21 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",syst
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 
+/* ---- Sidebar (same as dashboard) ---- */
+.app-shell{display:flex;min-height:100vh}
+.sidebar{width:250px;flex-shrink:0;background:linear-gradient(180deg,#0b1220,#101a30);color:#cbd5e1;padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;color:#fff;font-weight:700}
+.brand-title{font-size:16px}
+.brand-sub{font-size:12px;color:#64748b;font-weight:500}
+.nav-link{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#b7c0dd;font-size:13.5px;font-weight:500;margin-bottom:2px;text-decoration:none}
+.nav-link:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-link.active{background:#4f5bd5;color:#fff}
+.nav-icon{width:18px;height:18px;fill:currentColor;flex-shrink:0}
+.main{flex:1;min-width:0}
+.menu-btn{display:none;border:0;background:none;font-size:22px;padding:0 4px}
+.overlay{display:none}
+
+/* ---- Page ---- */
 .topbar{background:var(--surface);display:flex;align-items:center;gap:1rem;padding:15px 30px}
 .search{flex:0 1 475px;display:flex;align-items:center;gap:.7rem;background:var(--box);border-radius:10px;padding:10px 16px}
 .search input{border:0;background:transparent;outline:none;width:100%;font-size:16px}
@@ -23,7 +41,7 @@ button{cursor:pointer}
 .top-icons{display:flex;gap:12px;font-size:18px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;flex-shrink:0}
 
-main{padding:32px 30px 40px;display:grid;gap:22px;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);align-items:start}
+.page{padding:32px 30px 40px;display:grid;gap:22px;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);align-items:start}
 .head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
 .head h1{margin:0;font-size:28px;font-weight:700}
 .head p{margin:8px 0 0;color:var(--muted)}
@@ -51,9 +69,9 @@ main{padding:32px 30px 40px;display:grid;gap:22px;grid-template-columns:minmax(0
 .role[aria-pressed="true"]{border-color:var(--accent)}
 
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:620px}
-th{text-align:left;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;padding:10px 15px;border-bottom:1px solid var(--line)}
-td{padding:16px 15px;border-bottom:1px solid var(--line);vertical-align:middle}
+.table-wrap table{width:100%;border-collapse:collapse;min-width:620px}
+.table-wrap th{text-align:left;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;padding:10px 15px;border-bottom:1px solid var(--line)}
+.table-wrap td{padding:16px 15px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:15px}
 .who{display:flex;align-items:center;gap:12px}
 .who .avatar{width:38px;height:38px}
 .who b{display:block;font-weight:600}
@@ -87,15 +105,21 @@ dialog::backdrop{background:rgba(17,24,39,.45)}
 .dlg-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
 .toggle{display:flex;align-items:center;gap:8px;font-size:14px}
 
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--btn);color:#fff;padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--btn);color:#fff;padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
 .toast.show{opacity:1}
 
-@media (max-width:1100px){
-  main{grid-template-columns:1fr 1fr}
+@media (max-width:1300px){
+  .page{grid-template-columns:1fr 1fr}
   .head,.users-card,.log-card{grid-column:span 2}
 }
+@media (max-width:860px){
+  .sidebar{position:fixed;left:0;top:0;z-index:40;transform:translateX(-100%);transition:transform .2s}
+  .sidebar.open{transform:none}
+  .overlay.show{display:block;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:30}
+  .menu-btn{display:block}
+}
 @media (max-width:700px){
-  main{grid-template-columns:1fr;padding:20px 16px}
+  .page{grid-template-columns:1fr;padding:20px 16px}
   .head,.users-card,.log-card{grid-column:auto}
   .roles{grid-template-columns:repeat(2,1fr)}
   .topbar{padding:12px 16px}
@@ -103,61 +127,82 @@ dialog::backdrop{background:rgba(17,24,39,.45)}
 </style>
 </head>
 <body>
+<div class="app-shell">
 
-<header class="topbar">
-  <div class="search">
-    <span>🔍</span>
-    <input id="q" type="search" placeholder="Search users, roles...">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
+      <div><div class="brand-title">AutoPartFlow</div><div class="brand-sub">Admin Workspace</div></div>
+    </div>
+    <nav aria-label="Admin navigation">
+      <a class="nav-link" href="<?= url('admin/dashboard') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/></svg>Dashboard</a>
+      <a class="nav-link" href="<?= url('admin/reports') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>Reports</a>
+      <a class="nav-link active" aria-current="page" href="<?= url('admin/users') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Z"/></svg>User Management</a>
+      <a class="nav-link" href="<?= url('admin/employees') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Zm16-7h4v7h-4v-7Z"/></svg>Employees</a>
+      <a class="nav-link" href="<?= url('admin/notifications') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>Notifications</a>
+      <a class="nav-link" href="<?= url('admin/settings') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>Settings</a>
+    </nav>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">☰</button>
+      <div class="search">
+        <span>🔍</span>
+        <input id="q" type="search" placeholder="Search users, roles...">
+      </div>
+      <div class="spacer"></div>
+      <div class="top-icons"><span>🔔</span><span>📅</span></div>
+      <div class="avatar">S</div>
+    </header>
+
+    <main class="page">
+      <section class="head">
+        <div>
+          <h1>User Management</h1>
+          <p>Control system access, roles, and review audit logs.</p>
+        </div>
+        <button class="btn" id="addBtn">+ Add User</button>
+      </section>
+
+      <section class="card">
+        <h2>Active Users</h2>
+        <div class="donut">
+          <svg width="184" height="184" viewBox="0 0 184 184">
+            <circle cx="92" cy="92" r="84" fill="none" stroke="var(--box)" stroke-width="12"/>
+            <circle id="arc" cx="92" cy="92" r="84" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="0 999"/>
+          </svg>
+          <div class="c"><b id="total">0</b><span>Total</span></div>
+        </div>
+        <div class="legend">
+          <span>● Active (<span id="nAct">0</span>)</span>
+          <span>○ Inactive (<span id="nIn">0</span>)</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Role Distribution <button class="link" id="manageRoles">Manage Roles</button></h2>
+        <div class="roles" id="roles"></div>
+      </section>
+
+      <section class="card users-card">
+        <h2>System Users</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card log-card">
+        <h2>Security Audit Log <button class="link" id="exportBtn">⬇ Export CSV</button></h2>
+        <ul class="log" id="log"></ul>
+      </section>
+    </main>
   </div>
-  <div class="spacer"></div>
-  <div class="top-icons"><span>🔔</span><span>📅</span></div>
-  <div class="avatar">S</div>
-</header>
-
-<main>
-  <section class="head">
-    <div>
-      <h1>User Management</h1>
-      <p>Control system access, roles, and review audit logs.</p>
-    </div>
-    <button class="btn" id="addBtn">+ Add User</button>
-  </section>
-
-  <section class="card">
-    <h2>Active Users</h2>
-    <div class="donut">
-      <svg width="184" height="184" viewBox="0 0 184 184">
-        <circle cx="92" cy="92" r="84" fill="none" stroke="var(--box)" stroke-width="12"/>
-        <circle id="arc" cx="92" cy="92" r="84" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="0 999"/>
-      </svg>
-      <div class="c"><b id="total">0</b><span>Total</span></div>
-    </div>
-    <div class="legend">
-      <span>● Active (<span id="nAct">0</span>)</span>
-      <span>○ Inactive (<span id="nIn">0</span>)</span>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Role Distribution <button class="link" id="manageRoles">Manage Roles</button></h2>
-    <div class="roles" id="roles"></div>
-  </section>
-
-  <section class="card users-card">
-    <h2>System Users</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="card log-card">
-    <h2>Security Audit Log <button class="link" id="exportBtn">⬇ Export CSV</button></h2>
-    <ul class="log" id="log"></ul>
-  </section>
-</main>
+</div>
 
 <dialog id="userDlg">
   <form class="dlg" id="userForm" novalidate>
@@ -379,6 +424,13 @@ document.getElementById("exportBtn").onclick = () => {
   a.download = "audit-log.csv";
   a.click();
 };
+
+// ---- Mobile sidebar menu
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+function closeMenu(){ sidebar.classList.remove("open"); overlay.classList.remove("show"); }
+document.getElementById("menuBtn").onclick = () => { sidebar.classList.add("open"); overlay.classList.add("show"); };
+overlay.onclick = closeMenu;
 
 let tt;
 function toast(m){
