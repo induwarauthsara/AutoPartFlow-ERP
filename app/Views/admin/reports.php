@@ -6,9 +6,16 @@ $revenue       = (float) ($revenue ?? 0);
 $revenueChange = $revenueChange ?? null;
 $compareText   = $compareText ?? '';
 $chartTitle    = $chartTitle ?? 'Sales';
-$chartLabels   = $chartLabels ?? [];
-$chartValues   = $chartValues ?? [];
+$chartLabels   = array_values($chartLabels ?? []);
+$chartValues   = array_map('floatval', array_values($chartValues ?? []));
+$chartMax      = $chartValues ? max($chartValues) : 0;
 $periods = ['daily' => 'Daily', 'monthly' => 'Monthly', 'ytd' => 'YTD'];
+
+$short = function (float $v): string {
+    if ($v >= 1000000) return number_format($v / 1000000, 1) . 'M';
+    if ($v >= 1000)    return number_format($v / 1000, 1) . 'K';
+    return number_format($v, 0);
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,7 +68,13 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .bar-label span:last-child{font-weight:700;color:#334155;}
 .bar-track{height:6px;background:var(--slate-100);border-radius:6px;overflow:hidden;}
 .bar-fill{height:100%;border-radius:6px;background:var(--indigo-500);}
-.empty-chart{height:220px;display:flex;align-items:center;justify-content:center;color:var(--slate-500);background:var(--slate-100);border-radius:10px;}
+.bars{height:220px;display:flex;align-items:stretch;gap:10px;border-bottom:1px solid var(--slate-100);}
+.bar-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;}
+.bar-val{font-size:10.5px;color:var(--slate-500);margin-bottom:4px;white-space:nowrap;}
+.bar-area{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;}
+.bar{width:100%;max-width:46px;background:var(--indigo-500);border-radius:6px 6px 0 0;min-height:2px;}
+.bar-lbl{font-size:11.5px;color:var(--slate-500);margin-top:6px;}
+.chart-note{margin:10px 0 0;font-size:12px;color:var(--slate-500);}
 table{width:100%;border-collapse:collapse;}
 th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--slate-500);padding:10px 12px;border-bottom:1px solid var(--slate-100);}
 td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
@@ -160,10 +173,17 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
             <div class="grid-2">
                 <div class="card">
                     <h3 style="margin-top:0;"><?= e($chartTitle) ?></h3>
-                    <?php if ($chartValues): ?>
-                        <div style="height:220px;"><canvas id="reportChart" style="width:100%;height:100%;"></canvas></div>
-                    <?php else: ?>
-                        <div class="empty-chart">No sales recorded in this period.</div>
+                    <div class="bars">
+                        <?php foreach ($chartValues as $i => $v): $h = $chartMax > 0 ? ($v / $chartMax) * 100 : 0; ?>
+                            <div class="bar-col" title="<?= e($chartLabels[$i] ?? '') ?>: Rs. <?= number_format($v, 2) ?>">
+                                <div class="bar-val"><?= $short($v) ?></div>
+                                <div class="bar-area"><div class="bar" style="height:<?= round($h, 1) ?>%"></div></div>
+                                <div class="bar-lbl"><?= e($chartLabels[$i] ?? '') ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if ($chartMax <= 0): ?>
+                        <p class="chart-note">No sales recorded in this period yet.</p>
                     <?php endif; ?>
                 </div>
                 <div class="card">
@@ -195,12 +215,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
         </div>
     </div>
 </div>
-<script src="<?= asset('js/admin-charts.js') ?>"></script>
 <script>
-<?php if ($chartValues): ?>
-drawBarChart('reportChart', <?= json_encode(array_values($chartLabels)) ?>, <?= json_encode(array_map('floatval', array_values($chartValues))) ?>);
-<?php endif; ?>
-
 document.getElementById('reportSearch').addEventListener('input', e => {
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll('#perfRows tr').forEach(tr => {

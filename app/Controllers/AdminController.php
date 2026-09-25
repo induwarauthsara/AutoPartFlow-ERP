@@ -80,6 +80,7 @@ class AdminController extends Controller
         }
 
         $today = new \DateTimeImmutable('today');
+        $chartKeys = [];
 
         if ($period === 'daily') {
             $from = $today;
@@ -89,10 +90,14 @@ class AdminController extends Controller
             $compareText = 'vs yesterday';
             $periodLabel = 'Today (' . $today->format('j M Y') . ')';
             $chartTitle = 'Sales (Last 7 Days)';
-            $chartSql = "SELECT DATE_FORMAT(sale_day, '%a') AS label, SUM(gross_sales) AS total
+            for ($i = 6; $i >= 0; $i--) {
+                $d = $today->modify("-{$i} day");
+                $chartKeys[$d->format('Y-m-d')] = $d->format('D');
+            }
+            $chartSql = "SELECT DATE_FORMAT(sale_day, '%Y-%m-%d') AS k, SUM(gross_sales) AS total
                          FROM v_daily_sales_summary
                          WHERE sale_day >= CURDATE() - INTERVAL 6 DAY
-                         GROUP BY sale_day ORDER BY sale_day";
+                         GROUP BY k";
         } elseif ($period === 'ytd') {
             $from = $today->modify('first day of january this year');
             $to = $today;
@@ -101,10 +106,15 @@ class AdminController extends Controller
             $compareText = 'vs same period last year';
             $periodLabel = 'Year to date (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
             $chartTitle = 'Sales (This Year by Month)';
-            $chartSql = "SELECT DATE_FORMAT(MIN(sale_day), '%b') AS label, SUM(gross_sales) AS total
+            $months = (int) $today->format('n');
+            for ($i = 0; $i < $months; $i++) {
+                $m = $from->modify("+{$i} month");
+                $chartKeys[$m->format('Y-m')] = $m->format('M');
+            }
+            $chartSql = "SELECT DATE_FORMAT(sale_day, '%Y-%m') AS k, SUM(gross_sales) AS total
                          FROM v_daily_sales_summary
                          WHERE sale_day >= MAKEDATE(YEAR(CURDATE()), 1)
-                         GROUP BY DATE_FORMAT(sale_day, '%Y-%m') ORDER BY MIN(sale_day)";
+                         GROUP BY k";
         } else {
             $from = $today->modify('first day of this month');
             $to = $today;
@@ -113,10 +123,14 @@ class AdminController extends Controller
             $compareText = 'vs last month';
             $periodLabel = 'This month (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
             $chartTitle = 'Sales (Last 6 Months)';
-            $chartSql = "SELECT DATE_FORMAT(MIN(sale_day), '%b') AS label, SUM(gross_sales) AS total
+            for ($i = 5; $i >= 0; $i--) {
+                $m = $from->modify("-{$i} month");
+                $chartKeys[$m->format('Y-m')] = $m->format('M');
+            }
+            $chartSql = "SELECT DATE_FORMAT(sale_day, '%Y-%m') AS k, SUM(gross_sales) AS total
                          FROM v_daily_sales_summary
                          WHERE sale_day >= DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01')
-                         GROUP BY DATE_FORMAT(sale_day, '%Y-%m') ORDER BY MIN(sale_day)";
+                         GROUP BY k";
         }
 
         $sum = $this->db->prepare(
@@ -130,7 +144,12 @@ class AdminController extends Controller
 
         $revenueChange = $previous > 0 ? (($revenue - $previous) / $previous) * 100 : null;
 
-        $chartRows = $this->db->query($chartSql)->fetchAll();
+        $totals = array_column($this->db->query($chartSql)->fetchAll(), 'total', 'k');
+        $chartLabels = array_values($chartKeys);
+        $chartValues = [];
+        foreach (array_keys($chartKeys) as $k) {
+            $chartValues[] = (float) ($totals[$k] ?? 0);
+        }
 
         $performance = $this->db->query("SELECT * FROM v_employee_sales_performance ORDER BY total_revenue DESC LIMIT 5")->fetchAll();
 
@@ -143,8 +162,8 @@ class AdminController extends Controller
             'revenueChange' => $revenueChange,
             'compareText'   => $compareText,
             'chartTitle'    => $chartTitle,
-            'chartLabels'   => array_column($chartRows, 'label'),
-            'chartValues'   => array_map('floatval', array_column($chartRows, 'total')),
+            'chartLabels'   => $chartLabels,
+            'chartValues'   => $chartValues,
         ], null);
     }
 
