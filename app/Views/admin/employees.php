@@ -1,4 +1,3 @@
-$code = @'
 <?php
 /** @var array $rows */
 $flash = $_SESSION['emp_flash'] ?? null;
@@ -15,24 +14,6 @@ $employees = array_map(fn($r) => [
     'commission_rate' => (float) ($r['commission_rate'] ?? 0),
     'status'          => (string) ($r['status'] ?? 'active'),
 ], $rows);
-
-// Role dropdown eke options
-$roleOptions = [
-    'Store Manager',
-    'Sales Manager',
-    'Sales Executive',
-    'Cashier',
-    'Inventory Manager',
-    'Warehouse Staff',
-    'Delivery Driver',
-    'Accountant',
-];
-// Database eke dan thiyena roles list eke nathnam eewath add karanawa
-foreach ($employees as $emp) {
-    if ($emp['designation'] !== '' && !in_array($emp['designation'], $roleOptions, true)) {
-        $roleOptions[] = $emp['designation'];
-    }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,8 +28,11 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .app-shell{display:flex;min-height:100vh;}
 .sidebar{width:230px;flex-shrink:0;background:linear-gradient(180deg,var(--navy-900),var(--navy-800));color:#cbd5e1;padding:18px 12px;display:flex;flex-direction:column;}
 .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 20px;}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--indigo-500),#7c8cf0);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;}
 .brand-title{color:#fff;font-weight:700;font-size:14px;}
 .brand-sub{font-size:10.5px;color:#8590b3;text-transform:uppercase;letter-spacing:.04em;}
+.nav-group{margin-top:12px;}
+.nav-group-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5b6689;padding:0 10px;margin-bottom:6px;font-weight:600;}
 .nav-link{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#b7c0dd;font-size:13px;font-weight:500;margin-bottom:2px;text-decoration:none;}
 .nav-link.active{background:var(--indigo-500);color:#fff;}
 .sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:9px;}
@@ -91,6 +75,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 .badge.active{background:var(--green-bg);color:var(--green);}
 .badge.on_leave{background:var(--amber-bg);color:var(--amber);}
 .badge.inactive{background:var(--slate-100);color:var(--slate-500);}
+.chip-count{background:var(--indigo-50);color:var(--indigo-500);font-weight:700;font-size:11px;padding:3px 9px;border-radius:20px;}
 .row-actions{display:flex;gap:4px;}
 .icon-btn{border:0;background:none;padding:6px;border-radius:6px;color:var(--slate-500);cursor:pointer;display:grid;place-items:center;}
 .icon-btn:hover{background:var(--slate-100);color:var(--slate-900);}
@@ -193,7 +178,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
                                     <span style="font-size:12px;font-weight:600;"><?= round($score) ?>/100</span>
                                 </div>
                             </td>
-                            <td>Rs. <?= number_format($emp['base_salary'], 2) ?></td>
+                            <td>Rs. <?= number_format($emp['base_salary']) ?></td>
                             <td><span class="badge <?= e($emp['status']) ?>"><?= e($statusLabels[$emp['status']] ?? $emp['status']) ?></span></td>
                             <td>
                                 <div class="row-actions">
@@ -216,6 +201,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
     </div>
 </div>
 
+<!-- Add / Edit employee -->
 <dialog id="empDlg">
     <form method="post" id="empForm" class="dlg" action="<?= url('admin/employees/store') ?>">
         <input type="hidden" name="id" id="fId">
@@ -231,12 +217,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
             </div>
             <div class="field">
                 <label for="fRole">Role</label>
-                <select id="fRole" name="designation" required>
-                    <option value="">Choose a role</option>
-                    <?php foreach ($roleOptions as $role): ?>
-                        <option value="<?= e($role) ?>"><?= e($role) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <input id="fRole" name="designation" required maxlength="60" placeholder="e.g. Sales Executive">
             </div>
             <div class="field">
                 <label for="fSalary">Base salary (Rs.)</label>
@@ -263,6 +244,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
     </form>
 </dialog>
 
+<!-- Delete confirm -->
 <dialog id="delDlg">
     <form method="post" class="dlg" action="<?= url('admin/employees/delete') ?>">
         <input type="hidden" name="id" id="delId">
@@ -285,6 +267,7 @@ const empForm = document.getElementById('empForm');
 const delDlg  = document.getElementById('delDlg');
 const findEmp = id => EMPLOYEES.find(e => e.id === Number(id));
 
+// ---- Add / Edit
 function openForm(emp) {
     empForm.action = emp ? UPDATE_URL : STORE_URL;
     document.getElementById('dlgTitle').textContent = emp ? 'Edit employee' : 'New employee';
@@ -293,7 +276,7 @@ function openForm(emp) {
     document.getElementById('fName').value   = emp ? emp.full_name : '';
     document.getElementById('fCode').value   = emp ? emp.employee_code : '';
     document.getElementById('fRole').value   = emp ? emp.designation : '';
-    document.getElementById('fSalary').value = emp ? emp.base_salary.toFixed(2) : '';
+    document.getElementById('fSalary').value = emp ? emp.base_salary : '';
     document.getElementById('fRate').value   = emp ? emp.commission_rate : '';
     document.getElementById('fStatus').value = emp ? emp.status : 'active';
     empDlg.showModal();
@@ -301,6 +284,7 @@ function openForm(emp) {
 document.getElementById('addBtn').onclick = () => openForm(null);
 document.getElementById('cancelBtn').onclick = () => empDlg.close();
 
+// ---- Edit / Delete buttons
 document.getElementById('empRows').addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b) return;
@@ -315,6 +299,7 @@ document.getElementById('empRows').addEventListener('click', e => {
 });
 document.getElementById('delCancel').onclick = () => delDlg.close();
 
+// ---- Search
 document.getElementById('empSearch').addEventListener('input', e => {
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll('#empRows tr').forEach(tr => {
@@ -322,9 +307,10 @@ document.getElementById('empSearch').addEventListener('input', e => {
     });
 });
 
+// ---- Export CSV
 document.getElementById('exportBtn').onclick = () => {
     const head = ['Employee ID', 'Full name', 'Role', 'Base salary', 'Commission rate', 'Status'];
-    const rows = EMPLOYEES.map(e => [e.employee_code, e.full_name, e.designation, e.base_salary.toFixed(2), e.commission_rate, e.status]);
+    const rows = EMPLOYEES.map(e => [e.employee_code, e.full_name, e.designation, e.base_salary, e.commission_rate, e.status]);
     const csv = [head, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
