@@ -74,11 +74,77 @@ class AdminController extends Controller
     /** GET /admin/reports */
     public function reports(): void
     {
+        $period = (string) ($_GET['period'] ?? 'monthly');
+        if (!in_array($period, ['daily', 'monthly', 'ytd'], true)) {
+            $period = 'monthly';
+        }
+
+        $today = new \DateTimeImmutable('today');
+
+        if ($period === 'daily') {
+            $from = $today;
+            $to = $today;
+            $prevFrom = $today->modify('-1 day');
+            $prevTo = $prevFrom;
+            $compareText = 'vs yesterday';
+            $periodLabel = 'Today (' . $today->format('j M Y') . ')';
+            $chartTitle = 'Sales (Last 7 Days)';
+            $chartSql = "SELECT DATE_FORMAT(sale_day, '%a') AS label, SUM(gross_sales) AS total
+                         FROM v_daily_sales_summary
+                         WHERE sale_day >= CURDATE() - INTERVAL 6 DAY
+                         GROUP BY sale_day ORDER BY sale_day";
+        } elseif ($period === 'ytd') {
+            $from = $today->modify('first day of january this year');
+            $to = $today;
+            $prevFrom = $from->modify('-1 year');
+            $prevTo = $today->modify('-1 year');
+            $compareText = 'vs same period last year';
+            $periodLabel = 'Year to date (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
+            $chartTitle = 'Sales (This Year by Month)';
+            $chartSql = "SELECT DATE_FORMAT(MIN(sale_day), '%b') AS label, SUM(gross_sales) AS total
+                         FROM v_daily_sales_summary
+                         WHERE sale_day >= MAKEDATE(YEAR(CURDATE()), 1)
+                         GROUP BY DATE_FORMAT(sale_day, '%Y-%m') ORDER BY MIN(sale_day)";
+        } else {
+            $from = $today->modify('first day of this month');
+            $to = $today;
+            $prevFrom = $today->modify('first day of last month');
+            $prevTo = $prevFrom->modify('last day of this month');
+            $compareText = 'vs last month';
+            $periodLabel = 'This month (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
+            $chartTitle = 'Sales (Last 6 Months)';
+            $chartSql = "SELECT DATE_FORMAT(MIN(sale_day), '%b') AS label, SUM(gross_sales) AS total
+                         FROM v_daily_sales_summary
+                         WHERE sale_day >= DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01')
+                         GROUP BY DATE_FORMAT(sale_day, '%Y-%m') ORDER BY MIN(sale_day)";
+        }
+
+        $sum = $this->db->prepare(
+            "SELECT COALESCE(SUM(gross_sales), 0) FROM v_daily_sales_summary WHERE sale_day BETWEEN ? AND ?"
+        );
+        $sum->execute([$from->format('Y-m-d'), $to->format('Y-m-d')]);
+        $revenue = (float) $sum->fetchColumn();
+
+        $sum->execute([$prevFrom->format('Y-m-d'), $prevTo->format('Y-m-d')]);
+        $previous = (float) $sum->fetchColumn();
+
+        $revenueChange = $previous > 0 ? (($revenue - $previous) / $previous) * 100 : null;
+
+        $chartRows = $this->db->query($chartSql)->fetchAll();
+
         $performance = $this->db->query("SELECT * FROM v_employee_sales_performance ORDER BY total_revenue DESC LIMIT 5")->fetchAll();
 
         $this->view('admin.reports', [
-            'title' => 'Reports & Analytics - AutoPartFlow',
-            'performance' => $performance,
+            'title'         => 'Reports & Analytics - AutoPartFlow',
+            'performance'   => $performance,
+            'period'        => $period,
+            'periodLabel'   => $periodLabel,
+            'revenue'       => $revenue,
+            'revenueChange' => $revenueChange,
+            'compareText'   => $compareText,
+            'chartTitle'    => $chartTitle,
+            'chartLabels'   => array_column($chartRows, 'label'),
+            'chartValues'   => array_map('floatval', array_column($chartRows, 'total')),
         ], null);
     }
 

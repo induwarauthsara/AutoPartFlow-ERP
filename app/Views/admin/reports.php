@@ -1,5 +1,14 @@
 <?php
 /** @var array $performance */
+$period        = $period ?? 'monthly';
+$periodLabel   = $periodLabel ?? '';
+$revenue       = (float) ($revenue ?? 0);
+$revenueChange = $revenueChange ?? null;
+$compareText   = $compareText ?? '';
+$chartTitle    = $chartTitle ?? 'Sales';
+$chartLabels   = $chartLabels ?? [];
+$chartValues   = $chartValues ?? [];
+$periods = ['daily' => 'Daily', 'monthly' => 'Monthly', 'ytd' => 'YTD'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,11 +23,8 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .app-shell{display:flex;min-height:100vh;}
 .sidebar{width:230px;flex-shrink:0;background:linear-gradient(180deg,var(--navy-900),var(--navy-800));color:#cbd5e1;padding:18px 12px;display:flex;flex-direction:column;}
 .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 20px;}
-.brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--indigo-500),#7c8cf0);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;}
 .brand-title{color:#fff;font-weight:700;font-size:14px;}
 .brand-sub{font-size:10.5px;color:#8590b3;text-transform:uppercase;letter-spacing:.04em;}
-.nav-group{margin-top:12px;}
-.nav-group-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5b6689;padding:0 10px;margin-bottom:6px;font-weight:600;}
 .nav-link{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#b7c0dd;font-size:13px;font-weight:500;margin-bottom:2px;text-decoration:none;}
 .nav-link.active{background:var(--indigo-500);color:#fff;}
 .sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:9px;}
@@ -34,9 +40,11 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .page-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
 .page-head h1{font-size:22px;margin:0 0 4px;}
 .page-head p{margin:0;color:var(--slate-500);font-size:13px;}
+.period-label{margin-top:6px !important;font-weight:600;color:var(--indigo-500) !important;}
 .segmented{display:inline-flex;background:var(--slate-100);border-radius:9px;padding:3px;}
-.segmented button{border:none;background:transparent;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;color:var(--slate-500);cursor:pointer;}
-.segmented button.active{background:var(--indigo-500);color:#fff;}
+.segmented a{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;color:var(--slate-500);text-decoration:none;}
+.segmented a:hover{color:var(--slate-900);}
+.segmented a.active{background:var(--indigo-500);color:#fff;}
 .card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;border:1px solid #eef0f5;}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
 .grid-2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
@@ -46,20 +54,20 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .stat-badge{display:inline-flex;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
 .stat-badge.up{background:var(--green-bg);color:var(--green);}
 .stat-badge.down{background:var(--red-bg);color:var(--red);}
+.stat-badge.none{background:var(--slate-100);color:var(--slate-500);}
 .bar-row{margin-bottom:12px;}
 .bar-row:last-child{margin-bottom:0;}
 .bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
 .bar-label span:last-child{font-weight:700;color:#334155;}
 .bar-track{height:6px;background:var(--slate-100);border-radius:6px;overflow:hidden;}
 .bar-fill{height:100%;border-radius:6px;background:var(--indigo-500);}
+.empty-chart{height:220px;display:flex;align-items:center;justify-content:center;color:var(--slate-500);background:var(--slate-100);border-radius:10px;}
 table{width:100%;border-collapse:collapse;}
 th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--slate-500);padding:10px 12px;border-bottom:1px solid var(--slate-100);}
 td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 .table-user{display:flex;align-items:center;gap:9px;}
 .badge{display:inline-flex;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
 .badge.excellent{background:var(--green-bg);color:var(--green);}
-.badge.good{background:var(--indigo-50);color:var(--indigo-500);}
-.badge.review{background:var(--red-bg);color:var(--red);}
 @media (max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
 </style>
@@ -96,7 +104,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 
     <div class="main">
         <header class="topbar">
-            <div class="search-box"> <input type="text" placeholder="Search reports..."></div>
+            <div class="search-box"><input type="text" id="reportSearch" placeholder="Search employees in report..."></div>
             <div class="topbar-icons">
                 <a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div>
             </div>
@@ -107,18 +115,27 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                 <div>
                     <h1>Reports &amp; Analytics</h1>
                     <p>High-level performance and operations dashboard.</p>
+                    <?php if ($periodLabel): ?><p class="period-label">Showing: <?= e($periodLabel) ?></p><?php endif; ?>
                 </div>
-                <div class="segmented">
-                    <button>Daily</button><button class="active">Monthly</button><button>YTD</button>
-                </div>
+                <nav class="segmented" aria-label="Report period">
+                    <?php foreach ($periods as $key => $label): ?>
+                        <a href="?period=<?= $key ?>" class="<?= $period === $key ? 'active' : '' ?>" <?= $period === $key ? 'aria-current="page"' : '' ?>><?= $label ?></a>
+                    <?php endforeach; ?>
+                </nav>
             </div>
 
             <div class="grid-4">
                 <div class="card">
                     <div class="stat-icon">$</div>
-                    <div class="stat-value">Rs. 1.2M</div>
+                    <div class="stat-value">Rs. <?= number_format($revenue, 2) ?></div>
                     <div class="stat-label">Gross Revenue</div>
-                    <span class="stat-badge up">↑ 14.5% vs last month</span>
+                    <?php if ($revenueChange === null): ?>
+                        <span class="stat-badge none">No earlier sales to compare</span>
+                    <?php elseif ($revenueChange >= 0): ?>
+                        <span class="stat-badge up">↑ <?= number_format($revenueChange, 1) ?>% <?= e($compareText) ?></span>
+                    <?php else: ?>
+                        <span class="stat-badge down">↓ <?= number_format(abs($revenueChange), 1) ?>% <?= e($compareText) ?></span>
+                    <?php endif; ?>
                 </div>
                 <div class="card">
                     <div class="stat-icon">%</div>
@@ -142,8 +159,12 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 
             <div class="grid-2">
                 <div class="card">
-                    <h3 style="margin-top:0;">Sales vs Profit (Monthly)</h3>
-                    <div style="height:220px;"><canvas id="reportChart" style="width:100%;height:100%;"></canvas></div>
+                    <h3 style="margin-top:0;"><?= e($chartTitle) ?></h3>
+                    <?php if ($chartValues): ?>
+                        <div style="height:220px;"><canvas id="reportChart" style="width:100%;height:100%;"></canvas></div>
+                    <?php else: ?>
+                        <div class="empty-chart">No sales recorded in this period.</div>
+                    <?php endif; ?>
                 </div>
                 <div class="card">
                     <h3 style="margin-top:0;">Category Profitability</h3>
@@ -156,11 +177,11 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
             <div class="card">
                 <h3 style="margin-top:0;">Employee Performance</h3>
                 <table>
-                    <thead><tr><th>Employee</th><th>Role</th><th>Orders Processed</th><th>Accuracy Rate</th><th>Status</th></tr></thead>
-                    <tbody>
+                    <thead><tr><th>Employee</th><th>Employee ID</th><th>Sales</th><th>Revenue</th><th>Status</th></tr></thead>
+                    <tbody id="perfRows">
                     <?php foreach ($performance as $p): ?>
                         <tr>
-                            <td><div class="table-user"><div class="avatar"><?= strtoupper(substr($p['full_name'],0,1)) ?></div><strong><?= e($p['full_name']) ?></strong></div></td>
+                            <td><div class="table-user"><div class="avatar"><?= strtoupper(substr($p['full_name'], 0, 1)) ?></div><strong><?= e($p['full_name']) ?></strong></div></td>
                             <td><?= e($p['employee_code']) ?></td>
                             <td><?= (int) $p['total_sales'] ?></td>
                             <td>Rs. <?= number_format((float) $p['total_revenue'], 2) ?></td>
@@ -176,7 +197,16 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 </div>
 <script src="<?= asset('js/admin-charts.js') ?>"></script>
 <script>
-drawBarChart('reportChart', ['Jan','Feb','Mar','Apr','May','Jun'], [58000,64000,49000,72000,81000,93000]);
+<?php if ($chartValues): ?>
+drawBarChart('reportChart', <?= json_encode(array_values($chartLabels)) ?>, <?= json_encode(array_map('floatval', array_values($chartValues))) ?>);
+<?php endif; ?>
+
+document.getElementById('reportSearch').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#perfRows tr').forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
 </script>
 </body>
 </html>
