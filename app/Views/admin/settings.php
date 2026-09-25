@@ -6,7 +6,6 @@ unset($_SESSION['settings_flash']);
 $tabs = [
     'business'    => 'Business Info',
     'invoice'     => 'Invoice Settings',
-    'tax'         => 'Tax Config',
     'backup'      => 'Data Backup',
     'preferences' => 'Preferences',
 ];
@@ -121,7 +120,6 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
                 <div class="tab-card">
                     <a class="tab-link" data-tab="business" href="?tab=business"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3V4Zm3 3v4h4V7H6Zm7 0v2h5V7h-5ZM6 14v2h12v-2H6Z"/></svg> Business Info</a>
                     <a class="tab-link" data-tab="invoice" href="?tab=invoice"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h14v20l-3-2-4 2-4-2-3 2V2Zm3 4v2h8V6H8Zm0 5v2h8v-2H8Z"/></svg> Invoice Settings</a>
-                    <a class="tab-link" data-tab="tax" href="?tab=tax"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 10 6H2l10-6ZM4 10h3v9H4v-9Zm6 0h4v9h-4v-9Zm7 0h3v9h-3v-9ZM2 21h20v2H2v-2Z"/></svg> Tax Config</a>
                     <a class="tab-link" data-tab="backup" href="?tab=backup"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h15l3 3v15H3V3Zm4 1v6h10V4H7Zm0 10v6h10v-6H7Z"/></svg> Data Backup</a>
                     <a class="tab-link" data-tab="preferences" href="?tab=preferences"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg> Preferences</a>
                 </div>
@@ -159,17 +157,6 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
                             <div class="form-group"><label for="invoice_due_days">Payment Due (days)</label><input class="form-control" id="invoice_due_days" name="invoice_due_days" type="number" min="0" step="1" value="<?= $s('invoice_due_days', '30') ?>" required></div>
                         </div>
                         <div class="form-group"><label for="invoice_footer_note">Invoice Footer Note</label><textarea class="form-control" id="invoice_footer_note" name="invoice_footer_note" rows="2" maxlength="500"><?= $s('invoice_footer_note', 'Thank you for your business.') ?></textarea></div>
-                    </section>
-
-                    <section class="card panel" data-panel="tax">
-                        <h3>Tax Configuration</h3>
-                        <p class="desc">Set the tax added to sales and printed on invoices.</p>
-                        <label class="check"><input type="checkbox" name="tax_enabled" value="1" <?= ($settings['tax_enabled'] ?? '0') === '1' ? 'checked' : '' ?>> Add tax to sales</label>
-                        <div class="grid-2f">
-                            <div class="form-group"><label for="tax_name">Tax Name</label><input class="form-control" id="tax_name" name="tax_name" value="<?= $s('tax_name', 'VAT') ?>" maxlength="30"></div>
-                            <div class="form-group"><label for="tax_rate">Tax Rate (%)</label><input class="form-control" id="tax_rate" name="tax_rate" type="number" min="0" max="100" step="0.01" value="<?= $s('tax_rate', '18.00') ?>" required></div>
-                            <div class="form-group"><label for="tax_registration_no">Tax Registration No.</label><input class="form-control" id="tax_registration_no" name="tax_registration_no" value="<?= $s('tax_registration_no') ?>" maxlength="50"></div>
-                        </div>
                     </section>
 
                     <section class="card panel" data-panel="backup">
