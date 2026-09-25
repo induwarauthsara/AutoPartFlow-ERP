@@ -80,8 +80,8 @@ class AdminController extends Controller
         }
 
         $today = new \DateTimeImmutable('today');
-        $chartKeys = [];
 
+        // ---- Cards walata kaalaya (period eka anuwa wenas wenawa)
         if ($period === 'daily') {
             $from = $today;
             $to = $today;
@@ -89,15 +89,6 @@ class AdminController extends Controller
             $prevTo = $prevFrom;
             $compareText = 'vs yesterday';
             $periodLabel = 'Today (' . $today->format('j M Y') . ')';
-            $chartTitle = 'Sales (Last 7 Days)';
-            for ($i = 6; $i >= 0; $i--) {
-                $d = $today->modify("-{$i} day");
-                $chartKeys[$d->format('Y-m-d')] = $d->format('D');
-            }
-            $chartSql = "SELECT DATE_FORMAT(sale_day, '%Y-%m-%d') AS k, SUM(gross_sales) AS total
-                         FROM v_daily_sales_summary
-                         WHERE sale_day >= CURDATE() - INTERVAL 6 DAY
-                         GROUP BY k";
         } elseif ($period === 'ytd') {
             $from = $today->modify('first day of january this year');
             $to = $today;
@@ -105,16 +96,6 @@ class AdminController extends Controller
             $prevTo = $today->modify('-1 year');
             $compareText = 'vs same period last year';
             $periodLabel = 'Year to date (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
-            $chartTitle = 'Sales (This Year by Month)';
-            $months = (int) $today->format('n');
-            for ($i = 0; $i < $months; $i++) {
-                $m = $from->modify("+{$i} month");
-                $chartKeys[$m->format('Y-m')] = $m->format('M');
-            }
-            $chartSql = "SELECT DATE_FORMAT(sale_day, '%Y-%m') AS k, SUM(gross_sales) AS total
-                         FROM v_daily_sales_summary
-                         WHERE sale_day >= MAKEDATE(YEAR(CURDATE()), 1)
-                         GROUP BY k";
         } else {
             $from = $today->modify('first day of this month');
             $to = $today;
@@ -122,30 +103,49 @@ class AdminController extends Controller
             $prevTo = $prevFrom->modify('last day of this month');
             $compareText = 'vs last month';
             $periodLabel = 'This month (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
-            $chartTitle = 'Sales (Last 6 Months)';
-            for ($i = 5; $i >= 0; $i--) {
-                $m = $from->modify("-{$i} month");
-                $chartKeys[$m->format('Y-m')] = $m->format('M');
-            }
-            $chartSql = "SELECT DATE_FORMAT(sale_day, '%Y-%m') AS k, SUM(gross_sales) AS total
-                         FROM v_daily_sales_summary
-                         WHERE sale_day >= DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01')
-                         GROUP BY k";
         }
 
-        $sum = $this->db->prepare(
-            "SELECT COALESCE(SUM(gross_sales), 0) FROM v_daily_sales_summary WHERE sale_day BETWEEN ? AND ?"
+        $statsStmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(gross_sales), 0)        AS gross,
+                    COALESCE(SUM(total_transactions), 0) AS tx,
+                    COALESCE(SUM(total_discounts), 0)    AS disc
+             FROM v_daily_sales_summary
+             WHERE sale_day BETWEEN ? AND ?"
         );
-        $sum->execute([$from->format('Y-m-d'), $to->format('Y-m-d')]);
-        $revenue = (float) $sum->fetchColumn();
+        $statsStmt->execute([$from->format('Y-m-d'), $to->format('Y-m-d')]);
+        $cur = $statsStmt->fetch();
+        $statsStmt->execute([$prevFrom->format('Y-m-d'), $prevTo->format('Y-m-d')]);
+        $prev = $statsStmt->fetch();
 
-        $sum->execute([$prevFrom->format('Y-m-d'), $prevTo->format('Y-m-d')]);
-        $previous = (float) $sum->fetchColumn();
+        $curGross = (float) $cur['gross'];  $prevGross = (float) $prev['gross'];
+        $curTx    = (float) $cur['tx'];     $prevTx    = (float) $prev['tx'];
+        $curDisc  = (float) $cur['disc'];   $prevDisc  = (float) $prev['disc'];
+        $curAvg   = $curTx > 0 ? $curGross / $curTx : 0.0;
+        $prevAvg  = $prevTx > 0 ? $prevGross / $prevTx : 0.0;
 
-        $revenueChange = $previous > 0 ? (($revenue - $previous) / $previous) * 100 : null;
+        $pct = fn(float $c, float $p): ?float => $p > 0 ? (($c - $p) / $p) * 100 : null;
 
-        $totals = array_column($this->db->query($chartSql)->fetchAll(), 'total', 'k');
-        $chartLabels = array_values($chartKeys);
+        $cards = [
+            ['icon' => 'Rs', 'label' => 'Gross Revenue',   'value' => 'Rs. ' . number_format($curGross, 2), 'change' => $pct($curGross, $prevGross), 'goodWhenUp' => true],
+            ['icon' => '#',  'label' => 'Transactions',    'value' => number_format($curTx),                'change' => $pct($curTx, $prevTx),       'goodWhenUp' => true],
+            ['icon' => 'Avg','label' => 'Average Sale',    'value' => 'Rs. ' . number_format($curAvg, 2),   'change' => $pct($curAvg, $prevAvg),     'goodWhenUp' => true],
+            ['icon' => '%',  'label' => 'Discounts Given', 'value' => 'Rs. ' . number_format($curDisc, 2),  'change' => $pct($curDisc, $prevDisc),   'goodWhenUp' => false],
+        ];
+
+        // ---- Chart eka: hama welema pasugiya masa 6 (period eka anuwa wenas wenne nae)
+        $chartKeys = [];
+        $monthStart = $today->modify('first day of this month');
+        for ($i = 5; $i >= 0; $i--) {
+            $m = $monthStart->modify("-{$i} month");
+            $chartKeys[$m->format('Y-m')] = $m->format('M');
+        }
+        $chartRows = $this->db->query(
+            "SELECT DATE_FORMAT(sale_day, '%Y-%m') AS k, SUM(gross_sales) AS total
+             FROM v_daily_sales_summary
+             WHERE sale_day >= DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01')
+             GROUP BY k"
+        )->fetchAll();
+        $totals = array_column($chartRows, 'total', 'k');
         $chartValues = [];
         foreach (array_keys($chartKeys) as $k) {
             $chartValues[] = (float) ($totals[$k] ?? 0);
@@ -154,16 +154,15 @@ class AdminController extends Controller
         $performance = $this->db->query("SELECT * FROM v_employee_sales_performance ORDER BY total_revenue DESC LIMIT 5")->fetchAll();
 
         $this->view('admin.reports', [
-            'title'         => 'Reports & Analytics - AutoPartFlow',
-            'performance'   => $performance,
-            'period'        => $period,
-            'periodLabel'   => $periodLabel,
-            'revenue'       => $revenue,
-            'revenueChange' => $revenueChange,
-            'compareText'   => $compareText,
-            'chartTitle'    => $chartTitle,
-            'chartLabels'   => $chartLabels,
-            'chartValues'   => $chartValues,
+            'title'       => 'Reports & Analytics - AutoPartFlow',
+            'performance' => $performance,
+            'period'      => $period,
+            'periodLabel' => $periodLabel,
+            'compareText' => $compareText,
+            'cards'       => $cards,
+            'chartTitle'  => 'Sales (Last 6 Months)',
+            'chartLabels' => array_values($chartKeys),
+            'chartValues' => $chartValues,
         ], null);
     }
 

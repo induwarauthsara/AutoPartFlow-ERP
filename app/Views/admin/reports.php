@@ -1,14 +1,13 @@
 <?php
 /** @var array $performance */
-$period        = $period ?? 'monthly';
-$periodLabel   = $periodLabel ?? '';
-$revenue       = (float) ($revenue ?? 0);
-$revenueChange = $revenueChange ?? null;
-$compareText   = $compareText ?? '';
-$chartTitle    = $chartTitle ?? 'Sales';
-$chartLabels   = array_values($chartLabels ?? []);
-$chartValues   = array_map('floatval', array_values($chartValues ?? []));
-$chartMax      = $chartValues ? max($chartValues) : 0;
+$period      = $period ?? 'monthly';
+$periodLabel = $periodLabel ?? '';
+$compareText = $compareText ?? '';
+$cards       = $cards ?? [];
+$chartTitle  = $chartTitle ?? 'Sales (Last 6 Months)';
+$chartLabels = array_values($chartLabels ?? []);
+$chartValues = array_map('floatval', array_values($chartValues ?? []));
+$chartMax    = $chartValues ? max($chartValues) : 0;
 $periods = ['daily' => 'Daily', 'monthly' => 'Monthly', 'ytd' => 'YTD'];
 
 $short = function (float $v): string {
@@ -55,7 +54,7 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;border:1px solid #eef0f5;}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
 .grid-2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;}
-.stat-icon{width:34px;height:34px;border-radius:9px;background:var(--indigo-50);color:var(--indigo-500);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.stat-icon{width:34px;height:34px;border-radius:9px;background:var(--indigo-50);color:var(--indigo-500);display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-weight:700;font-size:12px;}
 .stat-value{font-size:21px;font-weight:700;}
 .stat-label{color:var(--slate-500);font-size:12.5px;margin:2px 0 8px;}
 .stat-badge{display:inline-flex;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}
@@ -138,36 +137,26 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
             </div>
 
             <div class="grid-4">
-                <div class="card">
-                    <div class="stat-icon">$</div>
-                    <div class="stat-value">Rs. <?= number_format($revenue, 2) ?></div>
-                    <div class="stat-label">Gross Revenue</div>
-                    <?php if ($revenueChange === null): ?>
-                        <span class="stat-badge none">No earlier sales to compare</span>
-                    <?php elseif ($revenueChange >= 0): ?>
-                        <span class="stat-badge up">↑ <?= number_format($revenueChange, 1) ?>% <?= e($compareText) ?></span>
-                    <?php else: ?>
-                        <span class="stat-badge down">↓ <?= number_format(abs($revenueChange), 1) ?>% <?= e($compareText) ?></span>
-                    <?php endif; ?>
-                </div>
-                <div class="card">
-                    <div class="stat-icon">%</div>
-                    <div class="stat-value">18.2%</div>
-                    <div class="stat-label">Net Profit Margin</div>
-                    <span class="stat-badge up">↑ 2.1% vs last month</span>
-                </div>
-                <div class="card">
-                    <div class="stat-icon">#</div>
-                    <div class="stat-value">3,492</div>
-                    <div class="stat-label">Active Orders</div>
-                    <span class="stat-badge down">↓ 1.5% vs last month</span>
-                </div>
-                <div class="card">
-                    <div class="stat-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 11H7v-2h4V6h2v7Z"/></svg></div>
-                    <div class="stat-value">2.4h</div>
-                    <div class="stat-label">Avg Fulfillment</div>
-                    <span class="stat-badge up">↓ 0.3h (improved)</span>
-                </div>
+                <?php foreach ($cards as $card):
+                    $chg = $card['change'];
+                    if ($chg === null) {
+                        $cls = 'none';
+                    } else {
+                        $isGood = ($chg >= 0) === $card['goodWhenUp'];
+                        $cls = $isGood ? 'up' : 'down';
+                    }
+                ?>
+                    <div class="card">
+                        <div class="stat-icon"><?= e($card['icon']) ?></div>
+                        <div class="stat-value"><?= e($card['value']) ?></div>
+                        <div class="stat-label"><?= e($card['label']) ?></div>
+                        <?php if ($chg === null): ?>
+                            <span class="stat-badge none">No earlier data to compare</span>
+                        <?php else: ?>
+                            <span class="stat-badge <?= $cls ?>"><?= $chg >= 0 ? '↑' : '↓' ?> <?= number_format(abs($chg), 1) ?>% <?= e($compareText) ?></span>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="grid-2">
@@ -183,7 +172,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                         <?php endforeach; ?>
                     </div>
                     <?php if ($chartMax <= 0): ?>
-                        <p class="chart-note">No sales recorded in this period yet.</p>
+                        <p class="chart-note">No sales recorded in the last 6 months yet.</p>
                     <?php endif; ?>
                 </div>
                 <div class="card">
