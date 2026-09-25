@@ -50,6 +50,9 @@ class App
         $this->router->get('/admin/dashboard', 'AdminController@dashboard');
         $this->router->get('/admin/users', 'AdminController@users');
         $this->router->get('/admin/employees', 'AdminController@employees');
+        $this->router->post('/admin/employees/store', 'AdminController@employeeStore');
+        $this->router->post('/admin/employees/update', 'AdminController@employeeUpdate');
+        $this->router->post('/admin/employees/delete', 'AdminController@employeeDelete');
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
         $this->router->post('/admin/notifications/store', 'AdminController@notificationStore');
