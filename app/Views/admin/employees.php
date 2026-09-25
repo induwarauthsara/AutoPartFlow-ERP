@@ -1,4 +1,3 @@
-$code = @'
 <?php
 /** @var array $rows */
 $flash = $_SESSION['emp_flash'] ?? null;
