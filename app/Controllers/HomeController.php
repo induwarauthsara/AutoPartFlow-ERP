@@ -63,9 +63,9 @@ class HomeController extends Controller
         $stmt = $db->prepare(
             "SELECT u.id, u.full_name, u.email, u.password_hash, u.role_id, u.is_active, r.slug AS role_slug
              FROM users u JOIN roles r ON r.id = u.role_id
-             WHERE (u.email = :identity OR u.username = :identity) AND u.deleted_at IS NULL LIMIT 1"
+             WHERE (u.email = :identity1 OR u.username = :identity2) AND u.deleted_at IS NULL LIMIT 1"
         );
-        $stmt->execute(['identity' => $identity]);
+        $stmt->execute(['identity1' => $identity, 'identity2' => $identity]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {

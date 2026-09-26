@@ -71,6 +71,89 @@ class AdminController extends Controller
         $this->view('admin.employees', ['title' => 'Employee Management - AutoPartFlow', 'rows' => $rows], null);
     }
 
+    /** GET /admin/suppliers */
+    public function suppliers(): void
+    {
+        $supplierModel = new \App\Models\Supplier();
+
+        $this->view('admin.suppliers', [
+            'title'    => 'Supplier Management - AutoPartFlow',
+            'rows'     => $supplierModel->allWithSummary(),
+            'summary'  => $supplierModel->summary(),
+            'csrfToken' => csrf_token(),
+        ], null);
+    }
+
+    /** GET /admin/purchases */
+    public function purchases(): void
+    {
+        $purchaseModel = new \App\Models\Purchase();
+        $orders = $purchaseModel->recentOrders();
+        $isMock = !$orders;
+
+        $this->view('admin.purchases', [
+            'title'   => 'Purchase Management - AutoPartFlow',
+            'summary' => $isMock ? [
+                'pendingApproval' => 12,
+                'inTransit' => 8,
+                'receivedThisWeek' => 45,
+                'fulfillmentRate' => 98,
+            ] : $purchaseModel->summary(),
+            'orders'  => $orders ?: $purchaseModel->mockOrders(),
+            'isMock'  => $isMock,
+            'csrfToken' => csrf_token(),
+        ], null);
+    }
+
+    /** POST /admin/purchases/status */
+    public function updatePurchaseStatus(): void
+    {
+        $data = json_decode((string) file_get_contents('php://input'), true);
+        $data = is_array($data) ? $data : $_POST;
+        $token = (string) ($data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+
+        if ($token === '' || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token)) {
+            $this->json(['ok' => false, 'message' => 'Your session expired. Refresh the page and try again.'], 419);
+        }
+
+        try {
+            (new \App\Models\Purchase())->updateStatus((int) ($data['order_id'] ?? 0), (string) ($data['status'] ?? ''));
+            $this->json(['ok' => true, 'message' => 'Purchase order status updated.']);
+        } catch (\InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            $this->json(['ok' => false, 'message' => 'The purchase order status could not be updated.'], 500);
+        }
+    }
+
+    /** POST /admin/suppliers */
+    public function createSupplier(): void
+    {
+        $data = json_decode((string) file_get_contents('php://input'), true);
+        $data = is_array($data) ? $data : $_POST;
+        $token = (string) ($data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+
+        if ($token === '' || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token)) {
+            $this->json(['ok' => false, 'message' => 'Your session expired. Refresh the page and try again.'], 419);
+        }
+
+        try {
+            $supplierModel = new \App\Models\Supplier();
+            $supplier = $supplierModel->create($data);
+
+            $this->json([
+                'ok'      => true,
+                'message' => "Supplier '{$supplier['company_name']}' created successfully.",
+                'supplier' => $supplier,
+                'summary' => $supplierModel->summary(),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            $this->json(['ok' => false, 'message' => 'The supplier could not be saved. Please try again.'], 500);
+        }
+    }
+
     /** GET /admin/reports */
     public function reports(): void
     {

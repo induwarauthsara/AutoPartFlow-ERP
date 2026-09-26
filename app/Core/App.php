@@ -50,11 +50,18 @@ class App
         $this->router->get('/admin/dashboard', 'AdminController@dashboard');
         $this->router->get('/admin/users', 'AdminController@users');
         $this->router->get('/admin/employees', 'AdminController@employees');
+        $this->router->get('/admin/suppliers', 'AdminController@suppliers');
+        $this->router->get('/admin/purchases', 'AdminController@purchases');
+        $this->router->post('/admin/purchases/status', 'AdminController@updatePurchaseStatus');
+        $this->router->post('/admin/suppliers', 'AdminController@createSupplier');
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
         $this->router->get('/admin/settings', 'AdminController@settings');
         // Inventory / Store Workspace
         $this->router->get('/inventory', 'InventoryController@index');
+        $this->router->post('/inventory/stock-in', 'InventoryController@recordStockIn');
+        $this->router->post('/inventory/add-item', 'InventoryController@addItem');
+        $this->router->post('/inventory/delete-item', 'InventoryController@deleteItem');
     }
 
     public function run(): void
