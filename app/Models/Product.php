@@ -149,6 +149,38 @@ class Product extends Model
     }
 
     /**
+     * Find only fields that are safe for the public product-details endpoint.
+     * Internal cost_price and wholesale_price are deliberately excluded.
+     */
+    public function findPublicByCode(string $code): ?array
+    {
+        $sql = "
+            SELECT
+                p.id, p.product_code, p.barcode, p.name, p.description,
+                p.unit, p.selling_price, p.tax_rate, p.warranty_months,
+                p.image_path, p.specifications, p.is_active,
+                c.name AS category,
+                b.name AS brand,
+                COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
+                COALESCE(i.reorder_level, 0) AS reorder_level
+            FROM products p
+            INNER JOIN categories c ON c.id = p.category_id
+            LEFT JOIN brands b ON b.id = p.brand_id
+            LEFT JOIN inventory i ON i.product_id = p.id
+            WHERE p.product_code = :code
+              AND p.is_active = 1
+              AND p.deleted_at IS NULL
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['code' => $code]);
+        $result = $stmt->fetch();
+
+        return $result ?: null;
+    }
+
+    /**
      * Fetch active categories.
      */
     public function categories(): array
