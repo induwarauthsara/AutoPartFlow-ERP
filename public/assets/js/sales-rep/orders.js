@@ -126,7 +126,7 @@
             '<div class="detail-body">' +
                 '<div class="detail-info-grid">' +
                     '<div><p class="detail-label">Customer</p><div class="detail-person"><span class="sales-avatar">' + u.escapeHtml(order.initials) + '</span><div><strong>' + u.escapeHtml(order.customer) + '</strong><span>' + u.escapeHtml(order.accountType) + '</span></div></div></div>' +
-                    '<div><p class="detail-label">Sales Rep</p><div class="detail-person"><span class="sales-avatar">SR</span><div><strong>' + u.escapeHtml(order.rep) + '</strong><span>Assigned representative</span></div></div></div>' +
+                    '<div><p class="detail-label">Sales Rep</p><div class="detail-person"><span class="sales-avatar" aria-hidden="true"><svg class="sales-icon"><use href="#sales-icon-user"></use></svg></span><div><strong>' + u.escapeHtml(order.rep) + '</strong><span>Assigned representative</span></div></div></div>' +
                 '</div>' +
                 '<div class="detail-items"><p class="detail-label">Order Items</p>' + itemLines +
                     '<div class="detail-total"><strong>Order Total</strong><strong>' + u.money(order.total) + '</strong></div></div>' +
@@ -156,15 +156,33 @@
             'Delete'
         ).then(function (ok) {
             if (!ok) return;
-            const index = data.orders.findIndex(function (item) { return item.id === orderId; });
-            if (index === -1) return;
-            data.orders.splice(index, 1);
-            if (state.selectedId === orderId) {
-                state.selectedId = data.orders[0] ? data.orders[0].id : null;
-            }
-            renderStats();
-            renderRows();
-            u.showToast(order.id + ' deleted.');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+            fetch(baseUrl.replace(/\/$/, '') + '/sales/orders/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({
+                    id: order.databaseId || 0,
+                    order_number: order.id,
+                    csrf_token: csrfToken
+                })
+            }).then(function (res) { return res.json(); })
+            .then(function (json) {
+                if (json.ok) {
+                    const index = data.orders.findIndex(function (item) { return item.id === orderId; });
+                    if (index !== -1) data.orders.splice(index, 1);
+                    if (state.selectedId === orderId) {
+                        state.selectedId = data.orders[0] ? data.orders[0].id : null;
+                    }
+                    renderStats();
+                    renderRows();
+                    u.showToast(order.id + ' deleted.');
+                } else {
+                    u.showToast(json.message || 'Failed to delete order.');
+                }
+            }).catch(function () {
+                u.showToast('Network error deleting order.');
+            });
         });
     }
 
@@ -224,10 +242,31 @@
         const nextButton = event.target.closest('[data-next-status]');
         if (nextButton) {
             const order = data.orders.find(function (item) { return item.id === state.selectedId; });
-            order.status = nextButton.dataset.nextStatus;
-            renderStats();
-            renderRows();
-            u.showToast(order.id + ' moved to ' + order.status + '.');
+            const targetStatus = nextButton.dataset.nextStatus;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+            fetch(baseUrl.replace(/\/$/, '') + '/sales/orders/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({
+                    id: order.databaseId || 0,
+                    order_number: order.id,
+                    status: targetStatus.toLowerCase(),
+                    csrf_token: csrfToken
+                })
+            }).then(function (res) { return res.json(); })
+            .then(function (json) {
+                if (json.ok) {
+                    order.status = targetStatus;
+                    renderStats();
+                    renderRows();
+                    u.showToast(order.id + ' moved to ' + order.status + '.');
+                } else {
+                    u.showToast(json.message || 'Failed to update order status.');
+                }
+            }).catch(function () {
+                u.showToast('Network error updating order status.');
+            });
         }
         if (event.target.closest('[data-edit-order]')) {
             u.showToast('Connect Edit Order to your OrderController edit action.');

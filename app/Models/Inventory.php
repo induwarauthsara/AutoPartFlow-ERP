@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Model;
+use PDO;
 
 class Inventory extends Model
 {
@@ -20,10 +21,6 @@ class Inventory extends Model
 
     /**
      * Fetch every inventory item with product details and its latest stock movement.
-     *
-     * Returns rows shaped for the front-end:
-     * id, partNo, name, category, location, bin, qty, reorderLevel, status,
-     * lastMovement, unitCost.
      */
     public function getInventoryItems(): array
     {
@@ -65,6 +62,11 @@ class Inventory extends Model
         return array_map([$this, 'mapItem'], $rows);
     }
 
+    public function items(): array
+    {
+        return $this->getInventoryItems();
+    }
+
     /**
      * Summary KPIs for the inventory dashboard.
      */
@@ -97,6 +99,27 @@ class Inventory extends Model
             'lowStock'          => $lowStock,
             'incomingPurchases' => $incomingPurchases,
         ];
+    }
+
+    public function kpis(): array
+    {
+        $summary = $this->getSummary();
+        return [
+            'stock_value'        => $summary['stockValue'],
+            'low_stock_count'    => $summary['lowStock'],
+            'incoming_purchases' => $summary['incomingPurchases'],
+        ];
+    }
+
+    public function productsList(): array
+    {
+        return $this->db->query(
+            "SELECT p.id, p.product_code, p.name, p.cost_price, COALESCE(i.quantity_on_hand, 0) on_hand
+             FROM products p
+             LEFT JOIN inventory i ON i.product_id = p.id
+             WHERE p.deleted_at IS NULL AND p.is_active = 1
+             ORDER BY p.name ASC"
+        )->fetchAll();
     }
 
     /**
@@ -175,6 +198,7 @@ class Inventory extends Model
 
             return [
                 'id'           => $productId,
+                'productId'    => $productId,
                 'partNo'       => $product['product_code'],
                 'name'         => $product['name'],
                 'qty'          => $qtyAfter,
@@ -184,6 +208,60 @@ class Inventory extends Model
                 'lastMovement' => 'Just now (In)' . ($notes !== '' ? ' — ' . $notes : ''),
                 'unitCost'     => $costPrice,
             ];
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    public function stockIn(int $productId, int $quantity, ?float $unitCost = null, string $notes = '', ?int $userId = null): array
+    {
+        return $this->addStock($productId, $quantity, 'Main Warehouse', $notes, $userId);
+    }
+
+    public function adjustStock(int $productId, int $newQuantity, string $notes, ?int $userId): array
+    {
+        if ($productId <= 0 || $newQuantity < 0) {
+            throw new \InvalidArgumentException('Valid product and non-negative quantity are required.');
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare('SELECT id, quantity_on_hand FROM inventory WHERE product_id = :pid FOR UPDATE');
+            $stmt->execute(['pid' => $productId]);
+            $row = $stmt->fetch();
+
+            $before = $row ? (int) $row['quantity_on_hand'] : 0;
+            $diff = $newQuantity - $before;
+            $mtype = $diff >= 0 ? 'adjustment_in' : 'adjustment_out';
+
+            if ($row) {
+                $upd = $this->db->prepare('UPDATE inventory SET quantity_on_hand = :qty WHERE product_id = :pid');
+                $upd->execute(['qty' => $newQuantity, 'pid' => $productId]);
+            } else {
+                $ins = $this->db->prepare('INSERT INTO inventory (product_id, quantity_on_hand) VALUES (:pid, :qty)');
+                $ins->execute(['pid' => $productId, 'qty' => $newQuantity]);
+            }
+
+            $move = $this->db->prepare(
+                'INSERT INTO stock_movements (product_id, movement_type, quantity, quantity_before, quantity_after, reference_type, notes, created_by)
+                 VALUES (:pid, :mtype, :qty, :before, :after, :reftype, :notes, :uid)'
+            );
+            $move->execute([
+                'pid' => $productId,
+                'mtype' => $mtype,
+                'qty' => $diff,
+                'before' => $before,
+                'after' => $newQuantity,
+                'reftype' => 'adjustment',
+                'notes' => $notes ?: 'Physical inventory count adjustment',
+                'uid' => $userId,
+            ]);
+
+            $this->db->commit();
+            return ['ok' => true, 'product_id' => $productId, 'new_qty' => $newQuantity];
         } catch (\Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
@@ -291,6 +369,7 @@ class Inventory extends Model
 
             return [
                 'id'           => $newProductId,
+                'productId'    => $newProductId,
                 'partNo'       => $code,
                 'name'         => $name,
                 'category'     => $category['name'],
@@ -308,6 +387,74 @@ class Inventory extends Model
             }
             throw $e;
         }
+    }
+
+    public function writeOffStock(int $productId, int $quantity, string $reason, ?int $userId): array
+    {
+        if ($productId <= 0 || $quantity <= 0) {
+            throw new \InvalidArgumentException('Valid product and positive write-off quantity are required.');
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare('SELECT id, quantity_on_hand, quantity_damaged FROM inventory WHERE product_id = :pid FOR UPDATE');
+            $stmt->execute(['pid' => $productId]);
+            $row = $stmt->fetch();
+
+            if (!$row) {
+                throw new \RuntimeException('No inventory record found for this product.');
+            }
+
+            $before = (int) $row['quantity_on_hand'];
+            if ($quantity > $before) {
+                throw new \InvalidArgumentException('Write-off quantity (' . $quantity . ') exceeds on-hand stock (' . $before . ').');
+            }
+
+            $after = $before - $quantity;
+            $damaged = (int) ($row['quantity_damaged'] ?? 0) + $quantity;
+
+            $upd = $this->db->prepare(
+                'UPDATE inventory SET quantity_on_hand = :after, quantity_damaged = :damaged WHERE product_id = :pid'
+            );
+            $upd->execute(['after' => $after, 'damaged' => $damaged, 'pid' => $productId]);
+
+            $move = $this->db->prepare(
+                'INSERT INTO stock_movements (product_id, movement_type, quantity, quantity_before, quantity_after, reference_type, notes, created_by)
+                 VALUES (:pid, :mtype, :qty, :before, :after, :reftype, :notes, :uid)'
+            );
+            $move->execute([
+                'pid' => $productId,
+                'mtype' => 'damaged',
+                'qty' => -$quantity,
+                'before' => $before,
+                'after' => $after,
+                'reftype' => 'damaged',
+                'notes' => $reason ?: 'Damaged / expired stock write-off',
+                'uid' => $userId,
+            ]);
+
+            $this->db->commit();
+            return ['ok' => true, 'product_id' => $productId, 'new_qty' => $after, 'damaged' => $damaged];
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    public function movements(int $limit = 20): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT sm.*, p.name product_name, p.product_code, u.full_name created_by_name
+             FROM stock_movements sm
+             JOIN products p ON p.id = sm.product_id
+             LEFT JOIN users u ON u.id = sm.created_by
+             ORDER BY sm.created_at DESC LIMIT :lim'
+        );
+        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 
     /**
@@ -344,6 +491,7 @@ class Inventory extends Model
 
         return [
             'id'           => (int) $row['id'],
+            'productId'    => (int) $row['id'],
             'partNo'       => $row['product_code'],
             'name'         => $row['name'],
             'category'     => $row['category'],
@@ -354,6 +502,7 @@ class Inventory extends Model
             'status'       => $this->deriveStatus($qty, $reorder),
             'lastMovement' => $this->formatLastMovement($row),
             'unitCost'     => (float) $row['cost_price'],
+            'sellingPrice' => (float) ($row['selling_price'] ?? 0),
         ];
     }
 

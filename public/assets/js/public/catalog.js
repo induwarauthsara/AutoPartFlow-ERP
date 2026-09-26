@@ -330,11 +330,296 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 7. Spare Part Catalog CRUD & Vehicle Compatibility (Member 4 - Varshika)
+    const partModal = document.getElementById('part-modal');
+    const partForm = document.getElementById('part-modal-form');
+    const partModalTitle = document.getElementById('part-modal-title');
+    const partModalSubtitle = document.getElementById('part-modal-subtitle');
+    const partIdInput = document.getElementById('part-id');
+    const partCloseBtn = document.getElementById('part-modal-close');
+    const partCancelBtn = document.getElementById('part-modal-cancel');
+    const btnAddPart = document.getElementById('btn-add-part');
+    const initialStockGroup = document.getElementById('part-initial-stock-group');
+    const compatMappingSection = document.getElementById('compat-mapping-section');
+
+    const vBrandSelect = document.getElementById('part-vehicle-brand');
+    const vModelSelect = document.getElementById('part-vehicle-model');
+    const vEngineSelect = document.getElementById('part-vehicle-engine');
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || '';
+    }
+
+    function openPartModal(isEdit = false, data = {}) {
+        if (!partModal || !partForm) return;
+        partForm.reset();
+
+        if (isEdit) {
+            partModalTitle.textContent = 'Edit Spare Part';
+            partModalSubtitle.textContent = `Update Part: ${data.code || ''}`;
+            partIdInput.value = data.id || '';
+            document.getElementById('part-name').value = data.name || '';
+            document.getElementById('part-category').value = data.categoryId || '';
+            document.getElementById('part-brand').value = data.brandId || '';
+            document.getElementById('part-selling-price').value = data.sellingPrice || '';
+            document.getElementById('part-cost-price').value = data.costPrice || '';
+            document.getElementById('part-wholesale-price').value = data.wholesalePrice || '';
+            document.getElementById('part-warranty').value = data.warranty || '12';
+            document.getElementById('part-reorder-level').value = data.reorder || '5';
+            document.getElementById('part-image').value = data.image || '';
+            document.getElementById('part-description').value = data.desc || '';
+            if (initialStockGroup) initialStockGroup.style.display = 'none';
+            if (compatMappingSection) compatMappingSection.style.display = 'none';
+        } else {
+            partModalTitle.textContent = 'Add New Spare Part';
+            partModalSubtitle.textContent = 'Catalog & Vehicle Fitment Entry';
+            partIdInput.value = '';
+            if (initialStockGroup) initialStockGroup.style.display = 'block';
+            if (compatMappingSection) compatMappingSection.style.display = 'block';
+            if (vModelSelect) {
+                vModelSelect.innerHTML = '<option value="">-- All Models --</option>';
+                vModelSelect.disabled = true;
+            }
+            if (vEngineSelect) {
+                vEngineSelect.innerHTML = '<option value="">-- All Engines --</option>';
+                vEngineSelect.disabled = true;
+            }
+        }
+
+        partModal.classList.add('active');
+        partModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePartModal() {
+        if (!partModal) return;
+        partModal.classList.remove('active');
+        partModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    if (btnAddPart) {
+        btnAddPart.addEventListener('click', function () {
+            openPartModal(false);
+        });
+    }
+
+    if (partCloseBtn) partCloseBtn.addEventListener('click', closePartModal);
+    if (partCancelBtn) partCancelBtn.addEventListener('click', closePartModal);
+    if (partModal) {
+        partModal.addEventListener('click', function (e) {
+            if (e.target === partModal) closePartModal();
+        });
+    }
+
+    // Vehicle Fitment Dynamic Dropdowns
+    if (vBrandSelect) {
+        vBrandSelect.addEventListener('change', function () {
+            const brandId = this.value;
+            if (!brandId) {
+                if (vModelSelect) {
+                    vModelSelect.innerHTML = '<option value="">-- All Models --</option>';
+                    vModelSelect.disabled = true;
+                }
+                if (vEngineSelect) {
+                    vEngineSelect.innerHTML = '<option value="">-- All Engines --</option>';
+                    vEngineSelect.disabled = true;
+                }
+                return;
+            }
+
+            const baseUrl = window.APP_CONFIG?.baseUrl || document.querySelector('meta[name="base-url"]')?.content || '';
+            fetch(`${baseUrl}/catalog/vehicle-data?brand_id=${encodeURIComponent(brandId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok && Array.isArray(data.models)) {
+                        let opts = '<option value="">-- All Models --</option>';
+                        data.models.forEach(m => {
+                            opts += `<option value="${m.id}">${m.name}</option>`;
+                        });
+                        vModelSelect.innerHTML = opts;
+                        vModelSelect.disabled = false;
+                        if (vEngineSelect) {
+                            vEngineSelect.innerHTML = '<option value="">-- All Engines --</option>';
+                            vEngineSelect.disabled = true;
+                        }
+                    }
+                })
+                .catch(() => {});
+        });
+    }
+
+    if (vModelSelect) {
+        vModelSelect.addEventListener('change', function () {
+            const modelId = this.value;
+            if (!modelId) {
+                if (vEngineSelect) {
+                    vEngineSelect.innerHTML = '<option value="">-- All Engines --</option>';
+                    vEngineSelect.disabled = true;
+                }
+                return;
+            }
+
+            const baseUrl = window.APP_CONFIG?.baseUrl || document.querySelector('meta[name="base-url"]')?.content || '';
+            fetch(`${baseUrl}/catalog/vehicle-data?model_id=${encodeURIComponent(modelId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok && Array.isArray(data.engines)) {
+                        let opts = '<option value="">-- All Engines --</option>';
+                        data.engines.forEach(e => {
+                            opts += `<option value="${e.id}">${e.engine_code} (${e.displacement_cc || ''}cc ${e.fuel_type || ''})</option>`;
+                        });
+                        vEngineSelect.innerHTML = opts;
+                        vEngineSelect.disabled = false;
+                    }
+                })
+                .catch(() => {});
+        });
+    }
+
+    // Edit Part buttons
+    document.querySelectorAll('.btn-edit-part').forEach(btn => {
+        btn.addEventListener('click', function () {
+            openPartModal(true, {
+                id: this.dataset.id,
+                code: this.dataset.code,
+                name: this.dataset.name,
+                categoryId: this.dataset.categoryId,
+                brandId: this.dataset.brandId,
+                costPrice: this.dataset.costPrice,
+                sellingPrice: this.dataset.sellingPrice,
+                wholesalePrice: this.dataset.wholesalePrice,
+                warranty: this.dataset.warranty,
+                reorder: this.dataset.reorder,
+                image: this.dataset.image,
+                desc: this.dataset.desc,
+            });
+        });
+    });
+
+    // Delete Part buttons
+    document.querySelectorAll('.btn-delete-part').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+            const name = this.dataset.name || 'this part';
+            const code = this.dataset.code || '';
+
+            if (!confirm(`Are you sure you want to remove "${name}" (${code}) from the catalog? This will mark it as discontinued.`)) {
+                return;
+            }
+
+            const baseUrl = window.APP_CONFIG?.baseUrl || document.querySelector('meta[name="base-url"]')?.content || '';
+            const csrfToken = getCsrfToken();
+
+            fetch(`${baseUrl}/catalog/parts/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ id: parseInt(id, 10), csrf_token: csrfToken }),
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        showToast(`Spare part <strong>${name}</strong> removed successfully.`);
+                        const card = btn.closest('.product-card');
+                        if (card) {
+                            card.style.transition = 'opacity 0.3s, transform 0.3s';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.9)';
+                            setTimeout(() => card.remove(), 300);
+                        } else {
+                            setTimeout(() => window.location.reload(), 1000);
+                        }
+                    } else {
+                        alert(data.message || 'Failed to remove spare part.');
+                    }
+                })
+                .catch(() => {
+                    alert('Network error while deleting part.');
+                });
+        });
+    });
+
+    // Form Submit (Create or Update)
+    if (partForm) {
+        partForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const saveBtn = document.getElementById('part-modal-save');
+            const originalText = saveBtn ? saveBtn.innerHTML : 'Save';
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:18px;">sync</span> Saving...';
+            }
+
+            const payload = {
+                id: partIdInput.value ? parseInt(partIdInput.value, 10) : 0,
+                name: document.getElementById('part-name').value.trim(),
+                barcode: document.getElementById('part-barcode')?.value.trim() || null,
+                category_id: parseInt(document.getElementById('part-category').value, 10),
+                brand_id: document.getElementById('part-brand').value ? parseInt(document.getElementById('part-brand').value, 10) : null,
+                selling_price: parseFloat(document.getElementById('part-selling-price').value),
+                cost_price: parseFloat(document.getElementById('part-cost-price')?.value || '0'),
+                wholesale_price: document.getElementById('part-wholesale-price')?.value ? parseFloat(document.getElementById('part-wholesale-price').value) : null,
+                warranty_months: parseInt(document.getElementById('part-warranty')?.value || '12', 10),
+                reorder_level: parseInt(document.getElementById('part-reorder-level')?.value || '5', 10),
+                initial_stock: parseInt(document.getElementById('part-initial-stock')?.value || '10', 10),
+                image_path: document.getElementById('part-image')?.value.trim() || '',
+                description: document.getElementById('part-description')?.value.trim() || '',
+                csrf_token: getCsrfToken(),
+            };
+
+            // Vehicle Fitment data for creation
+            if (!payload.id && vBrandSelect && vBrandSelect.value) {
+                payload.vehicle_brand_id = parseInt(vBrandSelect.value, 10);
+                payload.vehicle_model_id = vModelSelect && vModelSelect.value ? parseInt(vModelSelect.value, 10) : null;
+                payload.vehicle_engine_id = vEngineSelect && vEngineSelect.value ? parseInt(vEngineSelect.value, 10) : null;
+                payload.year_from = document.getElementById('part-year-from')?.value ? parseInt(document.getElementById('part-year-from').value, 10) : null;
+                payload.year_to = document.getElementById('part-year-to')?.value ? parseInt(document.getElementById('part-year-to').value, 10) : null;
+                payload.compat_notes = document.getElementById('part-compat-notes')?.value.trim() || 'Standard fitment';
+            }
+
+            const baseUrl = window.APP_CONFIG?.baseUrl || document.querySelector('meta[name="base-url"]')?.content || '';
+            fetch(`${baseUrl}/catalog/parts/save`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': payload.csrf_token,
+                },
+                body: JSON.stringify(payload),
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        closePartModal();
+                        showToast(data.message || 'Saved successfully!');
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        alert(data.message || 'Failed to save spare part.');
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.innerHTML = originalText;
+                        }
+                    }
+                })
+                .catch(() => {
+                    alert('Network error while saving spare part.');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalText;
+                    }
+                });
+        });
+    }
+
     // Escape key to close any active modal
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             closeCompatModal();
             closeDetailsModal();
+            closePartModal();
         }
     });
 });

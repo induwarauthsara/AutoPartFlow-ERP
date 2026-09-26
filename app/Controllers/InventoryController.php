@@ -10,29 +10,26 @@ use App\Models\Product;
 
 class InventoryController extends Controller
 {
+    private Inventory $inventory;
+
     public function __construct()
     {
-        if (empty($_SESSION['user_id']) || !in_array($_SESSION['role_slug'] ?? '', ['store_manager', 'owner'], true)) {
-            $isApi = (!empty($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')) || $this->isPost();
-            if ($isApi) {
-                $this->json(['ok' => false, 'message' => 'Unauthorized or session expired. Please sign in.'], 401);
-            }
-            $this->setFlash('error', 'Sign in with a store manager account to open inventory.');
-            $this->redirect('/login');
-        }
+        $this->requireRole('store_manager', 'Access denied. The Store / Inventory workspace is reserved for Store Managers.');
+        $this->inventory = new Inventory();
     }
 
     public function index(): void
     {
-        $inventory = new Inventory();
         $productModel = new Product();
 
         $this->view('inventory/index', [
             'title'              => 'Inventory Management',
-            'inventoryItems'     => $inventory->getInventoryItems(),
-            'inventorySummary'   => $inventory->getSummary(),
-            'inventoryLocations' => $inventory->getLocations(),
+            'inventoryItems'     => $this->inventory->getInventoryItems(),
+            'inventorySummary'   => $this->inventory->getSummary(),
+            'inventoryLocations' => $this->inventory->getLocations(),
             'categories'         => $productModel->categories(),
+            'kpis'               => $this->inventory->kpis(),
+            'products'           => $this->inventory->productsList(),
         ], 'inventory');
     }
 
@@ -55,8 +52,7 @@ class InventoryController extends Controller
                 throw new \InvalidArgumentException('Quantity must be greater than zero.');
             }
 
-            $inventory = new Inventory();
-            $result = $inventory->addStock(
+            $result = $this->inventory->addStock(
                 $productId,
                 $quantity,
                 $location !== '' ? $location : 'Main Warehouse',
@@ -68,7 +64,34 @@ class InventoryController extends Controller
                 'ok'      => true,
                 'message' => "Successfully added {$quantity} units to {$result['partNo']}.",
                 'item'    => $result,
-                'summary' => $inventory->getSummary(),
+                'items'   => $this->inventory->getInventoryItems(),
+                'summary' => $this->inventory->getSummary(),
+                'kpis'    => $this->inventory->kpis(),
+            ];
+        });
+    }
+
+    public function stockIn(): void
+    {
+        $this->recordStockIn();
+    }
+
+    public function adjust(): void
+    {
+        $this->api(function (array $data): array {
+            $productId = (int) ($data['product_id'] ?? 0);
+            $newQty = (int) ($data['quantity'] ?? 0);
+            $notes = trim((string) ($data['notes'] ?? ''));
+            $userId = (int) ($_SESSION['user_id'] ?? 0);
+
+            $result = $this->inventory->adjustStock($productId, $newQty, $notes, $userId ?: null);
+            return [
+                'ok' => true,
+                'message' => 'Inventory adjusted successfully.',
+                'result' => $result,
+                'items' => $this->inventory->getInventoryItems(),
+                'summary' => $this->inventory->getSummary(),
+                'kpis' => $this->inventory->kpis(),
             ];
         });
     }
@@ -106,8 +129,7 @@ class InventoryController extends Controller
                 throw new \InvalidArgumentException('Initial stock cannot be negative.');
             }
 
-            $inventory = new Inventory();
-            $newItem = $inventory->createItem([
+            $newItem = $this->inventory->createItem([
                 'product_code'     => $productCode,
                 'name'             => $name,
                 'category_id'      => $categoryId,
@@ -123,7 +145,29 @@ class InventoryController extends Controller
                 'ok'      => true,
                 'message' => "Item '{$name}' ({$productCode}) created successfully.",
                 'item'    => $newItem,
-                'summary' => $inventory->getSummary(),
+                'items'   => $this->inventory->getInventoryItems(),
+                'summary' => $this->inventory->getSummary(),
+                'kpis'    => $this->inventory->kpis(),
+            ];
+        });
+    }
+
+    public function writeOff(): void
+    {
+        $this->api(function (array $data): array {
+            $productId = (int) ($data['product_id'] ?? 0);
+            $qty = (int) ($data['quantity'] ?? 0);
+            $reason = trim((string) ($data['reason'] ?? $data['notes'] ?? ''));
+            $userId = (int) ($_SESSION['user_id'] ?? 0);
+
+            $result = $this->inventory->writeOffStock($productId, $qty, $reason, $userId ?: null);
+            return [
+                'ok' => true,
+                'message' => 'Stock written off successfully.',
+                'result' => $result,
+                'items' => $this->inventory->getInventoryItems(),
+                'summary' => $this->inventory->getSummary(),
+                'kpis' => $this->inventory->kpis(),
             ];
         });
     }
@@ -136,15 +180,24 @@ class InventoryController extends Controller
     {
         $this->api(function (array $data): array {
             $productId = (int) ($data['product_id'] ?? 0);
-            $inventory = new Inventory();
-            $inventory->deleteItem($productId);
+            $this->inventory->deleteItem($productId);
 
             return [
                 'ok'      => true,
                 'message' => 'Inventory item deleted successfully.',
-                'summary' => $inventory->getSummary(),
+                'items'   => $this->inventory->getInventoryItems(),
+                'summary' => $this->inventory->getSummary(),
+                'kpis'    => $this->inventory->kpis(),
             ];
         });
+    }
+
+    public function movements(): void
+    {
+        $this->json([
+            'ok' => true,
+            'movements' => $this->inventory->movements(30),
+        ]);
     }
 
     /**
@@ -161,6 +214,7 @@ class InventoryController extends Controller
         $token = (string) ($data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
         if ($token === '' || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token)) {
             $this->json(['ok' => false, 'message' => 'Your session expired. Refresh the page and try again.'], 419);
+            return;
         }
 
         try {

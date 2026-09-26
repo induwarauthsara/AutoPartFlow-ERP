@@ -70,7 +70,7 @@
                     '<div class="customer-contact-grid"><span class="customer-contact"><svg class="sales-icon"><use href="#sales-icon-phone"></use></svg><span>' + u.escapeHtml(customer.phone) + '</span></span>' +
                     '<span class="customer-contact"><svg class="sales-icon"><use href="#sales-icon-mail"></use></svg><span>' + u.escapeHtml(customer.email || 'No email provided') + '</span></span>' +
                     '<span class="customer-contact"><svg class="sales-icon"><use href="#sales-icon-location"></use></svg><span>' + u.escapeHtml(customer.address) + '</span></span></div>' +
-                    '<p class="rep-chip"><span class="sales-avatar sales-avatar--small">SR</span> Assigned representative: You</p></div>' +
+                    '<p class="rep-chip"><span class="sales-avatar sales-avatar--small" aria-hidden="true"><svg class="sales-icon"><use href="#sales-icon-user"></use></svg></span> Assigned representative: You</p></div>' +
                     '<div class="customer-identity__actions">' +
                         '<button class="sales-button sales-button--secondary" type="button" data-edit-customer>Edit</button>' +
                         '<button class="sales-button sales-button--danger" type="button" data-delete-customer>Delete</button>' +
@@ -122,12 +122,30 @@
             'Delete'
         ).then(function (ok) {
             if (!ok) return;
-            const index = data.customers.findIndex(function (item) { return item.id === customer.id; });
-            if (index === -1) return;
-            data.customers.splice(index, 1);
-            state.selectedId = null;
-            renderList();
-            u.showToast(customer.name + ' deleted.');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+            fetch(baseUrl.replace(/\/$/, '') + '/sales/customers/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({
+                    id: customer.databaseId || 0,
+                    customer_code: customer.id,
+                    csrf_token: csrfToken
+                })
+            }).then(function (res) { return res.json(); })
+            .then(function (json) {
+                if (json.ok) {
+                    const index = data.customers.findIndex(function (item) { return item.id === customer.id; });
+                    if (index !== -1) data.customers.splice(index, 1);
+                    state.selectedId = null;
+                    renderList();
+                    u.showToast(customer.name + ' deleted.');
+                } else {
+                    u.showToast(json.message || 'Failed to delete customer.');
+                }
+            }).catch(function () {
+                u.showToast('Network error deleting customer.');
+            });
         });
     }
 
@@ -214,35 +232,62 @@
             address: byId('customer-form-address').value.trim()
         };
 
-        if (existing) {
-            Object.assign(existing, values);
-            state.type = existing.type;
-            state.selectedId = existing.id;
-            u.showToast(existing.name + ' updated.');
-        } else {
-            const customer = Object.assign({
-                id: 'CUS-' + String(data.customers.length + 1).padStart(5, '0'),
-                active: true,
-                accountSince: new Intl.DateTimeFormat('en-LK', { month: 'long', year: 'numeric' }).format(new Date()),
-                outstanding: 0, overdue: false, highVolume: false,
-                ytdRevenue: 0, averageOrder: 0, orderCount: 0, returnRate: 0, purchases: []
-            }, values);
-            data.customers.push(customer);
-            state.type = customer.type;
-            state.selectedId = customer.id;
-            u.showToast(customer.name + ' added.');
-        }
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+        const payload = {
+            id: existing ? (existing.databaseId || 0) : 0,
+            customer_code: existing ? existing.id : '',
+            name: name,
+            customer_type: values.type,
+            phone: values.phone,
+            email: values.email,
+            address: values.address,
+            csrf_token: csrfToken
+        };
 
-        state.filter = 'all';
-        state.query = '';
-        byId('customer-search').value = '';
-        document.querySelectorAll('[data-customer-type]').forEach(function (tab) {
-            const active = tab.dataset.customerType === state.type;
-            tab.classList.toggle('customer-type-tab--active', active);
-            tab.setAttribute('aria-selected', String(active));
+        fetch(baseUrl.replace(/\/$/, '') + '/sales/customers/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(payload)
+        }).then(function (res) { return res.json(); })
+        .then(function (json) {
+            if (json.ok) {
+                if (json.customers) {
+                    data.customers = json.customers;
+                } else if (existing) {
+                    Object.assign(existing, values);
+                } else {
+                    const newId = json.customer?.code || ('CUS-' + String(data.customers.length + 1).padStart(5, '0'));
+                    const customer = Object.assign({
+                        id: newId,
+                        databaseId: json.customer?.id,
+                        active: true,
+                        accountSince: new Intl.DateTimeFormat('en-LK', { month: 'long', year: 'numeric' }).format(new Date()),
+                        outstanding: 0, overdue: false, highVolume: false,
+                        ytdRevenue: 0, averageOrder: 0, orderCount: 0, returnRate: 0, purchases: []
+                    }, values);
+                    data.customers.unshift(customer);
+                }
+                state.type = values.type;
+                state.selectedId = existing ? existing.id : (data.customers[0] ? data.customers[0].id : null);
+                u.showToast(name + (existing ? ' updated.' : ' added.'));
+
+                state.filter = 'all';
+                state.query = '';
+                byId('customer-search').value = '';
+                document.querySelectorAll('[data-customer-type]').forEach(function (tab) {
+                    const active = tab.dataset.customerType === state.type;
+                    tab.classList.toggle('customer-type-tab--active', active);
+                    tab.setAttribute('aria-selected', String(active));
+                });
+                dialog.close();
+                renderList();
+            } else {
+                u.showToast(json.message || 'Failed to save customer.');
+            }
+        }).catch(function () {
+            u.showToast('Network error saving customer.');
         });
-        dialog.close();
-        renderList();
     });
 
     renderList();

@@ -95,7 +95,7 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
         <header class="topbar">
             <div class="search-box"><input type="text" id="reportSearch" placeholder="Search employees in report..."></div>
             <div class="topbar-icons">
-                <a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div>
+                <a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <a href="<?= url('profile') ?>" class="avatar" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Admin') ?>" style="text-decoration:none;cursor:pointer;"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></a>
             </div>
         </header>
 
