@@ -26,10 +26,13 @@ class App
         $this->router->get('/catalog', 'CatalogController@index');
         $this->router->get('/catalog/compatibility', 'CatalogController@compatibility');
         $this->router->get('/catalog/details', 'CatalogController@details');
+        $this->router->post('/catalog/parts/save', 'CatalogController@savePart');
+        $this->router->post('/catalog/parts/delete', 'CatalogController@deletePart');
+        $this->router->post('/catalog/compatibility/save', 'CatalogController@saveCompatibility');
+        $this->router->post('/catalog/compatibility/delete', 'CatalogController@deleteCompatibility');
+        $this->router->get('/catalog/vehicle-data', 'CatalogController@vehicleData');
         $this->router->get('/checkout', 'OrderController@checkout');
         $this->router->post('/checkout/place', 'OrderController@placeOrder');
-        $this->router->get('/track-order', 'OrderController@track');
-        $this->router->post('/track-order', 'OrderController@track');
 
         // Sales Representative Workspace
         $this->router->get('/sales', 'SalesController@dashboard');
@@ -49,12 +52,22 @@ class App
         $this->router->post('/admin/login', 'AdminController@doLogin');       
         $this->router->get('/admin/dashboard', 'AdminController@dashboard');
         $this->router->get('/admin/users', 'AdminController@users');
+        $this->router->post('/admin/users/save', 'AdminController@saveUser');
+        $this->router->post('/admin/users/delete', 'AdminController@deleteUser');
         $this->router->get('/admin/employees', 'AdminController@employees');
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
         $this->router->get('/admin/settings', 'AdminController@settings');
-        // Inventory / Store Workspace
+        // Inventory / Store Workspace (Sashik's module)
         $this->router->get('/inventory', 'InventoryController@index');
+        $this->router->post('/inventory/stock-in', 'InventoryController@stockIn');
+        $this->router->post('/inventory/adjust', 'InventoryController@adjust');
+        $this->router->post('/inventory/write-off', 'InventoryController@writeOff');
+        $this->router->get('/inventory/movements', 'InventoryController@movements');
+
+        // Shop Customer Workspace (B2B Portal)
+        $this->router->get('/customer', 'CustomerController@dashboard');
+        $this->router->get('/customer/dashboard', 'CustomerController@dashboard');
     }
 
     public function run(): void

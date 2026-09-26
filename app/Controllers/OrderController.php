@@ -87,38 +87,4 @@ class OrderController extends Controller
             ], 500);
         }
     }
-
-    public function track(): void
-    {
-        $orderNumber = trim((string) $this->input('order_number', ''));
-
-        if (empty($orderNumber)) {
-            $this->view('orders/track', [
-                'title'       => 'Track Order | AutoPartFlow',
-                'order'       => null,
-                'orderNumber' => '',
-                'searched'    => false,
-            ], 'public');
-            return;
-        }
-
-        $orderModel = new Order();
-        $order = $orderModel->trackOrder($orderNumber);
-
-        if ($this->input('format') === 'json' || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'))) {
-            if ($order) {
-                $this->json(['status' => 'success', 'order' => $order]);
-            } else {
-                $this->json(['status' => 'error', 'message' => "No order found with number: {$orderNumber}"], 404);
-            }
-            return;
-        }
-
-        $this->view('orders/track', [
-            'title'       => "Track Order #{$orderNumber} | AutoPartFlow",
-            'order'       => $order,
-            'orderNumber' => $orderNumber,
-            'searched'    => true,
-        ], 'public');
-    }
 }

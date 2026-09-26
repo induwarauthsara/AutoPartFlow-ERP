@@ -87,3 +87,7 @@
 
     <div class="sales-toast" id="sales-toast" role="status" aria-live="polite"></div>
 </main>
+<script>
+window.SALES_REP_MOCK_DATA = window.SALES_REP_MOCK_DATA || {};
+window.SALES_REP_MOCK_DATA.customers = <?= json_encode($customers ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+</script>

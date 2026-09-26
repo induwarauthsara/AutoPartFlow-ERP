@@ -137,7 +137,7 @@ Each role has one clear shell and only sees destinations relevant to that role.
 
 ### Customer/public
 
-Header destinations: **Home, Catalog, Track Order, Cart, Sign In**. Do not expose staff dashboards, POS, inventory, reports, or admin tools. Only link to routes that exist.
+Header destinations: **Home, Catalog, Cart, Sign In**. Do not expose staff dashboards, POS, inventory, reports, or admin tools. Only link to routes that exist.
 
 ### Sales representative
 

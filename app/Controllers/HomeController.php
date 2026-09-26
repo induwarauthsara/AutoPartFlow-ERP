@@ -22,7 +22,7 @@ class HomeController extends Controller
     {
         // Already logged in? Send to the right place instead of showing the form again.
         if (!empty($_SESSION['user_id'])) {
-            $this->redirect($this->homeRouteForRole((int) ($_SESSION['role_id'] ?? 0)));
+            $this->redirect($this->homeRouteForRole((string) ($_SESSION['role_slug'] ?? '')));
         }
 
         $this->view('auth/login', [
@@ -63,9 +63,12 @@ class HomeController extends Controller
         $stmt = $db->prepare(
             "SELECT u.id, u.full_name, u.email, u.password_hash, u.role_id, u.is_active, r.slug AS role_slug
              FROM users u JOIN roles r ON r.id = u.role_id
-             WHERE (u.email = :identity OR u.username = :identity) AND u.deleted_at IS NULL LIMIT 1"
+             WHERE (u.email = :email_identity OR u.username = :username_identity) AND u.deleted_at IS NULL LIMIT 1"
         );
-        $stmt->execute(['identity' => $identity]);
+        $stmt->execute([
+            'email_identity'    => $identity,
+            'username_identity' => $identity,
+        ]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
@@ -78,7 +81,9 @@ class HomeController extends Controller
             $this->redirect('/login');
         }
 
-        session_regenerate_id(true);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
         $_SESSION['user_id']    = $user['id'];
         $_SESSION['role_id']    = $user['role_id'];
         $_SESSION['role_slug']  = $user['role_slug'];
@@ -162,18 +167,26 @@ class HomeController extends Controller
             if (in_array($roleSlug, ['owner', 'sales_rep', 'store_manager'], true)) {
                 $department = $roleSlug === 'sales_rep' ? 'sales' : ($roleSlug === 'store_manager' ? 'store' : 'admin');
                 $designation = $roleSlug === 'sales_rep' ? 'Sales Representative' : ($roleSlug === 'store_manager' ? 'Store Manager' : 'Business Owner');
+                
+                $maxEmpStmt = $db->query("SELECT MAX(CAST(SUBSTRING(employee_code, 5) AS UNSIGNED)) FROM employees WHERE employee_code LIKE 'EMP-%'");
+                $maxEmp = (int) $maxEmpStmt->fetchColumn();
+                $employeeCode = 'EMP-' . str_pad((string) max($userId, $maxEmp + 1), 5, '0', STR_PAD_LEFT);
+
                 $employee = $db->prepare(
                     'INSERT INTO employees (user_id, employee_code, designation, department, hire_date)
                      VALUES (:user_id, :employee_code, :designation, :department, CURDATE())'
                 );
                 $employee->execute([
                     'user_id' => $userId,
-                    'employee_code' => 'EMP-' . str_pad((string) $userId, 5, '0', STR_PAD_LEFT),
+                    'employee_code' => $employeeCode,
                     'designation' => $designation,
                     'department' => $department,
                 ]);
             } else {
-                $customerCode = 'CUS-' . str_pad((string) $userId, 5, '0', STR_PAD_LEFT);
+                $maxCusStmt = $db->query("SELECT MAX(CAST(SUBSTRING(customer_code, 5) AS UNSIGNED)) FROM customers WHERE customer_code LIKE 'CUS-%'");
+                $maxCus = (int) $maxCusStmt->fetchColumn();
+                $customerCode = 'CUS-' . str_pad((string) max($userId, $maxCus + 1), 5, '0', STR_PAD_LEFT);
+
                 $customer = $db->prepare(
                     "INSERT INTO customers (customer_code, customer_type, name, contact_person, phone, email)
                      VALUES (:code, 'shop', :name, :contact, :phone, :email)"
@@ -195,39 +208,46 @@ class HomeController extends Controller
             if ($db->inTransaction()) {
                 $db->rollBack();
             }
-            $this->setFlash('error', 'We could not create the account. Please review the details and try again.');
+            $this->setFlash('error', 'We could not create the account: ' . $e->getMessage());
             $this->redirect('/register');
         }
 
-        $this->setFlash('success', 'Account created. You can now sign in.');
-        $this->redirect('/login');
+        // Auto-login newly registered user directly to their role's workspace
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+        $_SESSION['user_id']   = $userId;
+        $_SESSION['role_id']   = $roleId;
+        $_SESSION['role_slug'] = $roleSlug;
+        $_SESSION['full_name'] = $fullName;
+
+        $roleLabel = match ($roleSlug) {
+            'owner' => 'Business Owner',
+            'sales_rep' => 'Sales Representative',
+            'store_manager' => 'Store Manager',
+            'shop_customer' => 'Shop Customer',
+            default => 'User',
+        };
+
+        $this->setFlash('success', 'Welcome, ' . $fullName . '! Your ' . $roleLabel . ' account has been created.');
+        $this->redirect($this->homeRouteForRole($roleSlug));
     }
 
     public function logout(): void
     {
         $_SESSION = [];
-        session_destroy();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $this->setFlash('success', 'You have been successfully signed out.');
         $this->redirect('/login');
     }
 
-    private function homeRouteForRole(string|int $role): string
+    public function homeRouteForRole(string|int|null $role): string
     {
-        if (is_int($role)) {
-            return match ($role) {
-                1 => '/admin/dashboard',
-                2 => '/sales',
-                3 => '/inventory',
-                4 => '/catalog',
-                default => '/',
-            };
-        }
-
-        return match ($role) {
-            'owner' => '/admin/dashboard',
-            'sales_rep' => '/sales',
-            'store_manager' => '/inventory',
-            'shop_customer' => '/catalog',
-            default => '/',
-        };
+        return $this->dashboardUrlForRole($role);
     }
 }

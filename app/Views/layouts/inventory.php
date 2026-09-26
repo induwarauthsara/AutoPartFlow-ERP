@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="<?= asset('css/inventory/inventory.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
 <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<meta name="csrf-token" content="<?= csrf_token() ?>">
+<meta name="base-url" content="<?= url() ?>">
 </head>
 <body class="sales-app">
     <aside class="sales-sidebar" id="sales-sidebar" aria-label="Workspace navigation">

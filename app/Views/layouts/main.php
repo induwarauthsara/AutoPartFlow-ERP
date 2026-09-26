@@ -32,7 +32,6 @@ $base = rtrim(BASE_URL, '/');
         <nav class="public-nav" aria-label="Public navigation">
             <a class="<?= $currentPath === $base . '/' || $currentPath === '/' ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
             <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
-            <a class="<?= str_contains($currentPath, '/track-order') ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
         </nav>
 
         <div class="public-actions">
@@ -45,10 +44,21 @@ $base = rtrim(BASE_URL, '/');
                 <span class="cart-count">0</span>
             </a>
             <span class="header-divider"></span>
-            <a class="sign-in-button" href="<?= url('login') ?>">
-                <span class="material-symbols-outlined">login</span>
-                Sign In
-            </a>
+            <?php if (auth_check()): ?>
+                <a class="sign-in-button sign-in-button--dashboard" href="<?= auth_dashboard_url() ?>">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <?= e(auth_dashboard_label()) ?>
+                </a>
+                <a class="sign-in-button sign-in-button--logout" href="<?= url('logout') ?>" title="Sign Out">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="logout-text">Sign Out</span>
+                </a>
+            <?php else: ?>
+                <a class="sign-in-button" href="<?= url('login') ?>">
+                    <span class="material-symbols-outlined">login</span>
+                    Sign In
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 </header>
@@ -63,7 +73,6 @@ $base = rtrim(BASE_URL, '/');
         <span>&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</span>
         <div>
             <a href="<?= url('catalog') ?>">Catalog</a>
-            <a href="<?= url('track-order') ?>">Track Order</a>
         </div>
     </div>
 </footer>

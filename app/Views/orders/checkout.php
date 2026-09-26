@@ -161,10 +161,7 @@
         </div>
 
         <div class="modal-action-buttons">
-            <button class="btn-modal-primary" type="button" onclick="alert('Order tracking status: Pending Confirmation by store warehouse.')">
-                Track Order Status
-            </button>
-            <button class="btn-modal-secondary" type="button" onclick="closeSuccessModal()">
+            <button class="btn-modal-primary" type="button" onclick="closeSuccessModal()">
                 Continue Shopping
             </button>
         </div>

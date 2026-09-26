@@ -133,7 +133,7 @@
         const customer = data.customers[event.target.value];
         const meta = byId('customer-meta');
         if (!customer) {
-            meta.innerHTML = '<span class="sales-avatar">?</span><div><strong>No customer selected</strong><span>Choose a customer account to continue</span></div>';
+            meta.innerHTML = '<span class="sales-avatar" aria-hidden="true"><svg class="sales-icon"><use href="#sales-icon-user"></use></svg></span><div><strong>No customer selected</strong><span>Choose a customer account to continue</span></div>';
             return;
         }
         meta.innerHTML = '<span class="sales-avatar">' + u.escapeHtml(customer.initials) + '</span><div><strong>' +

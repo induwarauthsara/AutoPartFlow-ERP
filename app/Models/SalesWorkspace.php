@@ -19,6 +19,20 @@ class SalesWorkspace extends Model
         return $id === false ? null : (int) $id;
     }
 
+    public function orderIdByNumber(string $number): int
+    {
+        $stmt = $this->db->prepare('SELECT id FROM orders WHERE order_number = :num AND deleted_at IS NULL LIMIT 1');
+        $stmt->execute(['num' => $number]);
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    public function customerIdByCode(string $code): int
+    {
+        $stmt = $this->db->prepare('SELECT id FROM customers WHERE customer_code = :code AND deleted_at IS NULL LIMIT 1');
+        $stmt->execute(['code' => $code]);
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
     public function products(): array
     {
         $rows = $this->db->query(
@@ -191,6 +205,9 @@ class SalesWorkspace extends Model
         }
 
         $id = (int) ($data['id'] ?? 0);
+        if ($id === 0 && !empty($data['customer_code'])) {
+            $id = $this->customerIdByCode((string) $data['customer_code']);
+        }
         $this->db->beginTransaction();
         try {
             if ($id > 0) {

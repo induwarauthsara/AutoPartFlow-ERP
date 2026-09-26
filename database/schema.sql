@@ -673,12 +673,17 @@ INSERT INTO settings (setting_key, setting_value, setting_group, description) VA
 ('invoice_footer',   'Thank you for your business!', 'invoice', 'Invoice footer text'),
 ('low_stock_alert',  '1', 'inventory', 'Enable low stock notifications');
 
--- Default admin user (password: admin123 — change immediately in production)
-INSERT INTO users (role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 'admin', 'admin@smartauto.lk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+94 77 000 0001');
+-- Default role seed users (passwords: admin123, sales123, store123, customer123)
+INSERT INTO users (id, role_id, username, email, password_hash, full_name, phone) VALUES
+(1, 1, 'admin',        'admin@smartauto.lk',    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+94 77 000 0001'),
+(2, 2, 'salesrep',     'sales@smartauto.lk',    '$2y$10$3lE7etljcCJny6YNXONCAe3B3TLFVEsI19SunzOvRNTkeC0aGJZMq', 'Sunil Perera',         '+94 77 000 0002'),
+(3, 3, 'storemanager', 'store@smartauto.lk',    '$2y$10$5aMskCJvrPv3Mcf3B/n5Qelnnez3fTIJ8r.XhvoeMz0T2O9UcEy2S', 'Kamal Fernando',       '+94 77 000 0003'),
+(4, 4, 'shopcustomer', 'customer@smartauto.lk', '$2y$10$cVni8gJI7slnbjY.MVikuuDcvUaYfGVqS6.KpHi67V/7tjMjJj.ye', 'City Auto Works',      '+94 77 111 0001');
 
 INSERT INTO employees (user_id, employee_code, designation, department, hire_date, commission_rate) VALUES
-(1, 'EMP-001', 'Owner / Administrator', 'admin', CURDATE(), 0.00);
+(1, 'EMP-001', 'Owner / Administrator', 'admin', CURDATE(), 0.00),
+(2, 'EMP-002', 'Sales Representative', 'sales', CURDATE(), 2.50),
+(3, 'EMP-003', 'Store Manager', 'store', CURDATE(), 0.00);
 
 -- Product categories
 INSERT INTO categories (name, slug, description) VALUES

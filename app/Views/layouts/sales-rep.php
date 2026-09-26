@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="<?= asset('css/sales-rep/customers.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
 <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<meta name="csrf-token" content="<?= csrf_token() ?>">
+<meta name="base-url" content="<?= url() ?>">
 </head>
 <body class="sales-app">
     <a class="sales-skip" href="#sales-main">Skip to content</a>

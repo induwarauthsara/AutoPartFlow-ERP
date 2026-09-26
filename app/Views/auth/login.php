@@ -62,7 +62,38 @@
             </button>
         </form>
 
-        <p class="auth-switch">New to AutoPartFlow? <a href="<?= url('register') ?>">Create an account</a></p>
+        <!-- Quick Demo Role Accounts for Testing RBAC -->
+        <div class="demo-accounts-box" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--outline-variant, #e2e8f0); text-align: left;">
+            <p style="font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em;">
+                Quick Demo Accounts (Click to Fill)
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button type="button" class="btn-demo-role" onclick="fillDemo('admin', 'admin123')" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; cursor: pointer; text-align: left; font-family: inherit;">
+                    <strong style="font-size: 12px; color: #0f172a;">Admin / Owner</strong>
+                    <span style="font-size: 11px; color: #64748b;">admin &bull; admin123</span>
+                </button>
+                <button type="button" class="btn-demo-role" onclick="fillDemo('salesrep', 'sales123')" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; cursor: pointer; text-align: left; font-family: inherit;">
+                    <strong style="font-size: 12px; color: #0f172a;">Sales Rep</strong>
+                    <span style="font-size: 11px; color: #64748b;">salesrep &bull; sales123</span>
+                </button>
+                <button type="button" class="btn-demo-role" onclick="fillDemo('storemanager', 'store123')" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; cursor: pointer; text-align: left; font-family: inherit;">
+                    <strong style="font-size: 12px; color: #0f172a;">Store Manager</strong>
+                    <span style="font-size: 11px; color: #64748b;">storemanager &bull; store123</span>
+                </button>
+                <button type="button" class="btn-demo-role" onclick="fillDemo('shopcustomer', 'customer123')" style="display: flex; flex-direction: column; align-items: flex-start; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; cursor: pointer; text-align: left; font-family: inherit;">
+                    <strong style="font-size: 12px; color: #0f172a;">Shop Customer</strong>
+                    <span style="font-size: 11px; color: #64748b;">shopcustomer &bull; customer123</span>
+                </button>
+            </div>
+        </div>
 
+        <script>
+            function fillDemo(username, password) {
+                document.getElementById('username').value = username;
+                document.getElementById('password').value = password;
+            }
+        </script>
+
+        <p class="auth-switch">New to AutoPartFlow? <a href="<?= url('register') ?>">Create an account</a></p>
     </div>
 </div>

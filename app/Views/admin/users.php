@@ -65,6 +65,8 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
 <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
 <link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
+<meta name="csrf-token" content="<?= csrf_token() ?>">
+<meta name="base-url" content="<?= url() ?>">
 </head>
 <body>
 <div class="app-shell">
@@ -77,6 +79,8 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
 <a class="nav-link" href="<?= url('admin/employees') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Zm16-7h4v7h-4v-7Z"/></svg>Employees</a>
 <a class="nav-link" href="<?= url('admin/notifications') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>Notifications</a>
 <a class="nav-link" href="<?= url('admin/settings') ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>Settings</a>
+<a class="nav-link" href="<?= url() ?>"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Public Home</a>
+<a class="nav-link" href="<?= url('logout') ?>" style="color:#fca5a5;"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>Sign Out</a>
 </nav>
         <div class="sidebar-footer">
             <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div>
@@ -126,18 +130,28 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
             <div class="card">
                 <div class="card-head"><h3>System Users</h3></div>
                 <table>
-                    <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
-                    <tbody>
+                    <thead><tr><th>User</th><th>Role</th><th>Department</th><th>Status</th><th>Last Login</th><th style="text-align:right;">Actions</th></tr></thead>
+                    <tbody id="users-table-body">
                     <?php foreach ($rows as $u): ?>
-                        <tr>
+                        <tr id="user-row-<?= (int) $u['id'] ?>">
                             <td><div class="table-user"><div class="avatar"><?= strtoupper(substr($u['full_name'],0,1)) ?></div><div><strong><?= e($u['full_name']) ?></strong><br><span style="color:var(--slate-500);font-size:11.5px;"><?= e($u['email']) ?></span></div></div></td>
                             <td><?= e($u['role_name']) ?></td>
+                            <td><?= e(ucfirst($u['department'] ?? '—')) ?></td>
                             <td><span class="badge <?= $u['is_active'] ? 'active' : 'suspended' ?>"><?= $u['is_active'] ? 'Active' : 'Suspended' ?></span></td>
                             <td><?= $u['last_login_at'] ? date('M j, g:i A', strtotime($u['last_login_at'])) : 'Never' ?></td>
-                            <td><a href="#" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:var(--slate-500);text-decoration:none;" onmouseover="this.style.background='var(--slate-100)'" onmouseout="this.style.background='transparent'" title="Edit user"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a></td>
+                            <td style="text-align:right;white-space:nowrap;">
+                                <button type="button" class="btn-action btn-edit-user" data-user='<?= htmlspecialchars(json_encode($u), ENT_QUOTES) ?>' title="Edit user" style="border:none;background:transparent;cursor:pointer;color:var(--indigo-500);padding:4px 6px;border-radius:6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                                <?php if (($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? 0)): ?>
+                                    <button type="button" class="btn-action btn-delete-user" data-id="<?= (int) $u['id'] ?>" data-name="<?= e($u['full_name']) ?>" title="Deactivate user" style="border:none;background:transparent;cursor:pointer;color:var(--red);padding:4px 6px;border-radius:6px;margin-left:4px;">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
-                    <?php if (!$rows): ?><tr><td colspan="5">No users found.</td></tr><?php endif; ?>
+                    <?php if (!$rows): ?><tr><td colspan="6">No users found.</td></tr><?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -146,30 +160,241 @@ td{padding:12px;border-bottom:1px solid var(--slate-100);font-size:13px;}
                 <div class="card-head"><h3>Security Audit Log</h3><a href="#">Export CSV</a></div>
                 <div class="log-item">
                     <div class="log-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3a5 5 0 1 0 4 8h5v3h3v-3h2V8H13a5 5 0 0 0-5-5Zm-2 5a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z"/></svg></div>
-                    <div><strong>Admin</strong> changed permissions for role Warehouse Staff.<div class="log-ip">IP: 192.168.1.45 · 10 mins ago</div></div>
+                    <div><strong>Admin</strong> logged in and reviewed system user accounts.<div class="log-ip">IP: <?= e($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1') ?> · Just now</div></div>
                 </div>
                 <div class="log-item">
                     <div class="log-icon red"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21 12 2l11 19H1Zm10-4h2v2h-2v-2Zm0-7h2v5h-2v-5Z"/></svg></div>
-                    <div>Failed login attempt for user alice.s@autopartflow.com.<div class="log-ip">IP: 45.33.12.98 (External) · 1 hour ago</div></div>
-                </div>
-                <div class="log-item">
-                    <div class="log-icon"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4Z"/></svg></div>
-                    <div>System Admin created new user account mike.t@autopartflow.com.<div class="log-ip">IP: 10.0.0.5 · Yesterday, 16:30</div></div>
+                    <div>Failed login attempt for user demo@autopartflow.com.<div class="log-ip">IP: 45.33.12.98 (External) · 1 hour ago</div></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div id="addUserModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);align-items:center;justify-content:center;z-index:50;">
-    <div class="card" style="width:400px;max-width:92vw;">
-        <div class="card-head"><h3>Add New User</h3><span style="cursor:pointer;" onclick="document.getElementById('addUserModal').style.display='none'">✕</span></div>
-        <p style="color:var(--slate-500);font-size:13px;">User creation is not available yet.</p>
-        <button class="btn" style="width:100%;" onclick="document.getElementById('addUserModal').style.display='none'">Close</button>
+
+<!-- Add / Edit User Modal Dialog -->
+<div id="userModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);align-items:center;justify-content:center;z-index:999;padding:16px;">
+    <div class="card" style="width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,.2);margin:0;">
+        <div class="card-head">
+            <h3 id="userModalTitle">Add New User</h3>
+            <span style="cursor:pointer;font-size:18px;color:var(--slate-500);" onclick="closeUserModal()">✕</span>
+        </div>
+        <form id="userForm" style="display:flex;flex-direction:column;gap:12px;">
+            <input type="hidden" id="modal-user-id" name="id" value="0">
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Full Name *</label>
+                    <input type="text" id="modal-user-name" name="full_name" required style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Username</label>
+                    <input type="text" id="modal-user-uname" name="username" placeholder="Auto-generated if empty" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Email Address *</label>
+                    <input type="email" id="modal-user-email" name="email" required style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Phone Number</label>
+                    <input type="tel" id="modal-user-phone" name="phone" placeholder="07XXXXXXXX" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">System Role *</label>
+                    <select id="modal-user-role" name="role_id" required style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;background:#fff;">
+                        <?php foreach (($roles ?? []) as $r): ?>
+                            <option value="<?= (int) $r['id'] ?>"><?= e($r['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Department</label>
+                    <select id="modal-user-dept" name="department" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;background:#fff;">
+                        <option value="sales">Sales</option>
+                        <option value="store">Store / Inventory</option>
+                        <option value="admin">Administration</option>
+                        <option value="delivery">Delivery</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;">
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Designation / Job Title</label>
+                    <input type="text" id="modal-user-desig" name="designation" placeholder="e.g. Sales Representative" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Base Salary (Rs.)</label>
+                    <input type="number" id="modal-user-salary" name="base_salary" step="0.01" min="0" placeholder="0.00" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px;">
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Password <span id="pwd-hint" style="font-weight:normal;color:var(--slate-500);">(Min 6 chars)</span></label>
+                    <input type="password" id="modal-user-password" name="password" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;">
+                </div>
+                <div>
+                    <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--slate-500);">Account Status</label>
+                    <select id="modal-user-active" name="is_active" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--slate-300);font-size:13px;background:#fff;">
+                        <option value="1">Active</option>
+                        <option value="0">Suspended</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;border-top:1px solid var(--slate-100);padding-top:14px;">
+                <button type="button" class="btn" onclick="closeUserModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="userSubmitBtn">Save User</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<div id="admin-toast" style="position:fixed;bottom:24px;right:24px;background:var(--navy-900);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);display:none;z-index:9999;"></div>
+
 <script src="<?= asset('js/admin-charts.js') ?>"></script>
 <script>
 drawDonut('userDonut', <?= count($rows) ?>, Math.max(<?= count($rows) ?>, 1));
+
+function showAdminToast(msg) {
+    const toast = document.getElementById('admin-toast');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3200);
+}
+
+function openAddUserModal() {
+    document.getElementById('userForm').reset();
+    document.getElementById('modal-user-id').value = '0';
+    document.getElementById('userModalTitle').textContent = 'Add New Staff User';
+    document.getElementById('pwd-hint').textContent = '(Min 6 chars, required)';
+    document.getElementById('modal-user-password').required = true;
+    document.getElementById('userModal').style.display = 'flex';
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+function openEditUserModal(user) {
+    document.getElementById('userForm').reset();
+    document.getElementById('modal-user-id').value = user.id;
+    document.getElementById('userModalTitle').textContent = 'Edit User — ' + user.full_name;
+    document.getElementById('modal-user-name').value = user.full_name || '';
+    document.getElementById('modal-user-uname').value = user.username || '';
+    document.getElementById('modal-user-email').value = user.email || '';
+    document.getElementById('modal-user-phone').value = user.phone || '';
+    document.getElementById('modal-user-role').value = user.role_id || '1';
+    document.getElementById('modal-user-dept').value = user.department || 'sales';
+    document.getElementById('modal-user-desig').value = user.designation || '';
+    document.getElementById('modal-user-salary').value = user.base_salary || '0';
+    document.getElementById('modal-user-active').value = user.is_active ? '1' : '0';
+    document.getElementById('modal-user-password').value = '';
+    document.getElementById('modal-user-password').required = false;
+    document.getElementById('pwd-hint').textContent = '(Leave empty to keep current)';
+    document.getElementById('userModal').style.display = 'flex';
+}
+
+document.querySelectorAll('.btn-edit-user').forEach(btn => {
+    btn.addEventListener('click', () => {
+        try {
+            const user = JSON.parse(btn.getAttribute('data-user'));
+            openEditUserModal(user);
+        } catch(e) {
+            console.error(e);
+        }
+    });
+});
+
+document.querySelectorAll('.btn-delete-user').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        if (!confirm('Are you sure you want to deactivate account for ' + name + '?')) return;
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const baseUrl = (document.querySelector('meta[name="base-url"]')?.content || '/').replace(/\/$/, '');
+
+        fetch(baseUrl + '/admin/users/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({ id: Number(id), csrf_token: csrfToken })
+        }).then(res => res.json())
+        .then(json => {
+            if (json.ok) {
+                showAdminToast(json.message);
+                const row = document.getElementById('user-row-' + id);
+                if (row) {
+                    const badge = row.querySelector('.badge');
+                    if (badge) {
+                        badge.className = 'badge suspended';
+                        badge.textContent = 'Suspended';
+                    }
+                }
+                setTimeout(() => { location.reload(); }, 1000);
+            } else {
+                alert(json.message || 'Failed to deactivate user.');
+            }
+        }).catch(() => {
+            alert('Network error deactivating user.');
+        });
+    });
+});
+
+document.getElementById('userForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const baseUrl = (document.querySelector('meta[name="base-url"]')?.content || '/').replace(/\/$/, '');
+
+    const payload = {
+        id: Number(document.getElementById('modal-user-id').value || 0),
+        full_name: document.getElementById('modal-user-name').value.trim(),
+        username: document.getElementById('modal-user-uname').value.trim(),
+        email: document.getElementById('modal-user-email').value.trim(),
+        phone: document.getElementById('modal-user-phone').value.trim(),
+        role_id: Number(document.getElementById('modal-user-role').value),
+        department: document.getElementById('modal-user-dept').value,
+        designation: document.getElementById('modal-user-desig').value.trim(),
+        base_salary: Number(document.getElementById('modal-user-salary').value || 0),
+        password: document.getElementById('modal-user-password').value,
+        is_active: Number(document.getElementById('modal-user-active').value),
+        csrf_token: csrfToken
+    };
+
+    const submitBtn = document.getElementById('userSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    fetch(baseUrl + '/admin/users/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        body: JSON.stringify(payload)
+    }).then(res => res.json())
+    .then(json => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save User';
+        if (json.ok) {
+            closeUserModal();
+            showAdminToast(json.message);
+            setTimeout(() => { location.reload(); }, 900);
+        } else {
+            alert(json.message || 'Failed to save user.');
+        }
+    }).catch(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save User';
+        alert('Network error saving user.');
+    });
+});
+
+// Hook top "+ Add User" button
+document.querySelector('.page-head .btn-primary').onclick = openAddUserModal;
 </script>
 </body>
 </html>

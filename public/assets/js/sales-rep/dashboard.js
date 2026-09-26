@@ -65,7 +65,7 @@
         if (!list) return;
         list.innerHTML = (data.recentSales || []).map(function (sale) {
             return '<a class="recent-sale-item" href="' + u.escapeHtml(page.dataset.ordersUrl) + '">' +
-                '<span class="sales-avatar">Rs</span>' +
+                '<span class="sales-avatar" aria-hidden="true"><svg class="sales-icon"><use href="#sales-icon-money"></use></svg></span>' +
                 '<div><strong>' + u.escapeHtml(sale.id) + '</strong><span>' + u.escapeHtml(sale.customer) + '</span></div>' +
                 '<span class="sales-badge ' + u.statusBadgeClass(sale.status) + '">' + u.escapeHtml(u.money(sale.total)) + '</span></a>';
         }).join('');

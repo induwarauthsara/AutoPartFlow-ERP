@@ -57,6 +57,10 @@ button, a, input, select, textarea { accent-color: var(--sales-primary); }
 .hero-register { background: var(--sales-primary); color: white; }
 .sales-header__brand { display: flex; align-items: center; gap: 10px; }
 .public-nav a { flex-shrink: 0; }
+.sign-in-button--dashboard { background: #002045; border: 1px solid rgba(255, 255, 255, 0.2); }
+.sign-in-button--dashboard:hover { background: #0c3360; }
+.sign-in-button--logout { background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.9); padding: 10px 12px; }
+.sign-in-button--logout:hover { background: rgba(220, 38, 38, 0.85); color: #fff; }
 @media (max-width: 900px) {
     .public-header__inner { flex-wrap: wrap; padding: 12px 0; gap: 12px; }
     .public-nav { display: flex; order: 3; width: 100%; overflow-x: auto; gap: 20px; padding: 8px 0; justify-content: flex-start; }
