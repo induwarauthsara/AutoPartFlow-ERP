@@ -63,9 +63,9 @@ class HomeController extends Controller
         $stmt = $db->prepare(
             "SELECT u.id, u.full_name, u.email, u.password_hash, u.role_id, u.is_active, r.slug AS role_slug
              FROM users u JOIN roles r ON r.id = u.role_id
-             WHERE (u.email = :identity OR u.username = :identity) AND u.deleted_at IS NULL LIMIT 1"
+             WHERE (u.email = :identity1 OR u.username = :identity2) AND u.deleted_at IS NULL LIMIT 1"
         );
-        $stmt->execute(['identity' => $identity]);
+        $stmt->execute(['identity1' => $identity, 'identity2' => $identity]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
@@ -83,6 +83,24 @@ class HomeController extends Controller
         $_SESSION['role_id']    = $user['role_id'];
         $_SESSION['role_slug']  = $user['role_slug'];
         $_SESSION['full_name']  = $user['full_name'];
+        $_SESSION['customer_id'] = null;
+
+        // A shop-customer account is linked to its customer record at login.
+        // This keeps My Orders, checkout and tracking scoped to the signed-in account.
+        if ((string) $user['role_slug'] === 'shop_customer') {
+            $customerStmt = $db->prepare(
+                "SELECT id FROM customers
+                 WHERE email = :email
+                   AND customer_type = 'shop'
+                   AND deleted_at IS NULL
+                   AND is_active = 1
+                 ORDER BY id DESC
+                 LIMIT 1"
+            );
+            $customerStmt->execute(['email' => $user['email']]);
+            $customerId = $customerStmt->fetchColumn();
+            $_SESSION['customer_id'] = $customerId !== false ? (int) $customerId : null;
+        }
 
         $db->prepare("UPDATE users SET last_login_at = NOW() WHERE id = :id")
            ->execute(['id' => $user['id']]);
@@ -201,6 +219,27 @@ class HomeController extends Controller
 
         $this->setFlash('success', 'Account created. You can now sign in.');
         $this->redirect('/login');
+    }
+
+    public function help(): void
+    {
+        $this->view('home/help', [
+            'title' => 'Help Center | AutoPartFlow',
+        ], 'public');
+    }
+
+    public function privacy(): void
+    {
+        $this->view('home/privacy', [
+            'title' => 'Privacy Policy | AutoPartFlow',
+        ], 'public');
+    }
+
+    public function terms(): void
+    {
+        $this->view('home/terms', [
+            'title' => 'Terms of Service | AutoPartFlow',
+        ], 'public');
     }
 
     public function logout(): void

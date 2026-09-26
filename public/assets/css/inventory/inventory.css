@@ -82,6 +82,43 @@
     flex: 0 0 auto;
 }
 
+.inventory-filter-menu {
+    position: relative;
+}
+
+.inventory-filter-options {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 5;
+    min-width: 170px;
+    padding: 6px;
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: var(--sales-radius-md);
+    background: var(--sales-surface-lowest);
+    box-shadow: var(--sales-shadow-overlay);
+}
+
+.inventory-filter-options button {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--sales-radius-sm);
+    color: var(--sales-on-surface);
+    background: transparent;
+    text-align: left;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.inventory-filter-options button:hover,
+.inventory-filter-options button[aria-checked="true"] {
+    color: var(--sales-primary);
+    background: var(--sales-surface-low);
+    font-weight: 700;
+}
+
 .inventory-table-card {
     max-width: 1640px;
     margin: 0 auto;
@@ -150,7 +187,27 @@
 }
 
 .inventory-table__action {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 184px;
+}
+
+.inventory-table__action .sales-button--compact {
+    min-height: 32px;
+    padding: 5px 8px;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.inventory-table__action .sales-icon-button--danger {
+    color: var(--sales-error);
+}
+
+.inventory-table__action .sales-icon-button--danger:hover {
+    color: var(--sales-on-primary);
+    background: var(--sales-error);
 }
 
 .inventory-status {
