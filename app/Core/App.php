@@ -23,6 +23,7 @@ class App
         $this->router->get('/register', 'HomeController@register');
         $this->router->post('/register', 'HomeController@doRegister');
         $this->router->get('/logout', 'HomeController@logout');
+        $this->router->get('/customer/dashboard', 'CustomerController@dashboard');
         $this->router->get('/catalog', 'CatalogController@index');
         $this->router->get('/catalog/compatibility', 'CatalogController@compatibility');
         $this->router->get('/catalog/details', 'CatalogController@details');

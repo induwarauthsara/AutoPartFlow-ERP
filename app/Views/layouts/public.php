@@ -18,6 +18,7 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
     <link rel="stylesheet" href="<?= asset('css/public/finder.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/public/delivery.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/public/pages.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/public/customer-dashboard.css') ?>">
     <script>
         window.APP_CONFIG = {
             baseUrl: '<?= rtrim(url(), '/') ?>'
@@ -40,6 +41,7 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
             <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
             <a class="<?= str_contains($currentPath, '/track-order') ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
             <?php if ($isShopCustomer): ?>
+                <a class="<?= str_contains($currentPath, '/customer/dashboard') ? 'active' : '' ?>" href="<?= url('customer/dashboard') ?>">Dashboard</a>
                 <a class="<?= str_contains($currentPath, '/orders') || str_contains($currentPath, '/my-orders') ? 'active' : '' ?>" href="<?= url('orders') ?>">My Orders</a>
             <?php endif; ?>
         </nav>
@@ -54,9 +56,9 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
                 <span class="cart-count">0</span>
             </a>
             <span class="header-divider"></span>
-            <a class="sign-in-button" href="<?= $isShopCustomer ? url('orders') : url('login') ?>">
+            <a class="sign-in-button" href="<?= $isShopCustomer ? url('customer/dashboard') : url('login') ?>">
                 <span class="material-symbols-outlined"><?= $isShopCustomer ? 'person' : 'login' ?></span>
-                <?= $isShopCustomer ? 'My Orders' : 'Sign In' ?>
+                <?= $isShopCustomer ? 'My Dashboard' : 'Sign In' ?>
             </a>
         </div>
     </div>
