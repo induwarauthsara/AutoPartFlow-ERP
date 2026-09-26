@@ -64,13 +64,21 @@ class App
         $this->router->get('/admin/dashboard', 'AdminController@dashboard');
         $this->router->get('/admin/users', 'AdminController@users');
         $this->router->get('/admin/employees', 'AdminController@employees');
+        $this->router->post('/admin/employees/store', 'AdminController@employeeStore');
+        $this->router->post('/admin/employees/update', 'AdminController@employeeUpdate');
+        $this->router->post('/admin/employees/delete', 'AdminController@employeeDelete');
         $this->router->get('/admin/suppliers', 'AdminController@suppliers');
         $this->router->get('/admin/purchases', 'AdminController@purchases');
         $this->router->post('/admin/purchases/status', 'AdminController@updatePurchaseStatus');
         $this->router->post('/admin/suppliers', 'AdminController@createSupplier');
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
+        $this->router->post('/admin/notifications/store', 'AdminController@notificationStore');
+        $this->router->post('/admin/notifications/read', 'AdminController@notificationRead');
+        $this->router->post('/admin/notifications/read-all', 'AdminController@notificationReadAll');
+        $this->router->post('/admin/notifications/delete', 'AdminController@notificationDelete');
         $this->router->get('/admin/settings', 'AdminController@settings');
+        $this->router->post('/admin/settings/save', 'AdminController@settingsSave');
         // Inventory / Store Workspace
         $this->router->get('/inventory', 'InventoryController@index');
         $this->router->post('/inventory/stock-in', 'InventoryController@recordStockIn');
