@@ -12,93 +12,122 @@ class Product extends Model
     protected string $table = 'products';
 
     /**
-     * Get catalog products based on search, categories, brands, and sort filters.
+ * Get catalog products based on search, categories, brands, and sort filters.
+ */
+public function catalog(array $filters = []): array
+{
+    $sql = "
+        SELECT
+            p.id,
+            p.product_code,
+            p.barcode,
+            p.name,
+            p.description,
+            p.unit,
+            p.cost_price,
+            p.selling_price,
+            p.wholesale_price,
+            p.tax_rate,
+            p.warranty_months,
+            p.specifications,
+            p.image_path,
+            c.id AS category_id,
+            c.name AS category,
+            b.id AS brand_id,
+            b.name AS brand,
+            COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
+            COALESCE(i.reorder_level, 0) AS reorder_level
+        FROM products p
+        INNER JOIN categories c ON c.id = p.category_id
+        LEFT JOIN brands b ON b.id = p.brand_id
+        LEFT JOIN inventory i ON i.product_id = p.id
+        WHERE p.is_active = 1
+          AND p.deleted_at IS NULL
+          AND c.is_active = 1
+          AND c.deleted_at IS NULL
+    ";
+
+    $params = [];
+
+    /*
+     * Search
+     *
+     * Use a separate placeholder for every LIKE condition.
+     * This avoids PDO HY093 errors caused by reusing :search.
      */
-    public function catalog(array $filters = []): array
-    {
-        $sql = "
-            SELECT
-                p.id,
-                p.product_code,
-                p.barcode,
-                p.name,
-                p.description,
-                p.unit,
-                p.cost_price,
-                p.selling_price,
-                p.wholesale_price,
-                p.tax_rate,
-                p.warranty_months,
-                p.specifications,
-                p.image_path,
-                c.id AS category_id,
-                c.name AS category,
-                b.id AS brand_id,
-                b.name AS brand,
-                COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
-                COALESCE(i.reorder_level, 0) AS reorder_level
-            FROM products p
-            INNER JOIN categories c ON c.id = p.category_id
-            LEFT JOIN brands b ON b.id = p.brand_id
-            LEFT JOIN inventory i ON i.product_id = p.id
-            WHERE p.is_active = 1
-              AND p.deleted_at IS NULL
-              AND c.is_active = 1
-              AND c.deleted_at IS NULL
+    if (!empty($filters['search'])) {
+        $sql .= "
+            AND (
+                p.name LIKE :search_name
+                OR p.product_code LIKE :search_code
+                OR p.barcode LIKE :search_barcode
+                OR p.description LIKE :search_description
+                OR c.name LIKE :search_category
+                OR b.name LIKE :search_brand
+            )
         ";
 
-        $params = [];
+        $search = '%' . trim((string) $filters['search']) . '%';
 
-        if (!empty($filters['search'])) {
-            $sql .= " AND (p.name LIKE :s1 OR p.product_code LIKE :s2 OR p.barcode LIKE :s3 OR p.description LIKE :s4 OR c.name LIKE :s5 OR b.name LIKE :s6)";
-            $term = '%' . $filters['search'] . '%';
-            $params['s1'] = $term;
-            $params['s2'] = $term;
-            $params['s3'] = $term;
-            $params['s4'] = $term;
-            $params['s5'] = $term;
-            $params['s6'] = $term;
-        }
-
-        if (!empty($filters['categories'])) {
-            $placeholders = [];
-            foreach ($filters['categories'] as $index => $category) {
-                $key = 'category_' . $index;
-                $placeholders[] = ':' . $key;
-                $params[$key] = $category;
-            }
-            $sql .= ' AND c.name IN (' . implode(', ', $placeholders) . ')';
-        }
-
-        if (!empty($filters['brands'])) {
-            $placeholders = [];
-            foreach ($filters['brands'] as $index => $brand) {
-                $key = 'brand_' . $index;
-                $placeholders[] = ':' . $key;
-                $params[$key] = $brand;
-            }
-            $sql .= ' AND b.name IN (' . implode(', ', $placeholders) . ')';
-        }
-
-        $sort = $filters['sort'] ?? 'relevance';
-        $orderBy = match ($sort) {
-            'price_asc'  => 'p.selling_price ASC, p.id ASC',
-            'price_desc' => 'p.selling_price DESC, p.id ASC',
-            'name_asc'   => 'p.name ASC, p.id ASC',
-            default      => 'p.id ASC',
-        };
-
-        $sql .= ' ORDER BY ' . $orderBy;
-
-        if (!empty($filters['limit'])) {
-            $sql .= ' LIMIT ' . (int) $filters['limit'];
-        }
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-
-        return $stmt->fetchAll();
+        $params['search_name'] = $search;
+        $params['search_code'] = $search;
+        $params['search_barcode'] = $search;
+        $params['search_description'] = $search;
+        $params['search_category'] = $search;
+        $params['search_brand'] = $search;
     }
+
+    /*
+     * Category filters
+     */
+    if (!empty($filters['categories'])) {
+        $placeholders = [];
+
+        foreach ($filters['categories'] as $index => $category) {
+            $key = 'category_' . $index;
+
+            $placeholders[] = ':' . $key;
+            $params[$key] = $category;
+        }
+
+        $sql .= ' AND c.name IN (' . implode(', ', $placeholders) . ')';
+    }
+
+    /*
+     * Brand filters
+     */
+    if (!empty($filters['brands'])) {
+        $placeholders = [];
+
+        foreach ($filters['brands'] as $index => $brand) {
+            $key = 'brand_' . $index;
+
+            $placeholders[] = ':' . $key;
+            $params[$key] = $brand;
+        }
+
+        $sql .= ' AND b.name IN (' . implode(', ', $placeholders) . ')';
+    }
+
+    /*
+     * Sorting
+     */
+    $sort = $filters['sort'] ?? 'relevance';
+
+    $orderBy = match ($sort) {
+        'price_asc'  => 'p.selling_price ASC, p.id ASC',
+        'price_desc' => 'p.selling_price DESC, p.id ASC',
+        'name_asc'   => 'p.name ASC, p.id ASC',
+        default      => 'p.id ASC',
+    };
+
+    $sql .= ' ORDER BY ' . $orderBy;
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll();
+}
 
     /**
      * Get vehicle compatibility list for a product.
@@ -391,6 +420,38 @@ class Product extends Model
             return $stmt->fetchAll();
         }
         return $this->db->query('SELECT id, vehicle_model_id, engine_code, displacement_cc, fuel_type, year_from, year_to FROM vehicle_engines WHERE is_active = 1 ORDER BY engine_code')->fetchAll();
+    }
+
+    /**
+     * Find only fields that are safe for the public product-details endpoint.
+     * Internal cost_price and wholesale_price are deliberately excluded.
+     */
+    public function findPublicByCode(string $code): ?array
+    {
+        $sql = "
+            SELECT
+                p.id, p.product_code, p.barcode, p.name, p.description,
+                p.unit, p.selling_price, p.tax_rate, p.warranty_months,
+                p.image_path, p.specifications, p.is_active,
+                c.name AS category,
+                b.name AS brand,
+                COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
+                COALESCE(i.reorder_level, 0) AS reorder_level
+            FROM products p
+            INNER JOIN categories c ON c.id = p.category_id
+            LEFT JOIN brands b ON b.id = p.brand_id
+            LEFT JOIN inventory i ON i.product_id = p.id
+            WHERE p.product_code = :code
+              AND p.is_active = 1
+              AND p.deleted_at IS NULL
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['code' => $code]);
+        $result = $stmt->fetch();
+
+        return $result ?: null;
     }
 
     /**

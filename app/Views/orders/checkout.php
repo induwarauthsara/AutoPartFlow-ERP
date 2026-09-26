@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="<?= asset('css/public/checkout.css') ?>">
     <script>
         window.APP_CONFIG = {
-            baseUrl: '<?= rtrim(url(), '/') ?>'
+            baseUrl: '<?= rtrim(url(), '/') ?>',
+            csrfToken: '<?= e(csrf_token()) ?>'
         };
     </script>
 <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
@@ -27,7 +28,7 @@
         </a>
 
         <div class="checkout-header__actions">
-            <button class="header-icon-btn" type="button" title="Help Center" onclick="alert('For assistance with your order, please contact support at +1 (800) 555-0198.')">
+            <button class="header-icon-btn" type="button" title="Help Center" onclick="window.location.href='<?= url('help') ?>'">
                 <span class="material-symbols-outlined">help</span>
             </button>
             <a class="header-icon-btn" href="<?= url('catalog') ?>" title="Cancel and return to Catalog">
@@ -60,20 +61,20 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label" for="fullName">Full Name <span class="text-error">*</span></label>
-                        <input class="form-input" id="fullName" name="fullName" placeholder="Enter your full name" required type="text">
+                        <input class="form-input" id="fullName" name="fullName" value="<?= e($customer['name'] ?? '') ?>" placeholder="Enter your full name" required type="text" <?= !empty($customer) ? 'readonly' : '' ?>>
                         <span class="error-msg hidden" id="fullNameError">Full Name is required.</span>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="phoneNumber">Phone Number <span class="text-error">*</span></label>
-                        <input class="form-input" id="phoneNumber" name="phoneNumber" placeholder="07XXXXXXXX" required type="tel" maxlength="12">
+                        <input class="form-input" id="phoneNumber" name="phoneNumber" value="<?= e($customer['phone'] ?? '') ?>" placeholder="07XXXXXXXX" required type="tel" maxlength="12" <?= !empty($customer) ? 'readonly' : '' ?>>
                         <span class="error-msg hidden" id="phoneError">Valid 10-digit Sri Lankan number required (e.g., 0712345678).</span>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="deliveryAddress">Delivery Address <span class="text-error">*</span></label>
-                    <textarea class="form-textarea" id="deliveryAddress" name="deliveryAddress" placeholder="Enter full delivery address with city" required rows="3"></textarea>
+                    <textarea class="form-textarea" id="deliveryAddress" name="deliveryAddress" placeholder="Enter full delivery address with city" required rows="3"><?= e($customer['address'] ?? '') ?></textarea>
                     <span class="error-msg hidden" id="addressError">Delivery Address is required.</span>
                 </div>
             </div>
@@ -91,12 +92,6 @@
                         <span class="payment-option__text">Cash on Delivery</span>
                         <span class="material-symbols-outlined payment-option__icon">local_atm</span>
                     </label>
-
-                    <label class="payment-option">
-                        <input type="radio" name="paymentMethod" value="card">
-                        <span class="payment-option__text">Card Payment (Online)</span>
-                        <span class="material-symbols-outlined payment-option__icon">credit_card</span>
-                    </label>
                 </div>
             </div>
         </form>
@@ -107,21 +102,12 @@
         <div class="summary-card">
             <h2 class="summary-card__title">Order Summary</h2>
 
-            <ul class="summary-items" id="summaryItemsList">
-                <!-- Dynamically populated from localStorage / default fallback -->
-                <li class="summary-item">
-                    <div class="summary-item__info">
-                        <strong class="summary-item__name">Front Brake Pad Set - Brembo</strong>
-                        <span class="summary-item__qty">Qty: 1</span>
-                    </div>
-                    <span class="summary-item__price">Rs. 4,500</span>
-                </li>
-            </ul>
+            <ul class="summary-items" id="summaryItemsList" aria-live="polite"></ul>
 
             <div class="summary-calc">
                 <div class="summary-calc__row">
                     <span>Subtotal</span>
-                    <span id="summarySubtotal">Rs. 4,500</span>
+                    <span id="summarySubtotal">Rs. 0</span>
                 </div>
                 <div class="summary-calc__row">
                     <span>Delivery Fee</span>
@@ -131,7 +117,7 @@
 
             <div class="summary-total-row">
                 <span class="summary-total__label">Total Amount</span>
-                <span class="summary-total__value" id="summaryTotal">Rs. 4,850</span>
+                <span class="summary-total__value" id="summaryTotal">Rs. 0</span>
             </div>
 
             <button class="confirm-order-btn" id="confirmOrderBtn" type="button">
@@ -152,16 +138,19 @@
         <h2 class="success-title">Order Placed Successfully!</h2>
 
         <p class="success-order-num">
-            Order #: <span class="order-code-badge" id="successOrderNumber">ORD-2026-00124</span>
+            Order #: <span class="order-code-badge" id="successOrderNumber"></span>
         </p>
 
         <div class="delivery-notice-box">
             <span class="material-symbols-outlined text-secondary">local_shipping</span>
-            <span><strong>Estimated Delivery:</strong> <span id="successDeliveryTime">Tomorrow by 2PM</span></span>
+            <span><strong>Estimated Delivery:</strong> <span id="successDeliveryTime">The store will confirm the delivery date.</span></span>
         </div>
 
         <div class="modal-action-buttons">
-            <button class="btn-modal-primary" type="button" onclick="closeSuccessModal()">
+            <button class="btn-modal-primary" type="button" id="trackOrderBtn">
+                Track Order Status
+            </button>
+            <button class="btn-modal-secondary" type="button" onclick="closeSuccessModal()">
                 Continue Shopping
             </button>
         </div>
@@ -173,9 +162,9 @@
     <div class="checkout-footer__inner">
         <div>&copy; <?= date('Y') ?> AutoPartFlow. All rights reserved.</div>
         <div class="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Help Center</a>
+            <a href="<?= url('privacy') ?>">Privacy Policy</a>
+            <a href="<?= url('terms') ?>">Terms of Service</a>
+            <a href="<?= url('help') ?>">Help Center</a>
         </div>
     </div>
 </footer>

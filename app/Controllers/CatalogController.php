@@ -96,7 +96,7 @@ class CatalogController extends Controller
             return;
         }
 
-        $product = $this->productModel->findByCode($code);
+        $product = $this->productModel->findPublicByCode($code) ?? $this->productModel->findByCode($code);
 
         if (!$product) {
             $this->json(['status' => 'error', 'message' => 'Product not found.'], 404);

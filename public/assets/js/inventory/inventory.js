@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const data = window.INVENTORY_MOCK_DATA || { items: [], locations: [], incomingPurchases: 0 };
+    const data = window.INVENTORY_DATA || window.INVENTORY_MOCK_DATA || { items: [], locations: [], incomingPurchases: 0 };
     const page = document.querySelector('[data-sales-page="inventory"]');
     if (!page) return;
 
@@ -40,7 +40,6 @@
 
     function deriveStatus(item) {
         if (item.status === 'restocking') return 'restocking';
-        if (item.qty <= 0) return 'critical';
         if (item.qty <= Math.max(1, Math.floor(item.reorderLevel / 2))) return 'critical';
         if (item.qty <= item.reorderLevel) return 'low';
         return 'optimal';
@@ -55,28 +54,27 @@
         window.clearTimeout(toastTimer);
         toastTimer = window.setTimeout(function () {
             toast.classList.remove('is-visible');
-        }, 3200);
+        }, 2800);
     }
 
     function filteredItems() {
         const query = state.query.trim().toLowerCase();
         return data.items.filter(function (item) {
-            const matchesLocation = state.location === 'All Locations' || item.location === state.location;
-            const matchesQuery = !query ||
-                item.partNo.toLowerCase().includes(query) ||
-                item.name.toLowerCase().includes(query) ||
-                (item.bin && item.bin.toLowerCase().includes(query));
             const status = deriveStatus(item);
+            const matchesLocation = state.location === 'All Locations' || item.location === state.location;
             const matchesStatus = state.statusFilter === 'all' || status === state.statusFilter;
-            return matchesLocation && matchesQuery && matchesStatus;
+            const matchesQuery = !query ||
+                item.partNo.toLowerCase().indexOf(query) !== -1 ||
+                item.name.toLowerCase().indexOf(query) !== -1 ||
+                item.bin.toLowerCase().indexOf(query) !== -1;
+            return matchesLocation && matchesStatus && matchesQuery;
         });
     }
 
     function renderKpis() {
-        const stockValue = data.items.reduce(function (total, item) {
-            return total + (item.qty * (item.unitCost || 0));
+        const stockValue = data.items.reduce(function (sum, item) {
+            return sum + (item.qty * item.unitCost);
         }, 0);
-
         const lowStock = data.items.filter(function (item) {
             const status = deriveStatus(item);
             return status === 'low' || status === 'critical';
@@ -84,12 +82,11 @@
 
         byId('inventory-stock-value').textContent = money(stockValue, true);
         byId('inventory-low-stock').textContent = String(lowStock);
-        byId('inventory-incoming').textContent = String(data.incomingPurchases || 0);
+        byId('inventory-incoming').textContent = String(data.incomingPurchases);
     }
 
     function renderLocations() {
         const host = byId('inventory-locations');
-        if (!host) return;
         host.innerHTML = data.locations.map(function (location) {
             const active = location === state.location ? ' inventory-chip--active' : '';
             return '<button class="inventory-chip' + active + '" type="button" role="tab" data-location="' +
@@ -101,7 +98,6 @@
         const rows = filteredItems();
         const body = byId('inventory-table-body');
         const empty = byId('inventory-empty');
-        if (!body) return;
 
         body.innerHTML = rows.map(function (item, index) {
             const status = deriveStatus(item);
@@ -110,41 +106,38 @@
             return '<tr class="inventory-row' + zebra + '" data-product-id="' + item.id + '">' +
                 '<td class="inventory-part">' + escapeHtml(item.partNo) + '</td>' +
                 '<td>' + escapeHtml(item.name) + '</td>' +
-                '<td class="inventory-muted">' + escapeHtml(item.location + ' - ' + (item.bin || 'A01')) + '</td>' +
+                '<td class="inventory-muted">' + escapeHtml(item.bin ? item.location + ' - ' + item.bin : item.location) + '</td>' +
                 '<td class="inventory-table__qty' + qtyClass + '">' + escapeHtml(item.qty.toLocaleString('en-LK')) + '</td>' +
                 '<td><span class="inventory-status inventory-status--' + status + '">' + escapeHtml(statusLabel(status)) + '</span></td>' +
-                '<td class="inventory-muted">' + escapeHtml(item.lastMovement || 'Active') + '</td>' +
-                '<td class="inventory-table__action" style="white-space:nowrap;">' +
-                    '<button class="sales-icon-button" type="button" data-edit-stock="' + item.id + '" title="Add Stock">' +
-                        '<svg class="sales-icon" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>' +
+                '<td class="inventory-muted">' + escapeHtml(item.lastMovement) + '</td>' +
+                '<td class="inventory-table__action">' +
+                    '<button class="sales-button sales-button--primary sales-button--compact" type="button" data-add-stock="' + item.id + '">' +
+                        '<svg class="sales-icon"><use href="#sales-icon-plus"></use></svg>' +
+                        'Add Stock' +
                     '</button>' +
-                    '<button class="sales-icon-button" type="button" data-adjust-stock="' + item.id + '" title="Adjust Count" style="margin-left:4px;">' +
-                        '<svg class="sales-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>' +
-                    '</button>' +
-                    '<button class="sales-icon-button sales-icon-button--danger" type="button" data-writeoff-stock="' + item.id + '" title="Write Off Damaged" style="margin-left:4px;">' +
-                        '<svg class="sales-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>' +
+                    '<button class="sales-icon-button sales-icon-button--danger" type="button" data-delete-stock="' + item.id + '" aria-label="Delete ' + escapeHtml(item.name) + '">' +
+                        '<svg class="sales-icon" viewBox="0 0 24 24" aria-hidden="true">' +
+                            '<path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2v7h2v-7H9Zm4 0v7h2v-7h-2Z" fill="currentColor"></path>' +
+                        '</svg>' +
                     '</button>' +
                 '</td>' +
                 '</tr>';
         }).join('');
 
-        if (empty) {
-            empty.classList.toggle('hidden', rows.length > 0);
-        }
+        empty.classList.toggle('hidden', rows.length > 0);
     }
 
     function fillProductSelect(selectedId) {
         const select = byId('stock-in-product');
         if (!select) return;
-        if (select.children.length > 1) {
-            if (selectedId) select.value = String(selectedId);
-            return;
-        }
-        select.innerHTML = '<option value="">Select a product</option>' + data.items.map(function (item) {
+        const options = ['<option value="">Select a product</option>'];
+        data.items.forEach(function (item) {
             const selected = String(item.id) === String(selectedId) ? ' selected' : '';
-            return '<option value="' + item.id + '"' + selected + '>' +
-                escapeHtml(item.partNo + ' — ' + item.name) + '</option>';
-        }).join('');
+            options.push('<option value="' + item.id + '"' + selected + '>' +
+                escapeHtml(item.partNo + ' — ' + item.name) + '</option>');
+        });
+        options.push('<option value="__new__">+ Create New Item...</option>');
+        select.innerHTML = options.join('');
     }
 
     function openStockDialog(productId) {
@@ -156,9 +149,7 @@
         byId('stock-in-notes').value = '';
         fillProductSelect(item ? item.id : '');
         if (item) {
-            byId('stock-in-product').value = String(item.id);
             byId('stock-in-location').value = item.location;
-            if (byId('stock-in-cost')) byId('stock-in-cost').value = item.unitCost || '';
         }
         dialog.showModal();
     }
@@ -167,159 +158,238 @@
         byId('stock-in-dialog').close();
     }
 
-    function openAdjustDialog(productId) {
-        const dialog = byId('stock-adjust-dialog');
-        const item = data.items.find(function (row) { return String(row.id) === String(productId); });
-        if (!item || !dialog) return;
-        byId('adjust-product-id').value = item.id;
-        byId('adjust-product-name').textContent = item.partNo + ' — ' + item.name;
-        byId('adjust-qty').value = item.qty;
-        byId('adjust-notes').value = '';
+    function openItemDialog() {
+        const dialog = byId('new-item-dialog');
+        if (!dialog) return;
+        const form = byId('new-item-form');
+        if (form) form.reset();
         dialog.showModal();
     }
 
-    function closeAdjustDialog() {
-        const dialog = byId('stock-adjust-dialog');
+    function closeItemDialog() {
+        const dialog = byId('new-item-dialog');
         if (dialog) dialog.close();
     }
 
-    function openWriteoffDialog(productId) {
-        const dialog = byId('stock-writeoff-dialog');
-        const item = data.items.find(function (row) { return String(row.id) === String(productId); });
-        if (!item || !dialog) return;
-        byId('writeoff-product-id').value = item.id;
-        byId('writeoff-product-name').textContent = item.partNo + ' — ' + item.name;
-        byId('writeoff-current-onhand').textContent = item.qty.toLocaleString('en-LK');
-        byId('writeoff-qty').value = '1';
-        byId('writeoff-qty').max = item.qty;
-        byId('writeoff-reason').value = '';
-        dialog.showModal();
-    }
-
-    function closeWriteoffDialog() {
-        const dialog = byId('stock-writeoff-dialog');
-        if (dialog) dialog.close();
-    }
-
-    function getApiConfig() {
-        return {
-            csrfToken: document.querySelector('meta[name="csrf-token"]')?.content || '',
-            baseUrl: (document.querySelector('meta[name="base-url"]')?.content || '/').replace(/\/$/, '')
-        };
-    }
-
-    function recordStockIn() {
+    async function recordStockIn() {
         const productId = byId('stock-in-product').value;
         const qty = Number(byId('stock-in-qty').value);
-        const costInput = byId('stock-in-cost');
-        const unitCost = costInput && costInput.value ? Number(costInput.value) : null;
+        const location = byId('stock-in-location').value;
         const notes = byId('stock-in-notes').value.trim();
+        const submitBtn = byId('stock-in-submit') || byId('stock-in-form').querySelector('button[type="submit"]');
 
-        if (!productId || !qty || qty < 1) {
-            showToast('Select a product and enter a positive quantity.');
+        if (!productId || productId === '__new__') {
+            showToast('Please select a product.');
+            return false;
+        }
+
+        if (!qty || qty < 1) {
+            showToast('Please enter a valid quantity of at least 1.');
+            return false;
+        }
+
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Recording...';
+
+        try {
+            const baseUrl = (window.APP_CONFIG && window.APP_CONFIG.baseUrl) ? window.APP_CONFIG.baseUrl : '';
+            const csrfToken = (window.APP_CONFIG && window.APP_CONFIG.csrfToken) || data.csrfToken || '';
+
+            const response = await fetch(baseUrl + '/inventory/stock-in', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    product_id: Number(productId),
+                    quantity: qty,
+                    location: location,
+                    notes: notes
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.ok) {
+                showToast(result.message || 'Failed to record stock in.');
+                return false;
+            }
+
+            const item = data.items.find(function (row) { return String(row.id) === String(productId); });
+            if (item && result.item) {
+                item.qty = result.item.qty;
+                item.location = result.item.location;
+                item.status = result.item.status;
+                item.lastMovement = result.item.lastMovement;
+            }
+
+            if (result.summary) {
+                if (typeof result.summary.stockValue !== 'undefined') {
+                    byId('inventory-stock-value').textContent = money(result.summary.stockValue, true);
+                }
+                if (typeof result.summary.lowStock !== 'undefined') {
+                    byId('inventory-low-stock').textContent = String(result.summary.lowStock);
+                }
+                if (typeof result.summary.incomingPurchases !== 'undefined') {
+                    byId('inventory-incoming').textContent = String(result.summary.incomingPurchases);
+                }
+            } else {
+                renderKpis();
+            }
+
+            renderTable();
+            showToast(result.message || (qty + ' units added to ' + (item ? item.partNo : 'item') + '.'));
+            closeStockDialog();
+            return true;
+        } catch (err) {
+            showToast('Network error while recording stock in.');
+            return false;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+    }
+
+    async function recordNewItem() {
+        const code = byId('new-item-code').value.trim();
+        const name = byId('new-item-name').value.trim();
+        const categoryId = byId('new-item-category').value;
+        const costPrice = parseFloat(byId('new-item-cost').value) || 0;
+        const sellingPrice = parseFloat(byId('new-item-selling').value) || 0;
+        const qty = parseInt(byId('new-item-qty').value, 10) || 0;
+        const reorderLevel = parseInt(byId('new-item-reorder').value, 10) || 10;
+        const location = byId('new-item-location') ? byId('new-item-location').value : 'Main Warehouse';
+        const notes = byId('new-item-notes').value.trim();
+        const submitBtn = byId('new-item-submit');
+
+        if (!code) {
+            showToast('Please enter a part number / SKU.');
+            byId('new-item-code').focus();
+            return false;
+        }
+        if (!name) {
+            showToast('Please enter a product name.');
+            byId('new-item-name').focus();
+            return false;
+        }
+        if (!categoryId) {
+            showToast('Please select a category.');
+            byId('new-item-category').focus();
+            return false;
+        }
+
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving Item...';
+
+        try {
+            const baseUrl = (window.APP_CONFIG && window.APP_CONFIG.baseUrl) ? window.APP_CONFIG.baseUrl : '';
+            const csrfToken = (window.APP_CONFIG && window.APP_CONFIG.csrfToken) || data.csrfToken || '';
+
+            const response = await fetch(baseUrl + '/inventory/add-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    product_code: code,
+                    name: name,
+                    category_id: Number(categoryId),
+                    cost_price: costPrice,
+                    selling_price: sellingPrice,
+                    quantity_on_hand: qty,
+                    reorder_level: reorderLevel,
+                    location: location,
+                    notes: notes
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.ok) {
+                showToast(result.message || 'Failed to create inventory item.');
+                return false;
+            }
+
+            if (result.item) {
+                data.items.unshift(result.item);
+            }
+
+            if (result.summary) {
+                if (typeof result.summary.stockValue !== 'undefined') {
+                    byId('inventory-stock-value').textContent = money(result.summary.stockValue, true);
+                }
+                if (typeof result.summary.lowStock !== 'undefined') {
+                    byId('inventory-low-stock').textContent = String(result.summary.lowStock);
+                }
+                if (typeof result.summary.incomingPurchases !== 'undefined') {
+                    byId('inventory-incoming').textContent = String(result.summary.incomingPurchases);
+                }
+            } else {
+                renderKpis();
+            }
+
+            renderTable();
+            fillProductSelect('');
+            byId('new-item-form').reset();
+            closeItemDialog();
+            showToast(result.message || ('Item ' + code + ' created successfully.'));
+            return true;
+        } catch (err) {
+            showToast('Network error while saving inventory item.');
+            return false;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+    }
+
+    async function deleteItem(productId, button) {
+        const item = data.items.find(function (row) { return String(row.id) === String(productId); });
+        if (!item || !window.confirm('Delete ' + item.name + '? This item will be removed from inventory.')) {
             return;
         }
 
-        const config = getApiConfig();
-        fetch(config.baseUrl + '/inventory/stock-in', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken },
-            body: JSON.stringify({
-                product_id: Number(productId),
-                quantity: qty,
-                unit_cost: unitCost,
-                notes: notes,
-                csrf_token: config.csrfToken
-            })
-        }).then(function (res) { return res.json(); })
-        .then(function (json) {
-            if (json.ok) {
-                if (json.items) data.items = json.items;
-                closeStockDialog();
-                renderKpis();
-                renderTable();
-                showToast(json.message || 'Stock added successfully.');
-            } else {
-                showToast(json.message || 'Failed to record stock in.');
+        const baseUrl = (window.APP_CONFIG && window.APP_CONFIG.baseUrl) ? window.APP_CONFIG.baseUrl : '';
+        const csrfToken = (window.APP_CONFIG && window.APP_CONFIG.csrfToken) || data.csrfToken || '';
+        button.disabled = true;
+
+        try {
+            const response = await fetch(baseUrl + '/inventory/delete-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ csrf_token: csrfToken, product_id: Number(productId) })
+            });
+            const result = await response.json();
+
+            if (!response.ok || !result.ok) {
+                showToast(result.message || 'Failed to delete inventory item.');
+                return;
             }
-        }).catch(function () {
-            showToast('Network error recording stock in.');
-        });
-    }
 
-    function recordAdjustment() {
-        const productId = Number(byId('adjust-product-id').value);
-        const qty = Number(byId('adjust-qty').value);
-        const notes = byId('adjust-notes').value.trim();
-
-        if (!productId || qty < 0) {
-            showToast('Valid count is required.');
-            return;
+            const index = data.items.findIndex(function (row) { return String(row.id) === String(productId); });
+            if (index !== -1) data.items.splice(index, 1);
+            renderKpis();
+            renderTable();
+            showToast(result.message || 'Inventory item deleted successfully.');
+        } catch (err) {
+            showToast('Network error while deleting inventory item.');
+        } finally {
+            button.disabled = false;
         }
-
-        const config = getApiConfig();
-        fetch(config.baseUrl + '/inventory/adjust', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken },
-            body: JSON.stringify({
-                product_id: productId,
-                quantity: qty,
-                notes: notes,
-                csrf_token: config.csrfToken
-            })
-        }).then(function (res) { return res.json(); })
-        .then(function (json) {
-            if (json.ok) {
-                if (json.items) data.items = json.items;
-                closeAdjustDialog();
-                renderKpis();
-                renderTable();
-                showToast(json.message || 'Stock adjusted successfully.');
-            } else {
-                showToast(json.message || 'Failed to adjust stock.');
-            }
-        }).catch(function () {
-            showToast('Network error adjusting stock.');
-        });
     }
 
-    function recordWriteOff() {
-        const productId = Number(byId('writeoff-product-id').value);
-        const qty = Number(byId('writeoff-qty').value);
-        const reason = byId('writeoff-reason').value.trim();
-
-        if (!productId || qty < 1) {
-            showToast('Valid write-off quantity is required.');
-            return;
-        }
-
-        const config = getApiConfig();
-        fetch(config.baseUrl + '/inventory/write-off', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken },
-            body: JSON.stringify({
-                product_id: productId,
-                quantity: qty,
-                reason: reason,
-                csrf_token: config.csrfToken
-            })
-        }).then(function (res) { return res.json(); })
-        .then(function (json) {
-            if (json.ok) {
-                if (json.items) data.items = json.items;
-                closeWriteoffDialog();
-                renderKpis();
-                renderTable();
-                showToast(json.message || 'Stock written off successfully.');
-            } else {
-                showToast(json.message || 'Failed to write off stock.');
-            }
-        }).catch(function () {
-            showToast('Network error writing off stock.');
-        });
-    }
-
-    // Event listeners
     byId('inventory-locations').addEventListener('click', function (event) {
         const button = event.target.closest('[data-location]');
         if (!button) return;
@@ -338,20 +408,38 @@
         headerSearch.addEventListener('input', onSearch);
     }
 
-    byId('inventory-filter').addEventListener('click', function () {
-        const cycle = ['all', 'low', 'critical', 'restocking', 'optimal'];
-        const next = cycle[(cycle.indexOf(state.statusFilter) + 1) % cycle.length];
-        state.statusFilter = next;
-        const labels = {
-            all: 'Showing all statuses',
-            low: 'Filtered to low stock',
-            critical: 'Filtered to critical stock',
-            restocking: 'Filtered to restocking',
-            optimal: 'Filtered to optimal stock'
-        };
-        showToast(labels[next]);
-        renderTable();
-    });
+    const filterButton = byId('inventory-filter');
+    const filterOptions = byId('inventory-filter-options');
+    if (filterButton && filterOptions) {
+        filterButton.addEventListener('click', function () {
+            const isOpen = !filterOptions.classList.contains('hidden');
+            filterOptions.classList.toggle('hidden', isOpen);
+            filterButton.setAttribute('aria-expanded', String(!isOpen));
+        });
+
+        filterOptions.addEventListener('click', function (event) {
+            const option = event.target.closest('[data-status-filter]');
+            if (!option) return;
+
+            state.statusFilter = option.dataset.statusFilter;
+            filterOptions.querySelectorAll('[data-status-filter]').forEach(function (item) {
+                item.setAttribute('aria-checked', String(item === option));
+            });
+            filterOptions.classList.add('hidden');
+            filterButton.setAttribute('aria-expanded', 'false');
+            showToast(option.textContent.trim() === 'All Stock'
+                ? 'Showing all statuses'
+                : 'Filtered to ' + option.textContent.trim().toLowerCase());
+            renderTable();
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.inventory-filter-menu')) {
+                filterOptions.classList.add('hidden');
+                filterButton.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 
     ['add-stock', 'add-stock-toolbar'].forEach(function (id) {
         const el = byId(id);
@@ -362,20 +450,35 @@
         }
     });
 
+    ['add-item-btn', 'add-item-toolbar'].forEach(function (id) {
+        const el = byId(id);
+        if (el) {
+            el.addEventListener('click', function () {
+                openItemDialog();
+            });
+        }
+    });
+
+    const productSelect = byId('stock-in-product');
+    if (productSelect) {
+        productSelect.addEventListener('change', function () {
+            if (this.value === '__new__') {
+                closeStockDialog();
+                openItemDialog();
+            }
+        });
+    }
+
     byId('inventory-table-body').addEventListener('click', function (event) {
-        const editBtn = event.target.closest('[data-edit-stock]');
-        if (editBtn) {
-            openStockDialog(editBtn.dataset.editStock);
+        const addStockButton = event.target.closest('[data-add-stock]');
+        if (addStockButton) {
+            openStockDialog(addStockButton.dataset.addStock);
             return;
         }
-        const adjBtn = event.target.closest('[data-adjust-stock]');
-        if (adjBtn) {
-            openAdjustDialog(adjBtn.dataset.adjustStock);
-            return;
-        }
-        const writeBtn = event.target.closest('[data-writeoff-stock]');
-        if (writeBtn) {
-            openWriteoffDialog(writeBtn.dataset.writeoffStock);
+
+        const deleteButton = event.target.closest('[data-delete-stock]');
+        if (deleteButton) {
+            deleteItem(deleteButton.dataset.deleteStock, deleteButton);
             return;
         }
     });
@@ -383,11 +486,9 @@
     document.querySelectorAll('[data-close-stock-dialog]').forEach(function (button) {
         button.addEventListener('click', closeStockDialog);
     });
-    document.querySelectorAll('[data-close-adjust-dialog]').forEach(function (button) {
-        button.addEventListener('click', closeAdjustDialog);
-    });
-    document.querySelectorAll('[data-close-writeoff-dialog]').forEach(function (button) {
-        button.addEventListener('click', closeWriteoffDialog);
+
+    document.querySelectorAll('[data-close-item-dialog]').forEach(function (button) {
+        button.addEventListener('click', closeItemDialog);
     });
 
     byId('stock-in-form').addEventListener('submit', function (event) {
@@ -395,19 +496,11 @@
         recordStockIn();
     });
 
-    const adjustForm = byId('stock-adjust-form');
-    if (adjustForm) {
-        adjustForm.addEventListener('submit', function (event) {
+    const newItemForm = byId('new-item-form');
+    if (newItemForm) {
+        newItemForm.addEventListener('submit', function (event) {
             event.preventDefault();
-            recordAdjustment();
-        });
-    }
-
-    const writeoffForm = byId('stock-writeoff-form');
-    if (writeoffForm) {
-        writeoffForm.addEventListener('submit', function (event) {
-            event.preventDefault();
-            recordWriteOff();
+            recordNewItem();
         });
     }
 
