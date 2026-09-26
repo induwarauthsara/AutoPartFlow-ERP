@@ -5,49 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($title ?? 'Inventory') ?> | AutoPartFlow ERP</title>
     <link rel="stylesheet" href="<?= asset('css/sales-rep/tokens.css') ?>">
-<link rel="stylesheet" href="<?= asset('css/sales-rep/shell.css') ?>">
-<link rel="stylesheet" href="<?= asset('css/sales-rep/components.css') ?>">
-<link rel="stylesheet" href="<?= asset('css/sales-rep/dashboard.css') ?>">
-<link rel="stylesheet" href="<?= asset('css/sales-rep/customers.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/sales-rep/shell.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/sales-rep/components.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/sales-rep/dashboard.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/sales-rep/customers.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/inventory/inventory.css') ?>">
-<link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
-<link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+    <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
+    <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
 </head>
 <body class="sales-app">
-    <aside class="sales-sidebar" id="sales-sidebar" aria-label="Workspace navigation">
-        <div class="sales-brand">
-            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
-            <div>
-                <strong>AutoPartFlow</strong>
-                <span>Stock Workspace</span>
-            </div>
-        </div>
-
-        <nav class="sales-nav">
-            <p class="sales-nav__label">Workspace</p>
-
-
-
-
-            <a class="sales-nav__link <?= str_contains(($title ?? ''), 'Inventory') ? 'sales-nav__link--active' : '' ?>" href="<?= url('inventory') ?>" data-nav-page="inventory">
-                <svg class="sales-icon"><use href="#sales-icon-inventory"></use></svg>
-                Inventory
-            </a>
-        </nav>
-
-        <div class="sales-profile">
-            <span class="sales-avatar" aria-hidden="true">
-                <svg class="sales-icon"><use href="#sales-icon-user"></use></svg>
-            </span>
-            <div>
-                <strong>Store Manager</strong>
-                <span>Stock Operations</span>
-            </div>
-        </div>
-    </aside>
+    <?php require APP_PATH . '/Views/admin/partials/sidebar.php'; ?>
 
     <header class="sales-header">
-        <button class="sales-icon-button sales-header__menu" type="button" id="sales-menu-toggle" aria-label="Open navigation" aria-controls="sales-sidebar" aria-expanded="false">
+        <button class="sales-icon-button sales-header__menu" type="button" id="sales-menu-toggle" aria-label="Open navigation" aria-controls="admin-sidebar" aria-expanded="false">
             <svg class="sales-icon"><use href="#sales-icon-menu"></use></svg>
         </button>
         <strong class="sales-header__brand"><img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="" width="40" height="40">AutoPartFlow</strong>
@@ -56,12 +27,12 @@
             <input type="search" id="inventory-header-search" placeholder="Search SKU, parts..." autocomplete="off">
         </div>
         <div class="sales-header__actions">
-            <button class="sales-icon-button" type="button" aria-label="Notifications">
+            <a href="<?= url('admin/notifications') ?>" class="sales-icon-button" aria-label="Notifications" style="text-decoration:none;">
                 <svg class="sales-icon"><use href="#sales-icon-bell"></use></svg>
                 <span class="sales-notification-dot" aria-hidden="true"></span>
-            </button>
+            </a>
             <a href="<?= url('logout') ?>" class="sales-avatar sales-avatar--small" title="Sign Out" aria-label="Sign out">
-                <svg class="sales-icon"><use href="#sales-icon-user"></use></svg>
+                <svg class="sales-icon"><use href="#sales-icon-logout"></use></svg>
             </a>
         </div>
     </header>
@@ -71,13 +42,27 @@
     <?= $content ?>
 
     <nav class="sales-mobile-nav" aria-label="Mobile navigation">
-
-
-
-
-        <a href="<?= url('inventory') ?>" class="sales-mobile-nav__item <?= str_contains(($title ?? ''), 'Inventory') ? 'sales-mobile-nav__item--active' : '' ?>">
+        <?php if (($_SESSION['role_slug'] ?? '') === 'owner' || ($_SESSION['role_id'] ?? 0) === 1): ?>
+        <a href="<?= url('admin/dashboard') ?>" class="sales-mobile-nav__item">
+            <svg class="sales-icon"><use href="#sales-icon-dashboard"></use></svg>
+            <span>Dashboard</span>
+        </a>
+        <?php endif; ?>
+        <a href="<?= url('inventory') ?>" class="sales-mobile-nav__item sales-mobile-nav__item--active">
             <svg class="sales-icon"><use href="#sales-icon-inventory"></use></svg>
             <span>Inventory</span>
+        </a>
+        <a href="<?= url('admin/reports') ?>" class="sales-mobile-nav__item">
+            <svg class="sales-icon" viewBox="0 0 24 24"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>
+            <span>Reports</span>
+        </a>
+        <a href="<?= url('admin/users') ?>" class="sales-mobile-nav__item">
+            <svg class="sales-icon" viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 20v-2c0-3 3.5-5 7-5s7 2 7 5v2H2Z"/></svg>
+            <span>Users</span>
+        </a>
+        <a href="<?= url('admin/settings') ?>" class="sales-mobile-nav__item">
+            <svg class="sales-icon" viewBox="0 0 24 24"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>
+            <span>Settings</span>
         </a>
     </nav>
 
