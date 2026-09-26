@@ -26,6 +26,8 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
     </script>
 <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
 <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+<meta name="csrf-token" content="<?= csrf_token() ?>">
+<meta name="base-url" content="<?= url() ?>">
 </head>
 <body class="public-body">
 <header class="public-header">
@@ -56,10 +58,25 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
                 <span class="cart-count">0</span>
             </a>
             <span class="header-divider"></span>
-            <a class="sign-in-button" href="<?= $isShopCustomer ? url('customer/dashboard') : url('login') ?>">
-                <span class="material-symbols-outlined"><?= $isShopCustomer ? 'person' : 'login' ?></span>
-                <?= $isShopCustomer ? 'My Dashboard' : 'Sign In' ?>
-            </a>
+            <?php if (auth_check()): ?>
+                <a class="sign-in-button sign-in-button--dashboard" href="<?= auth_dashboard_url() ?>">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <?= e(auth_dashboard_label()) ?>
+                </a>
+                <a class="sign-in-button sign-in-button--profile" href="<?= url('profile') ?>" title="Edit Profile">
+                    <span class="material-symbols-outlined">person</span>
+                    Profile
+                </a>
+                <a class="sign-in-button sign-in-button--logout" href="<?= url('logout') ?>" title="Sign Out">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="logout-text">Sign Out</span>
+                </a>
+            <?php else: ?>
+                <a class="sign-in-button" href="<?= url('login') ?>">
+                    <span class="material-symbols-outlined">login</span>
+                    Sign In
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 </header>
@@ -73,7 +90,6 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
         <span>&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</span>
         <div>
             <a href="<?= url('catalog') ?>">Catalog</a>
-            <a href="<?= url('track-order') ?>">Track Order</a>
         </div>
     </div>
 </footer>

@@ -25,7 +25,9 @@
             </select>
         </div>
         <div class="customer-card__meta" id="customer-meta">
-            <span class="sales-avatar">?</span>
+            <span class="sales-avatar" aria-hidden="true">
+                <svg class="sales-icon"><use href="#sales-icon-user"></use></svg>
+            </span>
             <div>
                 <strong>No customer selected</strong>
                 <span>Choose a customer account to continue</span>

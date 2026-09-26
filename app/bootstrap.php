@@ -50,6 +50,44 @@ function csrf_field(): string
 
 function verify_csrf(): bool
 {
-    $token = $_POST['csrf_token'] ?? '';
-    return hash_equals($_SESSION['csrf_token'] ?? '', $token);
+    $token = (string) ($_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+    if ($token === '' || empty($_SESSION['csrf_token'])) {
+        return false;
+    }
+
+    return hash_equals((string) $_SESSION['csrf_token'], $token);
+}
+
+function auth_check(): bool
+{
+    return !empty($_SESSION['user_id']);
+}
+
+function auth_role(): ?string
+{
+    return $_SESSION['role_slug'] ?? null;
+}
+
+function auth_dashboard_url(): string
+{
+    $role = auth_role();
+    return match ($role) {
+        'owner' => url('admin/dashboard'),
+        'sales_rep' => url('sales'),
+        'store_manager' => url('inventory'),
+        'shop_customer' => url('customer/dashboard'),
+        default => url('login'),
+    };
+}
+
+function auth_dashboard_label(): string
+{
+    $role = auth_role();
+    return match ($role) {
+        'owner' => 'Admin Dashboard',
+        'sales_rep' => 'Sales Dashboard',
+        'store_manager' => 'Store Dashboard',
+        'shop_customer' => 'Customer Dashboard',
+        default => 'Dashboard',
+    };
 }

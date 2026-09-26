@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
     <link rel="stylesheet" href="<?= asset('css/admin.css') ?>">
     <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
+    <meta name="csrf-token" content="<?= csrf_token() ?>">
+    <meta name="base-url" content="<?= url() ?>">
 </head>
 <body class="sales-app">
     <?php require APP_PATH . '/Views/admin/partials/sidebar.php'; ?>
@@ -31,8 +33,8 @@
                 <svg class="sales-icon"><use href="#sales-icon-bell"></use></svg>
                 <span class="sales-notification-dot" aria-hidden="true"></span>
             </a>
-            <a href="<?= url('logout') ?>" class="sales-avatar sales-avatar--small" title="Sign Out" aria-label="Sign out">
-                <svg class="sales-icon"><use href="#sales-icon-logout"></use></svg>
+            <a href="<?= url('profile') ?>" class="sales-avatar sales-avatar--small" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Store Manager') ?>" aria-label="Edit Profile" style="text-decoration:none;cursor:pointer;">
+                <?= e(strtoupper(substr(trim((string)($_SESSION['full_name'] ?? 'SM')), 0, 2)) ?: 'SM') ?>
             </a>
         </div>
     </header>

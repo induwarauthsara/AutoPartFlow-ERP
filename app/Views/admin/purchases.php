@@ -29,8 +29,8 @@ $statusLabel = static fn(string $status): string => ucwords(str_replace('_', ' '
         <a class="purchase-topbar__action" href="<?= url('admin/notifications') ?>" aria-label="Notifications">
             <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2Zm7-5-2-2v-5a5 5 0 0 0-4-5V3h-2v2a5 5 0 0 0-4 5v5l-2 2v2h14v-2Z"/></svg>
         </a>
-        <a class="purchase-topbar__action" href="<?= url('logout') ?>" aria-label="Sign out">
-            <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7l-1.4 1.4 2.6 2.6H8v2h10.2l-2.6 2.6L17 17l5-5-5-5ZM4 5h8V3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8v-2H4V5Z"/></svg>
+        <a class="purchase-topbar__action" href="<?= url('profile') ?>" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Admin') ?>" aria-label="Edit Profile">
+            <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
         </a>
     </header>
 

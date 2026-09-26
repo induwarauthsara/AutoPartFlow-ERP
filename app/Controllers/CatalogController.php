@@ -9,10 +9,15 @@ use App\Models\Product;
 
 class CatalogController extends Controller
 {
+    private Product $productModel;
+
+    public function __construct()
+    {
+        $this->productModel = new Product();
+    }
+
     public function index(): void
     {
-        $productModel = new Product();
-
         $selectedCategories = $this->input('category', []);
         $selectedBrands = $this->input('brand', []);
 
@@ -26,7 +31,7 @@ class CatalogController extends Controller
             'sort'       => (string) $this->input('sort', 'relevance'),
         ];
 
-        $products = $productModel->catalog($filters);
+        $products = $this->productModel->catalog($filters);
 
         // Product Catalog image fallback map
         $imageMap = [
@@ -51,8 +56,9 @@ class CatalogController extends Controller
         $this->view('catalog/index', [
             'title' => 'Product Catalog | AutoPartFlow',
             'products' => $products,
-            'categories' => $productModel->categories(),
-            'brands' => $productModel->brands(),
+            'categories' => $this->productModel->categories(),
+            'brands' => $this->productModel->brands(),
+            'vehicleBrands' => $this->productModel->vehicleBrands(),
             'filters' => $filters,
         ], 'public');
     }
@@ -61,10 +67,9 @@ class CatalogController extends Controller
     {
         $productId = (int) $this->input('product_id', 0);
         $productCode = (string) $this->input('product_code', '');
-        $productModel = new Product();
 
         if ($productId === 0 && !empty($productCode)) {
-            $product = $productModel->findByCode($productCode);
+            $product = $this->productModel->findByCode($productCode);
             if ($product) {
                 $productId = (int) $product['id'];
             }
@@ -75,7 +80,7 @@ class CatalogController extends Controller
             return;
         }
 
-        $compatibilities = $productModel->getCompatibility($productId);
+        $compatibilities = $this->productModel->getCompatibility($productId);
         $this->json([
             'status' => 'success',
             'product_id' => $productId,
@@ -91,8 +96,7 @@ class CatalogController extends Controller
             return;
         }
 
-        $productModel = new Product();
-        $product = $productModel->findPublicByCode($code);
+        $product = $this->productModel->findPublicByCode($code) ?? $this->productModel->findByCode($code);
 
         if (!$product) {
             $this->json(['status' => 'error', 'message' => 'Product not found.'], 404);
@@ -102,12 +106,97 @@ class CatalogController extends Controller
         $qty = (int) ($product['quantity_on_hand'] ?? 0);
         $reorder = (int) ($product['reorder_level'] ?? 0);
         $product['stock_status'] = $qty <= 0 ? 'Out of Stock' : ($qty <= $reorder ? 'Low Stock' : 'In Stock');
-        $compatibilities = $productModel->getCompatibility((int) $product['id']);
+        $compatibilities = $this->productModel->getCompatibility((int) $product['id']);
         $product['compatibility'] = $compatibilities;
 
         $this->json([
             'status' => 'success',
             'product' => $product,
         ]);
+    }
+
+    public function savePart(): void
+    {
+        $this->api(function (array $data): array {
+            $id = (int) ($data['id'] ?? 0);
+            if ($id > 0) {
+                $this->productModel->updateProduct($id, $data);
+                return ['ok' => true, 'message' => 'Spare part updated successfully.', 'id' => $id];
+            }
+
+            $res = $this->productModel->createProduct($data);
+            return ['ok' => true, 'message' => 'Spare part created successfully.', 'product' => $res];
+        });
+    }
+
+    public function deletePart(): void
+    {
+        $this->api(function (array $data): array {
+            $id = (int) ($data['id'] ?? 0);
+            $this->productModel->deleteProduct($id);
+            return ['ok' => true, 'message' => 'Spare part discontinued / removed from catalog.'];
+        });
+    }
+
+    public function saveCompatibility(): void
+    {
+        $this->api(function (array $data): array {
+            $productId = (int) ($data['product_id'] ?? 0);
+            $newId = $this->productModel->saveCompatibility($productId, $data);
+            return ['ok' => true, 'message' => 'Vehicle compatibility mapped successfully.', 'id' => $newId];
+        });
+    }
+
+    public function deleteCompatibility(): void
+    {
+        $this->api(function (array $data): array {
+            $id = (int) ($data['id'] ?? 0);
+            $this->productModel->deleteCompatibility($id);
+            return ['ok' => true, 'message' => 'Compatibility link removed.'];
+        });
+    }
+
+    public function vehicleData(): void
+    {
+        $brandId = !empty($_GET['brand_id']) ? (int) $_GET['brand_id'] : null;
+        $modelId = !empty($_GET['model_id']) ? (int) $_GET['model_id'] : null;
+
+        if ($modelId) {
+            $this->json(['ok' => true, 'engines' => $this->productModel->vehicleEngines($modelId)]);
+            return;
+        }
+
+        if ($brandId) {
+            $this->json(['ok' => true, 'models' => $this->productModel->vehicleModels($brandId)]);
+            return;
+        }
+
+        $this->json([
+            'ok' => true,
+            'brands' => $this->productModel->vehicleBrands(),
+            'models' => $this->productModel->vehicleModels(),
+        ]);
+    }
+
+    private function api(callable $action): void
+    {
+        $data = json_decode((string) file_get_contents('php://input'), true);
+        if (!is_array($data)) {
+            $data = $_POST;
+        }
+
+        $token = (string) ($data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+        if ($token === '' || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token)) {
+            $this->json(['ok' => false, 'message' => 'Your session expired. Refresh the page and try again.'], 419);
+            return;
+        }
+
+        try {
+            $this->json($action($data));
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            $this->json(['ok' => false, 'message' => 'Operation failed: ' . $e->getMessage()], 500);
+        }
     }
 }

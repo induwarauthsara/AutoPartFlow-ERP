@@ -139,7 +139,7 @@ dialog::backdrop{background:rgba(17,24,39,.45)}
       </div>
       <div class="spacer"></div>
       <div class="top-icons"><span>🔔</span><span>📅</span></div>
-      <div class="avatar">S</div>
+      <a href="<?= url('profile') ?>" class="avatar" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Admin') ?>" style="text-decoration:none;cursor:pointer;"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></a>
     </header>
 
     <main class="page">

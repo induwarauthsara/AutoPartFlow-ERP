@@ -74,4 +74,63 @@ abstract class Controller
 
         return $flash;
     }
+
+    /**
+     * Require authenticated session. Redirects to /login if not signed in.
+     */
+    protected function requireAuth(): void
+    {
+        if (empty($_SESSION['user_id'])) {
+            $this->setFlash('error', 'Please sign in to access that page.');
+            $this->redirect('/login');
+            return;
+        }
+    }
+
+    /**
+     * Require specific role(s). If authenticated with wrong role, redirects to own dashboard.
+     *
+     * @param string|array $roles Single role slug or array of allowed role slugs
+     */
+    protected function requireRole(string|array $roles, string $deniedMessage = 'Access denied. You do not have permission to access that workspace.'): void
+    {
+        if (empty($_SESSION['user_id'])) {
+            $this->setFlash('error', 'Please sign in to access that page.');
+            $this->redirect('/login');
+            return;
+        }
+
+        $allowed = is_array($roles) ? $roles : [$roles];
+        $currentRole = (string) ($_SESSION['role_slug'] ?? '');
+
+        if (!in_array($currentRole, $allowed, true)) {
+            $this->setFlash('error', $deniedMessage);
+            $this->redirect($this->dashboardUrlForRole($currentRole));
+            return;
+        }
+    }
+
+    /**
+     * Get dashboard URL for given role.
+     */
+    protected function dashboardUrlForRole(string|int|null $role): string
+    {
+        if (is_int($role)) {
+            return match ($role) {
+                1 => '/admin/dashboard',
+                2 => '/sales',
+                3 => '/inventory',
+                4 => '/customer/dashboard',
+                default => '/',
+            };
+        }
+
+        return match ($role) {
+            'owner' => '/admin/dashboard',
+            'sales_rep' => '/sales',
+            'store_manager' => '/inventory',
+            'shop_customer' => '/customer/dashboard',
+            default => '/',
+        };
+    }
 }

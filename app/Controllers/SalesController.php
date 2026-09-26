@@ -14,12 +14,10 @@ class SalesController extends Controller
 
     public function __construct()
     {
-        if (empty($_SESSION['user_id']) || !in_array($_SESSION['role_slug'] ?? '', ['sales_rep', 'owner'], true)) {
-            $this->setFlash('error', 'Sign in with a sales account to open the sales workspace.');
-            $this->redirect('/login');
-        }
+        $this->requireRole('sales_rep', 'Access denied. The Sales workspace is reserved for Sales Representatives.');
         $this->workspace = new SalesWorkspace();
-        $this->salesRepId = $this->workspace->employeeIdForUser((int) $_SESSION['user_id']);
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $this->salesRepId = $userId > 0 ? $this->workspace->employeeIdForUser($userId) : null;
     }
 
     public function dashboard(): void
@@ -77,7 +75,11 @@ class SalesController extends Controller
     public function deleteCustomer(): void
     {
         $this->api(function (array $data): array {
-            $this->workspace->deleteCustomer((int) ($data['id'] ?? 0));
+            $id = (int) ($data['id'] ?? 0);
+            if ($id === 0 && !empty($data['customer_code'])) {
+                $id = $this->workspace->customerIdByCode((string) $data['customer_code']);
+            }
+            $this->workspace->deleteCustomer($id);
             return ['ok' => true];
         });
     }
@@ -98,7 +100,11 @@ class SalesController extends Controller
     public function updateOrderStatus(): void
     {
         $this->api(function (array $data): array {
-            $this->workspace->updateOrderStatus((int) ($data['id'] ?? 0), strtolower((string) ($data['status'] ?? '')));
+            $id = (int) ($data['id'] ?? 0);
+            if ($id === 0 && !empty($data['order_number'])) {
+                $id = $this->workspace->orderIdByNumber((string) $data['order_number']);
+            }
+            $this->workspace->updateOrderStatus($id, strtolower((string) ($data['status'] ?? '')));
             return ['ok' => true];
         });
     }
@@ -106,7 +112,11 @@ class SalesController extends Controller
     public function deleteOrder(): void
     {
         $this->api(function (array $data): array {
-            $this->workspace->deleteOrder((int) ($data['id'] ?? 0));
+            $id = (int) ($data['id'] ?? 0);
+            if ($id === 0 && !empty($data['order_number'])) {
+                $id = $this->workspace->orderIdByNumber((string) $data['order_number']);
+            }
+            $this->workspace->deleteOrder($id);
             return ['ok' => true];
         });
     }

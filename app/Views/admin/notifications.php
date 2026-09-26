@@ -136,7 +136,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
 
     <div class="main">
         <header class="topbar">AutoPartFlow
-            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications<?= $unreadCount ? ' (' . $unreadCount . ')' : '' ?></a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></div></div>
+            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications<?= $unreadCount ? ' (' . $unreadCount . ')' : '' ?></a> <a href="<?= url('profile') ?>" class="avatar" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Admin') ?>" style="text-decoration:none;cursor:pointer;"><?= strtoupper(substr($_SESSION['full_name'] ?? 'S', 0, 1)) ?></a></div>
         </header>
 
         <div class="content">

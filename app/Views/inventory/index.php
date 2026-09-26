@@ -123,6 +123,11 @@
                     Product
                     <select id="stock-in-product" name="product_id" required>
                         <option value="">Select a product</option>
+                        <?php foreach (($products ?? []) as $p): ?>
+                            <option value="<?= (int) $p['id'] ?>" data-cost="<?= (float) $p['cost_price'] ?>">
+                                <?= e($p['product_code']) ?> - <?= e($p['name']) ?> (On Hand: <?= (int) $p['on_hand'] ?>)
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </label>
                 <div class="form-grid">
@@ -141,8 +146,12 @@
                     </label>
                 </div>
                 <label>
+                    Unit Cost (Rs.)
+                    <input type="number" id="stock-in-cost" name="unit_cost" step="0.01" min="0" placeholder="Defaults to product cost">
+                </label>
+                <label>
                     Notes
-                    <textarea id="stock-in-notes" name="notes" rows="3" maxlength="255" placeholder="Optional reference or receiving note"></textarea>
+                    <textarea id="stock-in-notes" name="notes" rows="3" maxlength="255" placeholder="Optional supplier receipt or reference note"></textarea>
                 </label>
             </div>
             <div class="customer-dialog__actions">
@@ -224,12 +233,75 @@
         </form>
     </dialog>
 
+    <!-- Adjust Stock Dialog (Count Adjustment) -->
+    <dialog class="customer-dialog sales-dialog" id="stock-adjust-dialog" aria-labelledby="stock-adjust-dialog-title">
+        <form class="customer-form" id="stock-adjust-form" method="dialog">
+            <div class="customer-dialog__header">
+                <div>
+                    <p class="sales-eyebrow">Physical Audit</p>
+                    <h2 id="stock-adjust-dialog-title">Adjust Inventory Count</h2>
+                </div>
+                <button class="sales-icon-button" type="button" data-close-adjust-dialog aria-label="Close">
+                    <svg class="sales-icon"><use href="#sales-icon-close"></use></svg>
+                </button>
+            </div>
+            <div class="customer-dialog__body">
+                <input type="hidden" id="adjust-product-id" name="product_id">
+                <p><strong id="adjust-product-name">Product Name</strong></p>
+                <label>
+                    New On-Hand Count
+                    <input type="number" id="adjust-qty" name="quantity" min="0" step="1" required>
+                </label>
+                <label>
+                    Reason / Audit Notes
+                    <textarea id="adjust-notes" name="notes" rows="2" maxlength="255" placeholder="e.g. Physical inventory cycle count adjustment" required></textarea>
+                </label>
+            </div>
+            <div class="customer-dialog__actions">
+                <button class="sales-button sales-button--secondary" type="button" data-close-adjust-dialog>Cancel</button>
+                <button class="sales-button sales-button--primary" type="submit">Save Adjustment</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Write-off Damaged Stock Dialog -->
+    <dialog class="customer-dialog sales-dialog" id="stock-writeoff-dialog" aria-labelledby="stock-writeoff-dialog-title">
+        <form class="customer-form" id="stock-writeoff-form" method="dialog">
+            <div class="customer-dialog__header">
+                <div>
+                    <p class="sales-eyebrow">Loss &amp; Damage</p>
+                    <h2 id="stock-writeoff-dialog-title">Write-off Damaged Stock</h2>
+                </div>
+                <button class="sales-icon-button" type="button" data-close-writeoff-dialog aria-label="Close">
+                    <svg class="sales-icon"><use href="#sales-icon-close"></use></svg>
+                </button>
+            </div>
+            <div class="customer-dialog__body">
+                <input type="hidden" id="writeoff-product-id" name="product_id">
+                <p><strong id="writeoff-product-name">Product Name</strong></p>
+                <p style="color:var(--sales-text-secondary, #64748b);font-size:12px;">Current on-hand: <span id="writeoff-current-onhand">0</span></p>
+                <label>
+                    Damaged Quantity to Write Off
+                    <input type="number" id="writeoff-qty" name="quantity" min="1" step="1" required>
+                </label>
+                <label>
+                    Damage Reason
+                    <textarea id="writeoff-reason" name="reason" rows="2" maxlength="255" placeholder="e.g. Packaging damaged during handling, expired or broken core" required></textarea>
+                </label>
+            </div>
+            <div class="customer-dialog__actions">
+                <button class="sales-button sales-button--secondary" type="button" data-close-writeoff-dialog>Cancel</button>
+                <button class="sales-button sales-button--danger" type="submit">Confirm Write-Off</button>
+            </div>
+        </form>
+    </dialog>
+
     <div class="sales-toast" id="sales-toast" role="status" aria-live="polite"></div>
 
     <?php
     $inventoryData = [
-        'incomingPurchases' => (int) ($inventorySummary['incomingPurchases'] ?? 0),
-        'locations'         => $inventoryLocations ?? ['All Locations'],
+        'incomingPurchases' => (int) ($inventorySummary['incomingPurchases'] ?? ($kpis['incoming_purchases'] ?? 0)),
+        'locations'         => $inventoryLocations ?? ['All Locations', 'Main Warehouse'],
         'items'             => $inventoryItems ?? [],
         'categories'        => $categories ?? [],
         'csrfToken'         => csrf_token(),
@@ -241,5 +313,6 @@
         window.APP_CONFIG.baseUrl = '<?= rtrim(url(), '/') ?>';
         window.APP_CONFIG.csrfToken = '<?= csrf_token() ?>';
         window.INVENTORY_DATA = <?= json_encode($inventoryData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.INVENTORY_MOCK_DATA = window.INVENTORY_DATA;
     </script>
 </main>

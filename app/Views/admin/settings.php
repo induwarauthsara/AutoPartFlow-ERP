@@ -81,7 +81,7 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
         <header class="topbar">
             AutoPartFlow
             <div class="search-box"><input type="text" id="settingSearch" placeholder="Search settings..."></div>
-            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div></div>
+            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <a href="<?= url('profile') ?>" class="avatar" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Admin') ?>" style="text-decoration:none;cursor:pointer;"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></a></div>
         </header>
 
         <div class="content">
