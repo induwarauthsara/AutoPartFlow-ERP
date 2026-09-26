@@ -23,6 +23,8 @@ class App
         $this->router->get('/register', 'HomeController@register');
         $this->router->post('/register', 'HomeController@doRegister');
         $this->router->get('/logout', 'HomeController@logout');
+        // Shop Customer Dashboard
+        $this->router->get('/customer/dashboard', 'CustomerController@dashboard');
 
         // User Profile Management (Common to all authenticated roles)
         $this->router->get('/profile', 'ProfileController@index');

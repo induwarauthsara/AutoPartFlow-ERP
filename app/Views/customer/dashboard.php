@@ -1,154 +1,197 @@
-<div class="customer-dashboard-page" style="padding: 32px 0 64px;">
-    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+<?php
+$customer = $customer ?? [];
+$stats = $stats ?? [];
+$recentOrders = $recentOrders ?? ($orders ?? []);
+$contactName = $customer['contact_person'] ?: ($customer['name'] ?: ($_SESSION['full_name'] ?? 'Customer'));
+$shopName = $customer['shop_name'] ?: ($customer['name'] ?: 'Shop Customer');
+?>
+<section class="customer-dashboard">
+    <div class="customer-dashboard__container">
+        <?php if (!empty($flash)): ?>
+            <div class="customer-flash customer-flash--<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div>
+        <?php endif; ?>
 
-        <!-- Dashboard Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 28px;">
+        <!-- Welcome Banner -->
+        <div class="customer-welcome">
             <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <span class="material-symbols-outlined" style="font-size: 28px; color: var(--secondary, #3b6090);">storefront</span>
-                    <h1 style="font-size: 26px; font-weight: 700; margin: 0; color: var(--on-surface, #1e293b);">
-                        <?= e($customer['shop_name'] ?? 'My Shop Portal') ?>
-                    </h1>
-                    <span style="font-size: 11px; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">
-                        Shop Customer
-                    </span>
-                </div>
-                <p style="margin: 0; color: #64748b; font-size: 14px;">
-                    Account Code: <strong style="color: #334155;"><?= e($customer['customer_code'] ?? 'CUS-00001') ?></strong>
-                    &bull; Contact: <strong><?= e($customer['name'] ?? '') ?></strong> (<?= e($customer['email'] ?? '') ?>)
-                </p>
+                <span class="customer-eyebrow">CUSTOMER PORTAL</span>
+                <h1>Welcome, <?= e($contactName) ?></h1>
+                <p>Manage your orders, check fulfillment and delivery status, and order new parts directly.</p>
             </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a href="<?= url('catalog') ?>" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #002045; color: #fff;">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
-                    Browse Catalog
-                </a>
-                <a href="<?= url('profile') ?>" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">manage_accounts</span>
-                    Edit Profile
-                </a>
-                <a href="<?= url('checkout') ?>" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1;">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">shopping_cart</span>
-                    Cart / Checkout
-                </a>
-                <a href="<?= url('logout') ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;" title="Sign out">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
-                    Sign Out
-                </a>
-            </div>
-        </div>
-
-        <!-- Metrics Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px;">
-            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #64748b;">Credit Limit</span>
-                    <span class="material-symbols-outlined" style="color: #3b82f6;">credit_card</span>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                <div class="customer-profile-chip">
+                    <span class="material-symbols-outlined">storefront</span>
+                    <div>
+                        <strong><?= e($shopName) ?></strong>
+                        <span>Code: <?= e($customer['customer_code'] ?? 'CUS-00001') ?></span>
+                    </div>
                 </div>
-                <div style="font-size: 24px; font-weight: 800; color: #0f172a;">
-                    Rs. <?= number_format((float) ($customer['credit_limit'] ?? 0), 2) ?>
-                </div>
-                <div style="font-size: 12px; color: #10b981; margin-top: 4px; font-weight: 600;">
-                    Payment Terms: <?= (int) ($customer['payment_terms_days'] ?? 30) ?> Days
-                </div>
-            </div>
-
-            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #64748b;">Outstanding Balance</span>
-                    <span class="material-symbols-outlined" style="color: #f59e0b;">account_balance_wallet</span>
-                </div>
-                <div style="font-size: 24px; font-weight: 800; color: #0f172a;">
-                    Rs. <?= number_format((float) ($customer['credit_balance'] ?? 0), 2) ?>
-                </div>
-                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-                    Available: Rs. <?= number_format(max(0, (float) ($customer['credit_limit'] ?? 0) - (float) ($customer['credit_balance'] ?? 0)), 2) ?>
-                </div>
-            </div>
-
-            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #64748b;">Total Orders</span>
-                    <span class="material-symbols-outlined" style="color: #10b981;">receipt_long</span>
-                </div>
-                <div style="font-size: 24px; font-weight: 800; color: #0f172a;">
-                    <?= count($orders) ?>
-                </div>
-                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-                    B2B Wholesale Purchases
-                </div>
-            </div>
-
-            <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 13px; font-weight: 600; color: #64748b;">Account Status</span>
-                    <span class="material-symbols-outlined" style="color: #10b981;">verified_user</span>
-                </div>
-                <div style="font-size: 18px; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 6px;">
-                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #16a34a;"></span>
-                    Active Verified Shop
-                </div>
-                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-                    Direct Distribution Access
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders Section -->
-        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
-                <h2 style="font-size: 18px; font-weight: 700; margin: 0; color: #0f172a;">Recent Orders & Requisitions</h2>
-                <a href="<?= url('catalog') ?>" style="font-size: 13px; font-weight: 600; color: var(--secondary, #3b6090); text-decoration: none;">
-                    + New Part Order
-                </a>
-            </div>
-
-            <?php if (empty($orders)): ?>
-                <div style="text-align: center; padding: 48px 16px; color: #64748b;">
-                    <span class="material-symbols-outlined" style="font-size: 48px; color: #cbd5e1; margin-bottom: 12px;">shopping_bag</span>
-                    <h3 style="font-size: 16px; font-weight: 600; color: #334155; margin-bottom: 6px;">No orders placed yet</h3>
-                    <p style="font-size: 13px; margin-bottom: 18px;">Browse our comprehensive spare parts catalog and place your first B2B stock replenishment order.</p>
-                    <a href="<?= url('catalog') ?>" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px; background: #002045; color: #fff;">
-                        Start Shopping
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a href="<?= url('catalog') ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; background: #002045; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                        Browse Catalog
+                    </a>
+                    <a href="<?= url('profile') ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; text-decoration: none; font-size: 13px; font-weight: 600;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">manage_accounts</span>
+                        Edit Profile
+                    </a>
+                    <a href="<?= url('cart') ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; text-decoration: none; font-size: 13px; font-weight: 600;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">shopping_cart</span>
+                        Cart
+                    </a>
+                    <a href="<?= url('logout') ?>" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; text-decoration: none; font-size: 13px; font-weight: 600;" title="Sign out">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">logout</span>
+                        Sign Out
                     </a>
                 </div>
-            <?php else: ?>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid #e2e8f0; text-align: left; color: #64748b;">
-                                <th style="padding: 10px 12px;">Order #</th>
-                                <th style="padding: 10px 12px;">Date</th>
-                                <th style="padding: 10px 12px;">Items</th>
-                                <th style="padding: 10px 12px;">Total</th>
-                                <th style="padding: 10px 12px;">Order Status</th>
-                                <th style="padding: 10px 12px;">Payment</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($orders as $order): ?>
-                                <tr style="border-bottom: 1px solid #f1f5f9;">
-                                    <td style="padding: 12px; font-weight: 700; color: #0f172a;"><?= e($order['order_number'] ?? ('ORD-' . $order['id'])) ?></td>
-                                    <td style="padding: 12px; color: #64748b;"><?= date('M j, Y', strtotime((string) $order['created_at'])) ?></td>
-                                    <td style="padding: 12px;"><?= (int) ($order['item_count'] ?? 1) ?> items</td>
-                                    <td style="padding: 12px; font-weight: 700;">Rs. <?= number_format((float) ($order['total_amount'] ?? 0), 2) ?></td>
-                                    <td style="padding: 12px;">
-                                        <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; background: #e0e7ff; color: #3730a3;">
-                                            <?= e($order['order_status'] ?? 'pending') ?>
-                                        </span>
-                                    </td>
-                                    <td style="padding: 12px;">
-                                        <span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; background: #fef3c7; color: #92400e;">
-                                            <?= e($order['payment_status'] ?? 'pending') ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
+            </div>
         </div>
 
+        <!-- Key Metrics Cards -->
+        <div class="customer-stats">
+            <article>
+                <span class="material-symbols-outlined">receipt_long</span>
+                <div>
+                    <small>Total Orders</small>
+                    <strong><?= (int) ($stats['total_orders'] ?? count($recentOrders)) ?></strong>
+                </div>
+            </article>
+            <article>
+                <span class="material-symbols-outlined">pending_actions</span>
+                <div>
+                    <small>Active Orders</small>
+                    <strong><?= (int) ($stats['active_orders'] ?? 0) ?></strong>
+                </div>
+            </article>
+            <article>
+                <span class="material-symbols-outlined">task_alt</span>
+                <div>
+                    <small>Delivered / Completed</small>
+                    <strong><?= (int) ($stats['completed_orders'] ?? 0) ?></strong>
+                </div>
+            </article>
+            <article>
+                <span class="material-symbols-outlined">payments</span>
+                <div>
+                    <small>Total Purchases</small>
+                    <strong>Rs. <?= number_format((float) ($stats['total_value'] ?? 0), 2) ?></strong>
+                </div>
+            </article>
+        </div>
+
+        <!-- Two Column Content Grid -->
+        <div class="customer-dashboard__grid">
+            <!-- Left Column: Recent Orders -->
+            <section class="customer-panel">
+                <div class="customer-panel__header">
+                    <div>
+                        <span class="customer-eyebrow">ORDER REQUISITIONS</span>
+                        <h2>Recent Orders</h2>
+                    </div>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <a href="<?= url('catalog') ?>" style="color: #0284c7; font-weight: 600; text-decoration: none; font-size: 13px;">+ Order New Parts</a>
+                        <span style="color: #cbd5e1;">|</span>
+                        <a href="<?= url('orders') ?>">View All Orders &rarr;</a>
+                    </div>
+                </div>
+
+                <?php if (empty($recentOrders)): ?>
+                    <div class="customer-empty">
+                        <span class="material-symbols-outlined">shopping_bag</span>
+                        <h3>No orders yet</h3>
+                        <p>Browse our catalog of genuine spare parts and place your first stock order.</p>
+                        <a class="customer-primary" href="<?= url('catalog') ?>">Start Browsing Catalog</a>
+                    </div>
+                <?php else: ?>
+                    <div class="customer-order-list">
+                        <?php foreach ($recentOrders as $order): ?>
+                            <?php
+                            $orderNum = (string) ($order['order_number'] ?? ('ORD-' . $order['id']));
+                            $orderStatus = (string) ($order['status'] ?? ($order['order_status'] ?? 'pending'));
+                            $orderDate = !empty($order['order_date']) ? $order['order_date'] : ($order['created_at'] ?? 'now');
+                            $totalAmt = (float) ($order['total_amount'] ?? 0);
+                            ?>
+                            <div class="customer-order-row">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <strong><?= e($orderNum) ?></strong>
+                                        <span class="customer-status customer-status--<?= e($orderStatus) ?>">
+                                            <?= e(ucfirst($orderStatus)) ?>
+                                        </span>
+                                    </div>
+                                    <span style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                                        Ordered on <?= e(date('d M Y, h:i A', strtotime((string) $orderDate))) ?>
+                                    </span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <strong style="font-size: 15px; color: #0b192e;">Rs. <?= number_format($totalAmt, 2) ?></strong>
+                                    <div>
+                                        <a href="<?= url('orders?order_number=' . rawurlencode($orderNum)) ?>" style="font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none;">
+                                            Track Order &rarr;
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+
+            <!-- Right Column: Quick Links & Account Details -->
+            <aside style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Shop Details Card -->
+                <div class="customer-panel" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5eaf0;">
+                        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0b192e;">Shop Account Details</h3>
+                        <a href="<?= url('profile') ?>" style="font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600;">Edit &rarr;</a>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #334155;">
+                        <div><strong style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block;">Shop Name</strong><?= e($shopName) ?></div>
+                        <div><strong style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block;">Contact Person</strong><?= e($contactName) ?></div>
+                        <div><strong style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block;">Phone Number</strong><?= e($customer['phone'] ?? 'Not set') ?></div>
+                        <div><strong style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block;">Email Address</strong><?= e($customer['email'] ?? 'Not set') ?></div>
+                        <?php if (!empty($customer['address'])): ?>
+                            <div><strong style="color: #64748b; font-size: 11px; text-transform: uppercase; display: block;">Delivery Address</strong><?= e($customer['address']) ?><?= !empty($customer['city']) ? ', ' . e($customer['city']) : '' ?></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="customer-panel customer-quick-links" style="padding: 20px;">
+                    <span class="customer-eyebrow">QUICK ACCESS</span>
+                    <h2 style="font-size: 16px; margin: 4px 0 12px;">What would you like to do?</h2>
+                    <a href="<?= url('finder') ?>">
+                        <span class="material-symbols-outlined">directions_car</span>
+                        <div><strong>Spare Parts Finder</strong><small>Find parts matching your vehicle make & model</small></div>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a href="<?= url('catalog') ?>">
+                        <span class="material-symbols-outlined">category</span>
+                        <div><strong>Product Catalog</strong><small>Browse inventory and order new parts</small></div>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a href="<?= url('orders') ?>">
+                        <span class="material-symbols-outlined">package_2</span>
+                        <div><strong>My Orders</strong><small>Check fulfillment and update delivery</small></div>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a href="<?= url('track-order') ?>">
+                        <span class="material-symbols-outlined">local_shipping</span>
+                        <div><strong>Track Order</strong><small>Check delivery status and courier timeline</small></div>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a href="<?= url('profile') ?>">
+                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <div><strong>Edit Profile</strong><small>Update shop details and password</small></div>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a href="<?= url('logout') ?>">
+                        <span class="material-symbols-outlined">logout</span>
+                        <div><strong>Sign Out</strong><small>Safely end your customer session</small></div>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                </div>
+            </aside>
+        </div>
     </div>
-</div>
+</section>

@@ -128,8 +128,8 @@ class HomeController extends Controller
         $phone = trim((string) $this->input('phone', ''));
         $password = (string) $this->input('password', '');
         $confirmation = (string) $this->input('password_confirmation', '');
-        $roleSlug = (string) $this->input('role_slug', 'shop_customer');
-        $allowedRoles = ['owner', 'sales_rep', 'store_manager', 'shop_customer'];
+        // Public registration is customer-only. Staff/admin accounts must be created by authorized staff.
+        $roleSlug = 'shop_customer';
 
         if ($fullName === '' || $username === '' || $email === '' || $password === '') {
             $this->setFlash('error', 'Name, username, email and password are required.');
@@ -147,11 +147,6 @@ class HomeController extends Controller
             $this->setFlash('error', 'Passwords must match and contain at least 8 characters.');
             $this->redirect('/register');
         }
-        if (!in_array($roleSlug, $allowedRoles, true)) {
-            $this->setFlash('error', 'Choose a valid account type.');
-            $this->redirect('/register');
-        }
-
         $duplicate = $db->prepare('SELECT id FROM users WHERE (email = :email OR username = :username) AND deleted_at IS NULL LIMIT 1');
         $duplicate->execute(['email' => $email, 'username' => $username]);
         if ($duplicate->fetch()) {
@@ -161,11 +156,22 @@ class HomeController extends Controller
 
         try {
             $db->beginTransaction();
+            // Customer registration must work with an existing project database too.
+            // This adds the missing ROLE DATA only; it does not alter database/schema.sql
+            // or create/alter any table.
             $role = $db->prepare('SELECT id FROM roles WHERE slug = :slug LIMIT 1');
             $role->execute(['slug' => $roleSlug]);
             $roleId = (int) ($role->fetchColumn() ?: 0);
+
             if ($roleId === 0) {
-                throw new \RuntimeException('The selected role is not configured.');
+                $createRole = $db->prepare(
+                    "INSERT INTO roles (name, slug, description, permissions)
+                     VALUES ('Shop Customer', 'shop_customer', 'B2B portal: catalog, orders', :permissions)"
+                );
+                $createRole->execute([
+                    'permissions' => json_encode(['catalog' => true, 'orders' => true], JSON_UNESCAPED_SLASHES),
+                ]);
+                $roleId = (int) $db->lastInsertId();
             }
 
             $insert = $db->prepare(
@@ -226,7 +232,25 @@ class HomeController extends Controller
             if ($db->inTransaction()) {
                 $db->rollBack();
             }
-            $this->setFlash('error', 'We could not create the account: ' . $e->getMessage());
+            error_log('Registration failed: ' . $e->getMessage());
+
+            $message = 'We could not create the account.';
+            if ($e instanceof \PDOException) {
+                $sqlState = (string) $e->getCode();
+                if ($sqlState === '23000') {
+                    $message = 'That username, email, customer code, or shop record already exists. Please use different account details.';
+                } elseif ($sqlState === '42S02') {
+                    $message = 'Registration cannot start because a required database table is missing.';
+                } elseif ($sqlState === '42S22') {
+                    $message = 'Registration cannot start because the database structure is older than this project version.';
+                } else {
+                    $message = 'We could not create the account: ' . $e->getMessage();
+                }
+            } else {
+                $message = 'We could not create the account: ' . $e->getMessage();
+            }
+
+            $this->setFlash('error', $message);
             $this->redirect('/register');
         }
 
@@ -287,6 +311,22 @@ class HomeController extends Controller
 
     public function homeRouteForRole(string|int|null $role): string
     {
-        return $this->dashboardUrlForRole($role);
+        if (is_int($role)) {
+            return match ($role) {
+                1 => '/admin/dashboard',
+                2 => '/sales',
+                3 => '/inventory',
+                4 => '/customer/dashboard',
+                default => '/',
+            };
+        }
+
+        return match ($role) {
+            'owner' => '/admin/dashboard',
+            'sales_rep' => '/sales',
+            'store_manager' => '/inventory',
+            'shop_customer' => '/customer/dashboard',
+            default => '/',
+        };
     }
 }
