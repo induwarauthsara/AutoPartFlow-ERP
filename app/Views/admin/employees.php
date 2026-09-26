@@ -118,7 +118,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
         <header class="topbar">
             AutoPartFlow
             <div class="search-box"><input type="text" id="empSearch" placeholder="Search employees..."></div>
-            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <div class="avatar"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></div></div>
+            <div class="topbar-icons"><a href="<?= url('admin/notifications') ?>" aria-label="Notifications">Notifications</a> <a href="<?= url('profile') ?>" class="avatar" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Admin') ?>" style="text-decoration:none;cursor:pointer;"><?= strtoupper(substr($_SESSION['full_name'] ?? 'A', 0, 1)) ?></a></div>
         </header>
 
         <div class="content">

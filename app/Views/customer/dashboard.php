@@ -23,6 +23,10 @@
                     <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
                     Browse Catalog
                 </a>
+                <a href="<?= url('profile') ?>" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">manage_accounts</span>
+                    Edit Profile
+                </a>
                 <a href="<?= url('checkout') ?>" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1;">
                     <span class="material-symbols-outlined" style="font-size: 20px;">shopping_cart</span>
                     Cart / Checkout

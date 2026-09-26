@@ -24,6 +24,12 @@ class App
         $this->router->post('/register', 'HomeController@doRegister');
         $this->router->get('/logout', 'HomeController@logout');
 
+        // User Profile Management (Common to all authenticated roles)
+        $this->router->get('/profile', 'ProfileController@index');
+        $this->router->post('/profile', 'ProfileController@updateProfile');
+        $this->router->post('/profile/update', 'ProfileController@updateProfile');
+        $this->router->post('/profile/password', 'ProfileController@changePassword');
+
         // Catalog & Spare Part Finder
         $this->router->get('/catalog', 'CatalogController@index');
         $this->router->get('/catalog/compatibility', 'CatalogController@compatibility');

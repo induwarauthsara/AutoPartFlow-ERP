@@ -61,6 +61,10 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
                     <span class="material-symbols-outlined">dashboard</span>
                     <?= e(auth_dashboard_label()) ?>
                 </a>
+                <a class="sign-in-button sign-in-button--profile" href="<?= url('profile') ?>" title="Edit Profile">
+                    <span class="material-symbols-outlined">person</span>
+                    Profile
+                </a>
                 <a class="sign-in-button sign-in-button--logout" href="<?= url('logout') ?>" title="Sign Out">
                     <span class="material-symbols-outlined">logout</span>
                     <span class="logout-text">Sign Out</span>

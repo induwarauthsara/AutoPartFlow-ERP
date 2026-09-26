@@ -55,14 +55,21 @@
             </a>
         </nav>
 
-        <div class="sales-profile">
-            <span class="sales-avatar" aria-hidden="true">
-                <svg class="sales-icon"><use href="#sales-icon-user"></use></svg>
-            </span>
-            <div>
-                <strong>Sales Rep</strong>
-                <span>Sales Operations</span>
-            </div>
+        <div class="sales-sidebar__footer" style="margin-top:auto;padding:12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,0.08);">
+            <a href="<?= url('profile') ?>" class="sales-profile" style="margin:0;padding:10px 12px;border-radius:10px;text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.05);transition:background 0.15s;" title="View & Edit Profile">
+                <span class="sales-avatar" aria-hidden="true" style="width:34px;height:34px;border-radius:50%;background:#3b82f6;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0;">
+                    <?= e(strtoupper(substr(trim((string)($_SESSION['full_name'] ?? 'SR')), 0, 2)) ?: 'SR') ?>
+                </span>
+                <div style="flex:1;min-width:0;">
+                    <strong style="color:#fff;font-size:13px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= e($_SESSION['full_name'] ?? 'Sales Rep') ?></strong>
+                    <span style="color:#94a3b8;font-size:11px;display:block;">Sales Representative</span>
+                </div>
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#94a3b8;flex-shrink:0;"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+            </a>
+            <a href="<?= url('logout') ?>" class="sales-nav__link sales-nav__link--logout" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:#fca5a5;text-decoration:none;font-size:13px;font-weight:600;transition:background 0.15s;" title="Sign Out">
+                <svg class="sales-icon" viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                <span>Sign Out</span>
+            </a>
         </div>
     </aside>
 
@@ -76,8 +83,8 @@
                 <svg class="sales-icon"><use href="#sales-icon-bell"></use></svg>
                 <span class="sales-notification-dot" aria-hidden="true"></span>
             </button>
-            <a href="<?= url('logout') ?>" class="sales-avatar sales-avatar--small" title="Sign out" aria-label="Sign out">
-                <svg class="sales-icon"><use href="#sales-icon-user"></use></svg>
+            <a href="<?= url('profile') ?>" class="sales-avatar sales-avatar--small" title="Edit Profile — <?= e($_SESSION['full_name'] ?? 'Sales Rep') ?>" aria-label="Edit Profile" style="text-decoration:none;cursor:pointer;">
+                <?= e(strtoupper(substr(trim((string)($_SESSION['full_name'] ?? 'SR')), 0, 2)) ?: 'SR') ?>
             </a>
         </div>
         <div class="sales-notify-panel hidden" id="sales-notify-panel" role="status">
