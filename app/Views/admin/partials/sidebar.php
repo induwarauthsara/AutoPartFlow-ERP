@@ -48,7 +48,7 @@ $workspaceSub = $isStore ? 'Store Workspace' : 'Admin Workspace';
                 <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3V3Zm10 0h8v5h-8V3ZM3 13h8v8H3v-8Zm10-3h8v11h-8V10Z"/></svg>
                 <span>Dashboard</span>
             </a>
-            <a class="nav-link <?= $activeItem === 'inventory' ? 'active' : '' ?>" <?= $activeItem === 'inventory' ? 'aria-current="page"' : '' ?> href="<?= url('inventory') ?>">
+            <a class="nav-link <?= $activeItem === 'inventory' ? 'active' : '' ?>" <?= $activeItem === 'inventory' ? 'aria-current="page"' : '' ?> href="<?= url('admin/inventory') ?>">
                 <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.2L6.2 7 12 9.8 17.8 7 12 4.2ZM5 8.6v7.7l6 3v-7.7l-6-3Zm8 10.7 6-3V8.6l-6 3v7.7Z"/></svg>
                 <span>Inventory</span>
             </a>

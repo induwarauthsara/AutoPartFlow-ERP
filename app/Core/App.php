@@ -93,6 +93,7 @@ class App
         $this->router->get('/admin/purchases', 'AdminController@purchases');
         $this->router->post('/admin/purchases/status', 'AdminController@updatePurchaseStatus');
         $this->router->get('/admin/reports', 'AdminController@reports');
+        $this->router->get('/admin/reports/sale-items', 'AdminController@saleItems');
         $this->router->get('/admin/notifications', 'AdminController@notifications');
         $this->router->post('/admin/notifications/store', 'AdminController@notificationStore');
         $this->router->post('/admin/notifications/read', 'AdminController@notificationRead');
@@ -101,14 +102,21 @@ class App
         $this->router->get('/admin/settings', 'AdminController@settings');
         $this->router->post('/admin/settings/save', 'AdminController@settingsSave');
 
-        // Inventory / Store Workspace
+        // Inventory / Store Workspace (Reusable for Store Manager & Admin)
         $this->router->get('/inventory', 'InventoryController@index');
+        $this->router->get('/admin/inventory', 'InventoryController@index');
         $this->router->post('/inventory/stock-in', 'InventoryController@stockIn');
+        $this->router->post('/admin/inventory/stock-in', 'InventoryController@stockIn');
         $this->router->post('/inventory/adjust', 'InventoryController@adjust');
+        $this->router->post('/admin/inventory/adjust', 'InventoryController@adjust');
         $this->router->post('/inventory/write-off', 'InventoryController@writeOff');
+        $this->router->post('/admin/inventory/write-off', 'InventoryController@writeOff');
         $this->router->get('/inventory/movements', 'InventoryController@movements');
+        $this->router->get('/admin/inventory/movements', 'InventoryController@movements');
         $this->router->post('/inventory/add-item', 'InventoryController@addItem');
+        $this->router->post('/admin/inventory/add-item', 'InventoryController@addItem');
         $this->router->post('/inventory/delete-item', 'InventoryController@deleteItem');
+        $this->router->post('/admin/inventory/delete-item', 'InventoryController@deleteItem');
 
         // Shop Customer Workspace (B2B Portal)
         $this->router->get('/customer', 'CustomerController@dashboard');

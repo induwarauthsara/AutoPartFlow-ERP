@@ -75,9 +75,11 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
                     <div class="bar-row"><div class="bar-label"><span>Suspension</span><span>18%</span></div><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div></div>
                     <div class="bar-row"><div class="bar-label"><span>Filters &amp; Fluids</span><span>12%</span></div><div class="bar-track"><div class="bar-fill" style="width:12%;background:var(--slate-300);"></div></div></div>
                 </div>
-            </div>
             <div class="card">
-                <h3>Low Stock Alerts</h3>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <h3 style="margin:0;">Low Stock Alerts</h3>
+                    <a href="<?= url('admin/inventory') ?>" style="font-size:13px;font-weight:600;color:var(--indigo-500);text-decoration:none;">View Full Inventory &rarr;</a>
+                </div>
                 <table>
                     <thead><tr><th>Item</th><th>Brand</th><th>Stock</th><th>Status</th></tr></thead>
                     <tbody>

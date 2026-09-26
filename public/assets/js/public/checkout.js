@@ -106,18 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const fullNameVal = fullNameInput?.value.trim() || '';
-        const phoneVal = phoneInput?.value.trim() || '';
+        const phoneVal = (phoneInput?.value || '').trim().replace(/[\s\-]/g, '');
         const addressVal = addressInput?.value.trim() || '';
 
         if (!fullNameVal) {
-            fullNameInput?.classList.add('border-error');
-            fullNameError?.classList.remove('hidden');
+            if (fullNameInput && fullNameInput.type !== 'hidden') fullNameInput.classList.add('border-error');
+            if (fullNameError) fullNameError.classList.remove('hidden');
             isValid = false;
         }
 
         if (!phoneRegex.test(phoneVal)) {
-            phoneInput?.classList.add('border-error');
-            phoneError?.classList.remove('hidden');
+            if (phoneInput && phoneInput.type !== 'hidden') phoneInput.classList.add('border-error');
+            if (phoneError) phoneError.classList.remove('hidden');
             isValid = false;
         }
 
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Real-time input clearing on typing
-    if (fullNameInput) {
+    if (fullNameInput && fullNameInput.type !== 'hidden') {
         fullNameInput.addEventListener('input', () => {
             if (fullNameInput.value.trim()) {
                 fullNameInput.classList.remove('border-error');
@@ -140,9 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (phoneInput) {
+    if (phoneInput && phoneInput.type !== 'hidden') {
         phoneInput.addEventListener('input', () => {
-            if (phoneRegex.test(phoneInput.value.trim())) {
+            if (phoneRegex.test(phoneInput.value.trim().replace(/[\s\-]/g, ''))) {
                 phoneInput.classList.remove('border-error');
                 phoneError?.classList.add('hidden');
             }
@@ -179,10 +179,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const fullNameVal = fullNameInput?.value.trim() || '';
+            const phoneVal = (phoneInput?.value || '').trim().replace(/[\s\-]/g, '');
+            const addressVal = addressInput?.value.trim() || '';
+
             const payload = {
-                fullName: fullNameInput.value.trim(),
-                phoneNumber: phoneInput.value.trim(),
-                deliveryAddress: addressInput.value.trim(),
+                fullName: fullNameVal,
+                phoneNumber: phoneVal,
+                deliveryAddress: addressVal,
                 paymentMethod: selectedPayment,
                 csrf_token: window.APP_CONFIG?.csrfToken || '',
                 items: cartItems

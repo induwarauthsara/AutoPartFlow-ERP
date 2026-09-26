@@ -50,7 +50,7 @@
             <span>Dashboard</span>
         </a>
         <?php endif; ?>
-        <a href="<?= url('inventory') ?>" class="sales-mobile-nav__item sales-mobile-nav__item--active">
+        <a href="<?= (($_SESSION['role_slug'] ?? '') === 'owner') ? url('admin/inventory') : url('inventory') ?>" class="sales-mobile-nav__item sales-mobile-nav__item--active">
             <svg class="sales-icon"><use href="#sales-icon-inventory"></use></svg>
             <span>Inventory</span>
         </a>

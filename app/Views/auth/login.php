@@ -8,6 +8,9 @@
 
         <form method="POST" action="<?= url('login') ?>" class="auth-form">
             <?= csrf_field() ?>
+            <?php if (!empty($redirect)): ?>
+                <input type="hidden" name="redirect" value="<?= e($redirect) ?>">
+            <?php endif; ?>
 
             <div class="form-group">
                 <label for="username">Username or Email</label>
