@@ -1,6 +1,7 @@
 <?php
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $base = rtrim(BASE_URL, '/');
+$isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,6 +13,11 @@ $base = rtrim(BASE_URL, '/');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200" rel="stylesheet">
     <link rel="stylesheet" href="<?= asset('css/public/public.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/public/cart.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/public/orders.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/public/finder.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/public/delivery.css') ?>">
+    <link rel="stylesheet" href="<?= asset('css/public/pages.css') ?>">
     <script>
         window.APP_CONFIG = {
             baseUrl: '<?= rtrim(url(), '/') ?>'
@@ -30,8 +36,12 @@ $base = rtrim(BASE_URL, '/');
 
         <nav class="public-nav" aria-label="Public navigation">
             <a class="<?= $currentPath === $base . '/' || $currentPath === '/' ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
+            <a class="<?= str_contains($currentPath, '/finder') ? 'active' : '' ?>" href="<?= url('finder') ?>">Spare Parts Finder</a>
             <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
             <a class="<?= str_contains($currentPath, '/track-order') ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
+            <?php if ($isShopCustomer): ?>
+                <a class="<?= str_contains($currentPath, '/orders') || str_contains($currentPath, '/my-orders') ? 'active' : '' ?>" href="<?= url('orders') ?>">My Orders</a>
+            <?php endif; ?>
         </nav>
 
         <div class="public-actions">
@@ -39,14 +49,14 @@ $base = rtrim(BASE_URL, '/');
                 <span class="material-symbols-outlined">search</span>
                 <input type="search" name="q" value="<?= e($filters['search'] ?? '') ?>" placeholder="Search parts..." aria-label="Search parts">
             </form>
-            <a class="cart-button" href="<?= url('checkout') ?>" aria-label="Shopping cart">
+            <a class="cart-button" href="<?= url('cart') ?>" aria-label="Shopping cart">
                 <span class="material-symbols-outlined">shopping_cart</span>
                 <span class="cart-count">0</span>
             </a>
             <span class="header-divider"></span>
-            <a class="sign-in-button" href="<?= url('login') ?>">
-                <span class="material-symbols-outlined">login</span>
-                Sign In
+            <a class="sign-in-button" href="<?= $isShopCustomer ? url('orders') : url('login') ?>">
+                <span class="material-symbols-outlined"><?= $isShopCustomer ? 'person' : 'login' ?></span>
+                <?= $isShopCustomer ? 'My Orders' : 'Sign In' ?>
             </a>
         </div>
     </div>
@@ -67,5 +77,7 @@ $base = rtrim(BASE_URL, '/');
 </footer>
 
 <script src="<?= asset('js/public/catalog.js') ?>"></script>
+<script src="<?= asset('js/public/cart.js') ?>"></script>
+<script src="<?= asset('js/public/finder.js') ?>"></script>
 </body>
 </html>

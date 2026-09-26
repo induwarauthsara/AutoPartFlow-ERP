@@ -24,10 +24,16 @@ $orderNumber = $orderNumber ?? '';
         <!-- Search Order Box -->
         <div class="checkout-card" style="margin-bottom: 24px;">
             <form action="<?= url('track-order') ?>" method="get" style="display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end;">
-                <div class="form-group" style="flex:1; min-width:260px;">
+                <div class="form-group" style="flex:1; min-width:230px;">
                     <label class="form-label" for="order_number">Order Number</label>
                     <input class="form-input" id="order_number" name="order_number" value="<?= e($orderNumber) ?>" placeholder="e.g. ORD-00001" required type="text" style="font-family:var(--mono);">
                 </div>
+                <?php if (!($customer ?? null)): ?>
+                    <div class="form-group" style="flex:1; min-width:230px;">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input class="form-input" id="phone" name="phone" value="<?= e($phone ?? '') ?>" placeholder="0712345678" required type="tel">
+                    </div>
+                <?php endif; ?>
                 <button class="btn-primary" type="submit" style="padding:11px 24px; font-size:14px; gap:8px;">
                     <span class="material-symbols-outlined" style="font-size:20px;">search</span>
                     <span>Track Order</span>
@@ -35,13 +41,24 @@ $orderNumber = $orderNumber ?? '';
             </form>
         </div>
 
+        <?php if (!empty($message)): ?>
+            <div class="orders-alert orders-alert--error" style="margin-bottom:24px;">
+                <span class="material-symbols-outlined">verified_user</span>
+                <span><?= e($message) ?></span>
+            </div>
+        <?php endif; ?>
+
         <!-- Tracking Results -->
         <?php if ($searched): ?>
             <?php if ($order): ?>
                 <?php
                     $status = strtolower((string) $order['status']);
-                    $stages = ['pending' => 'Pending', 'confirmed' => 'Confirmed', 'processing' => 'Processing', 'ready' => 'Ready for Delivery', 'delivered' => 'Delivered'];
+                    $delivery = $order['delivery'] ?? null;
+                    $deliveryStatus = strtolower((string) ($delivery['delivery_status'] ?? 'pending'));
+                    $stages = ['pending' => 'Order Placed', 'confirmed' => 'Confirmed', 'processing' => 'Processing', 'ready' => 'Ready for Delivery', 'delivered' => 'Delivered'];
                     $currentStageIndex = array_search($status, array_keys($stages));
+                    if ($deliveryStatus === 'delivered') $currentStageIndex = count($stages) - 1;
+                    if ($deliveryStatus === 'in_transit') $currentStageIndex = max($currentStageIndex, 3);
                     if ($currentStageIndex === false) $currentStageIndex = 0;
                 ?>
                 <div class="checkout-card" style="display:flex; flex-direction:column; gap:24px;">
@@ -73,6 +90,21 @@ $orderNumber = $orderNumber ?? '';
                             </div>
                         <?php $i++; endforeach; ?>
                     </div>
+
+                    <?php if ($delivery): ?>
+                        <div class="orders-detail-grid" style="margin-top:4px;">
+                            <div class="orders-detail-panel">
+                                <h3>Delivery Status</h3>
+                                <p><strong><?= e(ucwords(str_replace('_', ' ', $delivery['delivery_status']))) ?></strong></p>
+                                <p>Delivery No: <code><?= e($delivery['delivery_number']) ?></code></p>
+                            </div>
+                            <div class="orders-detail-panel">
+                                <h3>Scheduled Delivery</h3>
+                                <p><?= $delivery['scheduled_date'] ? e(date('M d, Y', strtotime($delivery['scheduled_date']))) : 'To be confirmed by the store.' ?></p>
+                                <?php if ($delivery['delivered_at']): ?><p>Delivered <?= e(date('M d, Y h:i A', strtotime($delivery['delivered_at']))) ?></p><?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Delivery & Customer Information -->
                     <div class="form-grid" style="background:var(--surface-low); padding:16px; border-radius:8px;">

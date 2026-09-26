@@ -673,7 +673,7 @@ INSERT INTO settings (setting_key, setting_value, setting_group, description) VA
 ('invoice_footer',   'Thank you for your business!', 'invoice', 'Invoice footer text'),
 ('low_stock_alert',  '1', 'inventory', 'Enable low stock notifications');
 
--- Default admin user (password: admin123 — change immediately in production)
+-- Default admin user (password: password — change immediately in production)
 INSERT INTO users (role_id, username, email, password_hash, full_name, phone) VALUES
 (1, 'admin', 'admin@smartauto.lk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+94 77 000 0001');
 
