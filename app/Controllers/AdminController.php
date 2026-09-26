@@ -23,6 +23,13 @@ class AdminController extends Controller
         $this->db = Database::getConnection();
     }
 
+    /** GET /admin/inventory */
+    public function inventory(): void
+    {
+        $controller = new InventoryController();
+        $controller->index();
+    }
+
     /** GET /admin/dashboard */
     public function dashboard(): void
     {
@@ -179,96 +186,44 @@ class AdminController extends Controller
     /** GET /admin/reports */
     public function reports(): void
     {
-        $period = (string) ($_GET['period'] ?? 'monthly');
-        if (!in_array($period, ['daily', 'monthly', 'ytd'], true)) {
-            $period = 'monthly';
+        $reportManager = new \App\Models\ReportManager();
+        $export = strtolower((string) ($_GET['export'] ?? ''));
+
+        if ($export === 'csv') {
+            $reportManager->exportCsv($_GET);
+            return;
         }
 
-        $today = new \DateTimeImmutable('today');
-
-        // ---- Cards walata kaalaya (period eka anuwa wenas wenawa)
-        if ($period === 'daily') {
-            $from = $today;
-            $to = $today;
-            $prevFrom = $today->modify('-1 day');
-            $prevTo = $prevFrom;
-            $compareText = 'vs yesterday';
-            $periodLabel = 'Today (' . $today->format('j M Y') . ')';
-        } elseif ($period === 'ytd') {
-            $from = $today->modify('first day of january this year');
-            $to = $today;
-            $prevFrom = $from->modify('-1 year');
-            $prevTo = $today->modify('-1 year');
-            $compareText = 'vs same period last year';
-            $periodLabel = 'Year to date (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
-        } else {
-            $from = $today->modify('first day of this month');
-            $to = $today;
-            $prevFrom = $today->modify('first day of last month');
-            $prevTo = $prevFrom->modify('last day of this month');
-            $compareText = 'vs last month';
-            $periodLabel = 'This month (' . $from->format('j M') . ' – ' . $today->format('j M Y') . ')';
+        if (in_array($export, ['excel', 'xls', 'xl', 'xlsx'], true)) {
+            $reportManager->exportExcel($_GET);
+            return;
         }
 
-        $statsStmt = $this->db->prepare(
-            "SELECT COALESCE(SUM(gross_sales), 0)        AS gross,
-                    COALESCE(SUM(total_transactions), 0) AS tx,
-                    COALESCE(SUM(total_discounts), 0)    AS disc
-             FROM v_daily_sales_summary
-             WHERE sale_day BETWEEN ? AND ?"
-        );
-        $statsStmt->execute([$from->format('Y-m-d'), $to->format('Y-m-d')]);
-        $cur = $statsStmt->fetch();
-        $statsStmt->execute([$prevFrom->format('Y-m-d'), $prevTo->format('Y-m-d')]);
-        $prev = $statsStmt->fetch();
-
-        $curGross = (float) $cur['gross'];  $prevGross = (float) $prev['gross'];
-        $curTx    = (float) $cur['tx'];     $prevTx    = (float) $prev['tx'];
-        $curDisc  = (float) $cur['disc'];   $prevDisc  = (float) $prev['disc'];
-        $curAvg   = $curTx > 0 ? $curGross / $curTx : 0.0;
-        $prevAvg  = $prevTx > 0 ? $prevGross / $prevTx : 0.0;
-
-        $pct = fn(float $c, float $p): ?float => $p > 0 ? (($c - $p) / $p) * 100 : null;
-
-        $cards = [
-            ['icon' => 'Rs', 'label' => 'Gross Revenue',   'value' => 'Rs. ' . number_format($curGross, 2), 'change' => $pct($curGross, $prevGross), 'goodWhenUp' => true],
-            ['icon' => '#',  'label' => 'Transactions',    'value' => number_format($curTx),                'change' => $pct($curTx, $prevTx),       'goodWhenUp' => true],
-            ['icon' => 'Avg','label' => 'Average Sale',    'value' => 'Rs. ' . number_format($curAvg, 2),   'change' => $pct($curAvg, $prevAvg),     'goodWhenUp' => true],
-            ['icon' => '%',  'label' => 'Discounts Given', 'value' => 'Rs. ' . number_format($curDisc, 2),  'change' => $pct($curDisc, $prevDisc),   'goodWhenUp' => false],
-        ];
-
-        // ---- Chart eka: hama welema pasugiya masa 6 (period eka anuwa wenas wenne nae)
-        $chartKeys = [];
-        $monthStart = $today->modify('first day of this month');
-        for ($i = 5; $i >= 0; $i--) {
-            $m = $monthStart->modify("-{$i} month");
-            $chartKeys[$m->format('Y-m')] = $m->format('M');
-        }
-        $chartRows = $this->db->query(
-            "SELECT DATE_FORMAT(sale_day, '%Y-%m') AS k, SUM(gross_sales) AS total
-             FROM v_daily_sales_summary
-             WHERE sale_day >= DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01')
-             GROUP BY k"
-        )->fetchAll();
-        $totals = array_column($chartRows, 'total', 'k');
-        $chartValues = [];
-        foreach (array_keys($chartKeys) as $k) {
-            $chartValues[] = (float) ($totals[$k] ?? 0);
+        if ($export === 'pdf') {
+            $reportManager->exportPdf($_GET);
+            return;
         }
 
-        $performance = $this->db->query("SELECT * FROM v_employee_sales_performance ORDER BY total_revenue DESC LIMIT 5")->fetchAll();
+        $reportData = $reportManager->getReportData($_GET);
 
-        $this->view('admin.reports', [
-            'title'       => 'Reports & Analytics - AutoPartFlow',
-            'performance' => $performance,
-            'period'      => $period,
-            'periodLabel' => $periodLabel,
-            'compareText' => $compareText,
-            'cards'       => $cards,
-            'chartTitle'  => 'Sales (Last 6 Months)',
-            'chartLabels' => array_values($chartKeys),
-            'chartValues' => $chartValues,
-        ], null);
+        $this->view('admin.reports', array_merge([
+            'title' => 'Reports & Analytics - AutoPartFlow',
+        ], $reportData), null);
+    }
+
+    /** GET /admin/reports/sale-items?id=X */
+    public function saleItems(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $reportManager = new \App\Models\ReportManager();
+        $sale = $reportManager->getSaleDetails($id);
+
+        if (!$sale) {
+            $this->json(['ok' => false, 'message' => 'Sale record not found.'], 404);
+            return;
+        }
+
+        $this->json(['ok' => true, 'sale' => $sale]);
     }
 
     /** GET /admin/notifications */

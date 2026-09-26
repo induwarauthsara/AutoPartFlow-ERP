@@ -14,16 +14,17 @@ class InventoryController extends Controller
 
     public function __construct()
     {
-        $this->requireRole('store_manager', 'Access denied. The Store / Inventory workspace is reserved for Store Managers.');
+        $this->requireRole(['store_manager', 'owner'], 'Access denied. The Store / Inventory workspace is reserved for Store Managers and Administrators.');
         $this->inventory = new Inventory();
     }
 
     public function index(): void
     {
         $productModel = new Product();
+        $isOwner = ((string) ($_SESSION['role_slug'] ?? '')) === 'owner';
 
         $this->view('inventory/index', [
-            'title'              => 'Inventory Management',
+            'title'              => $isOwner ? 'Inventory Management | Admin' : 'Inventory Management',
             'inventoryItems'     => $this->inventory->getInventoryItems(),
             'inventorySummary'   => $this->inventory->getSummary(),
             'inventoryLocations' => $this->inventory->getLocations(),
