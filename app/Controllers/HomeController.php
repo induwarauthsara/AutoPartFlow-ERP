@@ -20,13 +20,19 @@ class HomeController extends Controller
 
     public function login(): void
     {
-        // Already logged in? Send to the right place instead of showing the form again.
+        $redirect = trim((string) $this->input('redirect', ''));
+
+        // Already logged in? Send to destination or role dashboard
         if (!empty($_SESSION['user_id'])) {
+            if ($redirect !== '' && str_starts_with($redirect, '/')) {
+                $this->redirect($redirect);
+            }
             $this->redirect($this->homeRouteForRole((string) ($_SESSION['role_slug'] ?? '')));
         }
 
         $this->view('auth/login', [
             'title' => 'Sign In | AutoPartFlow ERP',
+            'redirect' => $redirect,
             'flash' => $this->getFlash(),
         ], 'main');
     }
@@ -111,6 +117,13 @@ class HomeController extends Controller
            ->execute(['id' => $user['id']]);
 
         $this->setFlash('success', 'Successfully signed in as ' . $user['full_name'] . '.');
+
+        $redirect = trim((string) $this->input('redirect', ''));
+        if ($redirect !== '' && str_starts_with($redirect, '/')) {
+            $this->redirect($redirect);
+            return;
+        }
+
         $this->redirect($this->homeRouteForRole((string) $user['role_slug']));
     }
 

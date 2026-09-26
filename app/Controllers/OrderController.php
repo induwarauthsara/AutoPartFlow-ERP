@@ -18,6 +18,12 @@ class OrderController extends Controller
 
     public function checkout(): void
     {
+        if (empty($_SESSION['user_id'])) {
+            $this->setFlash('error', 'Please sign in to your customer account to confirm and place your order.');
+            $this->redirect('/login?redirect=' . rawurlencode('/checkout'));
+            return;
+        }
+
         $orderModel = new Order();
         $customer = $this->currentCustomer($orderModel);
 
@@ -88,21 +94,15 @@ class OrderController extends Controller
             return;
         }
 
-        $fullName = trim((string) ($data['fullName'] ?? ''));
-        $phoneNumber = trim((string) ($data['phoneNumber'] ?? ''));
+        if (empty($_SESSION['user_id'])) {
+            $this->json(['status' => 'error', 'message' => 'Please sign in to your customer account to place an order.'], 401);
+            return;
+        }
+
+        $userId = (int) $_SESSION['user_id'];
         $deliveryAddress = trim((string) ($data['deliveryAddress'] ?? ''));
         $paymentMethod = trim((string) ($data['paymentMethod'] ?? ''));
         $items = $data['items'] ?? [];
-
-        if ($fullName === '') {
-            $this->json(['status' => 'error', 'message' => 'Full Name is required.'], 422);
-            return;
-        }
-
-        if (!preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $phoneNumber)) {
-            $this->json(['status' => 'error', 'message' => 'Valid 10-digit phone number is required (e.g., 0712345678).'], 422);
-            return;
-        }
 
         if ($deliveryAddress === '') {
             $this->json(['status' => 'error', 'message' => 'Delivery address is required.'], 422);
@@ -125,28 +125,43 @@ class OrderController extends Controller
         }
 
         $orderModel = new Order();
-        $userId = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
-        $email = null;
-        $accountCustomer = null;
+        $accountCustomer = $orderModel->findCustomerForUser($userId);
 
-        // Only shop_customer accounts are allowed to bind an online order to
-        // their customer record. Other roles remain outside the customer portal.
-        if ($userId && (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer') {
-            $accountCustomer = $orderModel->findCustomerForUser($userId);
-            if (!$accountCustomer) {
-                $this->json(['status' => 'error', 'message' => 'Your customer account could not be linked. Please contact support.'], 403);
-                return;
+        if (!$accountCustomer) {
+            $this->json(['status' => 'error', 'message' => 'Your customer account could not be linked. Please contact support.'], 403);
+            return;
+        }
+
+        // Account identity is authoritative
+        $fullName = trim((string) ($accountCustomer['name'] ?? ''));
+        if ($fullName === '') {
+            $fullName = trim((string) ($_SESSION['full_name'] ?? 'Shop Customer'));
+        }
+
+        $phoneNumber = trim((string) ($accountCustomer['phone'] ?? ''));
+        $inputPhone  = trim((string) ($data['phoneNumber'] ?? ''));
+
+        // If phone is missing in user/customer profile, update it from input
+        if ($phoneNumber === '' && $inputPhone !== '') {
+            if (preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $inputPhone)) {
+                $phoneNumber = $inputPhone;
+                $db = \App\Core\Database::getConnection();
+                $db->prepare('UPDATE customers SET phone = :phone WHERE id = :id')->execute(['phone' => $phoneNumber, 'id' => $accountCustomer['id']]);
+                $db->prepare('UPDATE users SET phone = :phone WHERE id = :id')->execute(['phone' => $phoneNumber, 'id' => $userId]);
             }
+        }
 
-            // Account identity is authoritative; do not trust browser-supplied name/phone.
-            $fullName = trim((string) $accountCustomer['name']);
-            $phoneNumber = trim((string) ($accountCustomer['phone'] ?? ''));
-            $email = (string) ($accountCustomer['email'] ?? '');
+        if ($phoneNumber === '' || !preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $phoneNumber)) {
+            $this->json(['status' => 'error', 'message' => 'Valid contact phone number is required (e.g., 0712345678).'], 422);
+            return;
+        }
 
-            if (!preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $phoneNumber)) {
-                $this->json(['status' => 'error', 'message' => 'Please update the phone number on your customer account before ordering.'], 422);
-                return;
-            }
+        $email = (string) ($accountCustomer['email'] ?? ($_SESSION['email'] ?? ''));
+
+        // Save delivery address to customer record if empty
+        if (empty($accountCustomer['address']) && $deliveryAddress !== '') {
+            $db = \App\Core\Database::getConnection();
+            $db->prepare('UPDATE customers SET address = :addr WHERE id = :id')->execute(['addr' => $deliveryAddress, 'id' => $accountCustomer['id']]);
         }
 
         $result = $orderModel->createOrderWithItems(
@@ -154,7 +169,7 @@ class OrderController extends Controller
                 'fullName' => $fullName,
                 'phoneNumber' => $phoneNumber,
                 'deliveryAddress' => $deliveryAddress,
-                'userId' => $accountCustomer ? $userId : null,
+                'userId' => $userId,
                 'email' => $email,
             ],
             $items,

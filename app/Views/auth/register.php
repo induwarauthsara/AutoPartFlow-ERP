@@ -26,8 +26,13 @@
                     <input type="tel" id="phone" name="phone" maxlength="20" autocomplete="tel">
                 </div>
                 <div class="form-group auth-form-grid__full">
-                    <label>Account type</label>
-                    <input type="text" value="Shop Customer" disabled aria-label="Account type: Shop Customer">
+                    <label for="role_slug">Account type</label>
+                    <select id="role_slug" name="role_slug" required>
+                        <option value="shop_customer" selected>Shop Customer (B2B Portal)</option>
+                        <option value="sales_rep">Sales Representative</option>
+                        <option value="store_manager">Store Manager</option>
+                        <option value="owner">Business Owner</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>

@@ -54,27 +54,55 @@
             <!-- Delivery Details Section -->
             <div class="form-section">
                 <h2 class="form-section__title">
-                    <span class="material-symbols-outlined text-secondary">local_shipping</span>
-                    <span>Delivery Details</span>
+                    <span class="material-symbols-outlined text-secondary">account_circle</span>
+                    <span>Customer Account</span>
                 </h2>
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label" for="fullName">Full Name <span class="text-error">*</span></label>
-                        <input class="form-input" id="fullName" name="fullName" value="<?= e($customer['name'] ?? '') ?>" placeholder="Enter your full name" required type="text" <?= !empty($customer) ? 'readonly' : '' ?>>
-                        <span class="error-msg hidden" id="fullNameError">Full Name is required.</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="phoneNumber">Phone Number <span class="text-error">*</span></label>
-                        <input class="form-input" id="phoneNumber" name="phoneNumber" value="<?= e($customer['phone'] ?? '') ?>" placeholder="07XXXXXXXX" required type="tel" maxlength="12" <?= !empty($customer) ? 'readonly' : '' ?>>
-                        <span class="error-msg hidden" id="phoneError">Valid 10-digit Sri Lankan number required (e.g., 0712345678).</span>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span class="material-symbols-outlined" style="font-size: 36px; color: #3b6090; background: #e0f2fe; padding: 8px; border-radius: 50%;">person</span>
+                            <div>
+                                <strong style="font-size: 16px; color: #0b192e; display: block;"><?= e($customer['name'] ?? ($_SESSION['full_name'] ?? 'Shop Customer')) ?></strong>
+                                <span style="font-size: 13px; color: #64748b;"><?= e($customer['email'] ?? ($_SESSION['email'] ?? '')) ?></span>
+                                <?php if (!empty($customer['customer_code'])): ?>
+                                    <span style="display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 700; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 4px;">
+                                        <?= e($customer['customer_code']) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <a href="<?= url('profile') ?>" target="_blank" style="font-size: 12px; font-weight: 600; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">manage_accounts</span>
+                            Edit Profile
+                        </a>
                     </div>
                 </div>
 
+                <input type="hidden" id="fullName" name="fullName" value="<?= e($customer['name'] ?? ($_SESSION['full_name'] ?? 'Shop Customer')) ?>">
+
+                <?php if (!empty($customer['phone'])): ?>
+                    <input type="hidden" id="phoneNumber" name="phoneNumber" value="<?= e($customer['phone']) ?>">
+                    <div style="margin-bottom: 20px; font-size: 13px; color: #166534; display: flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 8px;">
+                        <span class="material-symbols-outlined" style="color: #16a34a; font-size: 20px;">call</span>
+                        <span>Contact Phone: <strong><?= e($customer['phone']) ?></strong> (from verified profile)</span>
+                    </div>
+                <?php else: ?>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" for="phoneNumber">Contact Phone Number <span class="text-error">*</span> <small style="color: #64748b; font-weight: 400;">(Required for delivery; will save to your profile)</small></label>
+                        <input class="form-input" id="phoneNumber" name="phoneNumber" value="" placeholder="07XXXXXXXX" required type="tel" maxlength="12">
+                        <span class="error-msg hidden" id="phoneError">Valid 10-digit Sri Lankan number required (e.g., 0712345678).</span>
+                    </div>
+                <?php endif; ?>
+
+                <h2 class="form-section__title" style="margin-top: 24px;">
+                    <span class="material-symbols-outlined text-secondary">local_shipping</span>
+                    <span>Delivery Address</span>
+                </h2>
+
                 <div class="form-group">
                     <label class="form-label" for="deliveryAddress">Delivery Address <span class="text-error">*</span></label>
-                    <textarea class="form-textarea" id="deliveryAddress" name="deliveryAddress" placeholder="Enter full delivery address with city" required rows="3"><?= e($customer['address'] ?? '') ?></textarea>
+                    <textarea class="form-textarea" id="deliveryAddress" name="deliveryAddress" placeholder="Enter full delivery address with city and postal code" required rows="3"><?= e($customer['address'] ?? '') ?></textarea>
                     <span class="error-msg hidden" id="addressError">Delivery Address is required.</span>
                 </div>
             </div>

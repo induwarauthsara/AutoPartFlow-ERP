@@ -76,9 +76,70 @@ class Order extends Model
 
         if ($customer) {
             $_SESSION['customer_id'] = (int) $customer['id'];
+            return $customer;
         }
 
-        return $customer ?: null;
+        // Check by phone if email did not match
+        $stmt = $this->db->prepare(
+            "SELECT c.id, c.customer_code, c.customer_type, c.name, c.phone, c.email, c.address
+             FROM customers c
+             INNER JOIN users u ON u.id = :user_id AND u.phone IS NOT NULL AND u.phone != '' AND u.phone = c.phone
+             WHERE u.id = :user_id
+               AND u.deleted_at IS NULL
+               AND c.customer_type = 'shop'
+               AND c.deleted_at IS NULL
+               AND c.is_active = 1
+             ORDER BY c.id DESC
+             LIMIT 1"
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $customer = $stmt->fetch();
+
+        if ($customer) {
+            $_SESSION['customer_id'] = (int) $customer['id'];
+            return $customer;
+        }
+
+        // Automatic creation/linking if customer record doesn't exist yet for signed-in user
+        $uStmt = $this->db->prepare("SELECT id, full_name, email, phone FROM users WHERE id = :id AND deleted_at IS NULL");
+        $uStmt->execute(['id' => $userId]);
+        $user = $uStmt->fetch();
+        if ($user) {
+            $code = 'CUS-' . str_pad((string) $userId, 5, '0', STR_PAD_LEFT);
+            $ins = $this->db->prepare(
+                "INSERT INTO customers (customer_code, customer_type, name, contact_person, phone, email, is_active)
+                 VALUES (:code, 'shop', :name, :name, :phone, :email, 1)
+                 ON DUPLICATE KEY UPDATE name = VALUES(name), phone = COALESCE(VALUES(phone), phone)"
+            );
+            $ins->execute([
+                'code' => $code,
+                'name' => $user['full_name'],
+                'phone' => !empty($user['phone']) ? $user['phone'] : null,
+                'email' => $user['email'],
+            ]);
+            $cId = (int) $this->db->lastInsertId();
+            if ($cId === 0) {
+                $sel = $this->db->prepare("SELECT id FROM customers WHERE email = :email LIMIT 1");
+                $sel->execute(['email' => $user['email']]);
+                $cId = (int) ($sel->fetchColumn() ?: 0);
+            }
+            if ($cId > 0) {
+                $sh = $this->db->prepare("INSERT IGNORE INTO shops (customer_id, shop_name) VALUES (:cid, :sname)");
+                $sh->execute(['cid' => $cId, 'sname' => $user['full_name'] . ' Auto Care']);
+                $_SESSION['customer_id'] = $cId;
+                return [
+                    'id' => $cId,
+                    'customer_code' => $code,
+                    'customer_type' => 'shop',
+                    'name' => $user['full_name'],
+                    'phone' => $user['phone'] ?? '',
+                    'email' => $user['email'],
+                    'address' => '',
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**
