@@ -26,10 +26,24 @@ class App
         $this->router->get('/catalog', 'CatalogController@index');
         $this->router->get('/catalog/compatibility', 'CatalogController@compatibility');
         $this->router->get('/catalog/details', 'CatalogController@details');
+        $this->router->get('/finder', 'SparePartFinderController@index');
+        $this->router->get('/finder/models', 'SparePartFinderController@models');
+        $this->router->get('/finder/engines', 'SparePartFinderController@engines');
+        $this->router->get('/cart', 'OrderController@cart');
         $this->router->get('/checkout', 'OrderController@checkout');
+        $this->router->get('/orders', 'OrderController@orders');
+        $this->router->get('/my-orders', 'OrderController@orders');
+        $this->router->post('/orders/update', 'OrderController@updateOrder');
+        $this->router->post('/orders/cancel', 'OrderController@cancelOrder');
         $this->router->post('/checkout/place', 'OrderController@placeOrder');
         $this->router->get('/track-order', 'OrderController@track');
         $this->router->post('/track-order', 'OrderController@track');
+        $this->router->get('/delivery-status', 'DeliveryController@status');
+        $this->router->post('/delivery/assign', 'DeliveryController@assign');
+        $this->router->post('/delivery/status', 'DeliveryController@updateStatus');
+        $this->router->get('/help', 'HomeController@help');
+        $this->router->get('/privacy', 'HomeController@privacy');
+        $this->router->get('/terms', 'HomeController@terms');
 
         // Sales Representative Workspace
         $this->router->get('/sales', 'SalesController@dashboard');

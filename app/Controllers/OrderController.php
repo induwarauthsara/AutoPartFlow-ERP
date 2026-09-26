@@ -6,24 +6,75 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Order;
-use App\Models\Product;
 
 class OrderController extends Controller
 {
+    public function cart(): void
+    {
+        $this->view('orders/cart', [
+            'title' => 'Shopping Cart | AutoPartFlow',
+        ], 'public');
+    }
+
     public function checkout(): void
     {
-        $productModel = new Product();
-        $sampleProducts = $productModel->catalog(['limit' => 4]);
+        $orderModel = new Order();
+        $customer = $this->currentCustomer($orderModel);
 
         $this->view('orders/checkout', [
-            'title'          => 'Checkout | AutoPartFlow',
-            'sampleProducts' => $sampleProducts,
-        ], null); // Render as standalone clean layout matching the Stitch checkout mockup
+            'title' => 'Checkout | AutoPartFlow',
+            'customer' => $customer,
+        ], null);
+    }
+
+    /**
+     * Customer order management page.
+     * Signed-in shop customers see their order list; guests can verify one order
+     * with order number + phone number.
+     */
+    public function orders(): void
+    {
+        $orderModel = new Order();
+        $customer = $this->currentCustomer($orderModel);
+        $orderNumber = trim((string) $this->input('order_number', ''));
+        $phone = trim((string) $this->input('phone', ''));
+        $order = null;
+        $orders = [];
+        $message = null;
+
+        if ($customer) {
+            $orders = $orderModel->getOrdersForCustomer((int) $customer['id']);
+            if ($orderNumber !== '') {
+                $order = $orderModel->findOrderForCustomer($orderNumber, (int) $customer['id']);
+                if (!$order) {
+                    $message = 'That order could not be found in your account.';
+                }
+            }
+        } elseif ($orderNumber !== '' || $phone !== '') {
+            if ($orderNumber === '' || $phone === '') {
+                $message = 'Enter both the order number and phone number to manage a guest order.';
+            } else {
+                $order = $orderModel->findOrderForPhone($orderNumber, $phone);
+                if (!$order) {
+                    $message = 'We could not verify that order. Check the order number and phone number.';
+                }
+            }
+        }
+
+        $this->view('orders/manage', [
+            'title' => 'My Orders | AutoPartFlow',
+            'customer' => $customer,
+            'orders' => $orders,
+            'order' => $order,
+            'orderNumber' => $orderNumber,
+            'phone' => $phone,
+            'message' => $message,
+            'flash' => $this->getFlash(),
+        ], 'public');
     }
 
     public function placeOrder(): void
     {
-        // Parse request payload (JSON or Form POST)
         $rawInput = file_get_contents('php://input');
         $data = json_decode($rawInput, true);
 
@@ -31,94 +82,249 @@ class OrderController extends Controller
             $data = $_POST;
         }
 
-        $fullName        = trim((string) ($data['fullName'] ?? ''));
-        $phoneNumber     = trim((string) ($data['phoneNumber'] ?? ''));
-        $deliveryAddress = trim((string) ($data['deliveryAddress'] ?? ''));
-        $paymentMethod   = trim((string) ($data['paymentMethod'] ?? 'cod'));
-        $items           = $data['items'] ?? [];
+        $csrfToken = (string) ($data['csrf_token'] ?? '');
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $csrfToken)) {
+            $this->json(['status' => 'error', 'message' => 'Your session expired. Refresh the checkout page and try again.'], 419);
+            return;
+        }
 
-        // Validation
-        if (empty($fullName)) {
+        $fullName = trim((string) ($data['fullName'] ?? ''));
+        $phoneNumber = trim((string) ($data['phoneNumber'] ?? ''));
+        $deliveryAddress = trim((string) ($data['deliveryAddress'] ?? ''));
+        $paymentMethod = trim((string) ($data['paymentMethod'] ?? ''));
+        $items = $data['items'] ?? [];
+
+        if ($fullName === '') {
             $this->json(['status' => 'error', 'message' => 'Full Name is required.'], 422);
             return;
         }
 
-        // Sri Lankan phone regex (07XXXXXXXX or standard 10 digits)
         if (!preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $phoneNumber)) {
             $this->json(['status' => 'error', 'message' => 'Valid 10-digit phone number is required (e.g., 0712345678).'], 422);
             return;
         }
 
-        if (empty($deliveryAddress)) {
+        if ($deliveryAddress === '') {
             $this->json(['status' => 'error', 'message' => 'Delivery address is required.'], 422);
             return;
         }
 
-        if (empty($items) || !is_array($items)) {
-            // Default to single sample product if empty
-            $items = [
-                ['code' => 'PRD-00001', 'name' => 'Front Brake Pad Set - Brembo', 'price' => 4500.00, 'qty' => 1]
-            ];
+        if ($paymentMethod !== 'cod') {
+            $this->json(['status' => 'error', 'message' => 'Only Cash on Delivery is currently supported.'], 422);
+            return;
+        }
+
+        if (!is_array($items) || $items === []) {
+            $this->json(['status' => 'error', 'message' => 'Your cart is empty. Add at least one product before checkout.'], 422);
+            return;
+        }
+
+        if (count($items) > 50) {
+            $this->json(['status' => 'error', 'message' => 'Your cart contains too many different products.'], 422);
+            return;
         }
 
         $orderModel = new Order();
+        $userId = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+        $email = null;
+        $accountCustomer = null;
+
+        // Only shop_customer accounts are allowed to bind an online order to
+        // their customer record. Other roles remain outside the customer portal.
+        if ($userId && (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer') {
+            $accountCustomer = $orderModel->findCustomerForUser($userId);
+            if (!$accountCustomer) {
+                $this->json(['status' => 'error', 'message' => 'Your customer account could not be linked. Please contact support.'], 403);
+                return;
+            }
+
+            // Account identity is authoritative; do not trust browser-supplied name/phone.
+            $fullName = trim((string) $accountCustomer['name']);
+            $phoneNumber = trim((string) ($accountCustomer['phone'] ?? ''));
+            $email = (string) ($accountCustomer['email'] ?? '');
+
+            if (!preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $phoneNumber)) {
+                $this->json(['status' => 'error', 'message' => 'Please update the phone number on your customer account before ordering.'], 422);
+                return;
+            }
+        }
+
         $result = $orderModel->createOrderWithItems(
             [
-                'fullName'        => $fullName,
-                'phoneNumber'     => $phoneNumber,
+                'fullName' => $fullName,
+                'phoneNumber' => $phoneNumber,
                 'deliveryAddress' => $deliveryAddress,
+                'userId' => $accountCustomer ? $userId : null,
+                'email' => $email,
             ],
             $items,
             $paymentMethod
         );
 
-        if ($result['success']) {
-            $this->json([
-                'status'             => 'success',
-                'order_number'       => $result['order_number'],
-                'total_amount'       => $result['total_amount'],
-                'estimated_delivery' => $result['estimated_delivery'],
-                'message'            => 'Order placed successfully!',
-            ]);
-        } else {
-            $this->json([
-                'status'  => 'error',
-                'message' => $result['message'] ?? 'Failed to place order. Please try again.',
-            ], 500);
+        if (!$result['success']) {
+            $status = str_contains(strtolower((string) ($result['message'] ?? '')), 'available') ? 409 : 422;
+            $this->json(['status' => 'error', 'message' => $result['message'] ?? 'Failed to place order.'], $status);
+            return;
         }
+
+        $this->json([
+            'status' => 'success',
+            'order_number' => $result['order_number'],
+            'total_amount' => $result['total_amount'],
+            'estimated_delivery' => $result['estimated_delivery'],
+            'message' => 'Order placed successfully!',
+        ]);
+    }
+
+    public function updateOrder(): void
+    {
+        if (!verify_csrf()) {
+            $this->setFlash('error', 'Your session expired. Please try again.');
+            $this->redirect('/orders');
+        }
+
+        $orderNumber = trim((string) $this->input('order_number', ''));
+        $phone = trim((string) $this->input('phone', ''));
+        $address = trim((string) $this->input('delivery_address', ''));
+        $orderModel = new Order();
+        $customer = $this->currentCustomer($orderModel);
+
+        if ($customer) {
+            $order = $orderModel->findOrderForCustomer($orderNumber, (int) $customer['id']);
+        } else {
+            $order = $orderModel->findOrderForPhone($orderNumber, $phone);
+        }
+
+        if (!$order) {
+            $this->setFlash('error', 'Order could not be verified.');
+            $this->redirect('/orders');
+        }
+
+        $result = $orderModel->updateDeliveryAddress((int) $order['id'], (int) $order['customer_id'], $address);
+        $this->setFlash($result['success'] ? 'success' : 'error', $result['message']);
+
+        $query = 'order_number=' . rawurlencode($orderNumber);
+        if (!$customer) {
+            $query .= '&phone=' . rawurlencode($phone);
+        }
+        $this->redirect('/orders?' . $query);
+    }
+
+    public function cancelOrder(): void
+    {
+        if (!verify_csrf()) {
+            $this->setFlash('error', 'Your session expired. Please try again.');
+            $this->redirect('/orders');
+        }
+
+        $orderNumber = trim((string) $this->input('order_number', ''));
+        $phone = trim((string) $this->input('phone', ''));
+        $orderModel = new Order();
+        $customer = $this->currentCustomer($orderModel);
+
+        if ($customer) {
+            $order = $orderModel->findOrderForCustomer($orderNumber, (int) $customer['id']);
+        } else {
+            $order = $orderModel->findOrderForPhone($orderNumber, $phone);
+        }
+
+        if (!$order) {
+            $this->setFlash('error', 'Order could not be verified.');
+            $this->redirect('/orders');
+        }
+
+        $result = $orderModel->cancelOrder((int) $order['id'], (int) $order['customer_id']);
+        $this->setFlash($result['success'] ? 'success' : 'error', $result['message']);
+
+        $query = 'order_number=' . rawurlencode($orderNumber);
+        if (!$customer) {
+            $query .= '&phone=' . rawurlencode($phone);
+        }
+        $this->redirect('/orders?' . $query);
     }
 
     public function track(): void
     {
         $orderNumber = trim((string) $this->input('order_number', ''));
+        $phone = trim((string) $this->input('phone', ''));
+        $orderModel = new Order();
+        $customer = $this->currentCustomer($orderModel);
 
-        if (empty($orderNumber)) {
+        if ($orderNumber === '') {
             $this->view('orders/track', [
-                'title'       => 'Track Order | AutoPartFlow',
-                'order'       => null,
+                'title' => 'Track Order | AutoPartFlow',
+                'order' => null,
                 'orderNumber' => '',
-                'searched'    => false,
+                'phone' => '',
+                'customer' => $customer,
+                'searched' => false,
+                'message' => null,
             ], 'public');
             return;
         }
 
-        $orderModel = new Order();
-        $order = $orderModel->trackOrder($orderNumber);
-
-        if ($this->input('format') === 'json' || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'))) {
-            if ($order) {
-                $this->json(['status' => 'success', 'order' => $order]);
-            } else {
-                $this->json(['status' => 'error', 'message' => "No order found with number: {$orderNumber}"], 404);
-            }
+        if (!$customer && $phone === '') {
+            $message = 'For guest tracking, enter the phone number used when placing the order.';
+            $this->view('orders/track', [
+                'title' => "Track Order #{$orderNumber} | AutoPartFlow",
+                'order' => null, 'orderNumber' => $orderNumber, 'phone' => '',
+                'customer' => null, 'searched' => true, 'message' => $message,
+            ], 'public');
             return;
         }
 
+        $order = $customer
+            ? $orderModel->trackOrderForCustomer($orderNumber, (int) $customer['id'])
+            : $orderModel->trackOrderForPhone($orderNumber, $phone);
+
+        if ($this->input('format') === 'json' || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'))) {
+            if ($order) {
+                $delivery = $order['delivery'] ?? null;
+                $this->json([
+                    'status' => 'success',
+                    'order' => [
+                        'order_number' => $order['order_number'],
+                        'order_date' => $order['order_date'],
+                        'status' => $order['status'],
+                        'total_amount' => $order['total_amount'],
+                        'payment_status' => $order['payment_status'],
+                        'items' => $order['items'],
+                        'delivery' => $delivery ? [
+                            'delivery_number' => $delivery['delivery_number'],
+                            'status' => $delivery['delivery_status'],
+                            'scheduled_date' => $delivery['scheduled_date'],
+                            'delivered_at' => $delivery['delivered_at'],
+                            ] : null,
+                    ],
+                ]);
+            }
+            $this->json(['status' => 'error', 'message' => 'Order could not be verified.'], 404);
+        }
+
         $this->view('orders/track', [
-            'title'       => "Track Order #{$orderNumber} | AutoPartFlow",
-            'order'       => $order,
+            'title' => "Track Order #{$orderNumber} | AutoPartFlow",
+            'order' => $order,
             'orderNumber' => $orderNumber,
-            'searched'    => true,
+            'phone' => $phone,
+            'customer' => $customer,
+            'searched' => true,
+            'message' => $order ? null : 'Order could not be verified. Check the order number and phone number.',
         ], 'public');
+    }
+
+    private function currentCustomer(Order $orderModel): ?array
+    {
+        $userId = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+        $role = (string) ($_SESSION['role_slug'] ?? '');
+
+        if ($userId <= 0 || $role !== 'shop_customer') {
+            return null;
+        }
+
+        $customer = $orderModel->findCustomerForUser($userId);
+        if (!$customer) {
+            unset($_SESSION['customer_id']);
+        }
+        return $customer;
     }
 }

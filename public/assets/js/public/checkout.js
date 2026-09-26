@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalContent = document.getElementById('successModalContent');
     const successOrderNumber = document.getElementById('successOrderNumber');
     const successDeliveryTime = document.getElementById('successDeliveryTime');
+    const trackOrderBtn = document.getElementById('trackOrderBtn');
 
     const summaryItemsList = document.getElementById('summaryItemsList');
     const summarySubtotal = document.getElementById('summarySubtotal');
@@ -31,24 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cartItems = getCart();
 
-    // Default fallback item if cart is empty
-    if (!cartItems || cartItems.length === 0) {
-        cartItems = [
-            {
-                code: 'PRD-00001',
-                name: 'Front Brake Pad Set - Brembo',
-                price: 4500,
-                qty: 1
-            }
-        ];
-    }
-
     // 2. Render Order Summary
     function renderOrderSummary() {
         if (!summaryItemsList) return;
 
         summaryItemsList.innerHTML = '';
         let subtotal = 0;
+
+        if (!cartItems.length) {
+            summaryItemsList.innerHTML = `
+                <li class="summary-item">
+                    <div class="summary-item__info">
+                        <strong class="summary-item__name">Your cart is empty</strong>
+                        <span class="summary-item__qty">Add products before checkout.</span>
+                    </div>
+                </li>
+            `;
+            if (summarySubtotal) summarySubtotal.textContent = 'Rs. 0';
+            if (summaryTotal) summaryTotal.textContent = 'Rs. 0';
+            if (confirmBtn) confirmBtn.disabled = true;
+            return;
+        }
+
+        if (confirmBtn) confirmBtn.disabled = false;
 
         cartItems.forEach(item => {
             const price = parseFloat(item.price || '0');
@@ -157,17 +163,28 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmBtn.addEventListener('click', async (e) => {
             e.preventDefault();
 
+            if (!cartItems.length) {
+                alert('Your cart is empty. Please add a product before checkout.');
+                window.location.href = `${baseUrl}/cart`;
+                return;
+            }
+
             if (!validateForm()) {
                 return;
             }
 
-            const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cod';
+            const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+            if (selectedPayment !== 'cod') {
+                alert('Only Cash on Delivery is available.');
+                return;
+            }
 
             const payload = {
                 fullName: fullNameInput.value.trim(),
                 phoneNumber: phoneInput.value.trim(),
                 deliveryAddress: addressInput.value.trim(),
                 paymentMethod: selectedPayment,
+                csrf_token: window.APP_CONFIG?.csrfToken || '',
                 items: cartItems
             };
 
@@ -192,8 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok && data.status === 'success') {
                     // Update modal content
-                    if (successOrderNumber) successOrderNumber.textContent = data.order_number || 'ORD-2026-00124';
-                    if (successDeliveryTime) successDeliveryTime.textContent = data.estimated_delivery || 'Tomorrow by 2PM';
+                    if (successOrderNumber) successOrderNumber.textContent = data.order_number || '';
+                    if (trackOrderBtn) trackOrderBtn.dataset.orderNumber = data.order_number || '';
+                    if (successDeliveryTime) successDeliveryTime.textContent = data.estimated_delivery || 'The store will confirm the delivery date.';
 
                     // Clear local shopping cart
                     localStorage.removeItem('autopartflow_cart');
@@ -211,6 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = originalBtnHTML;
+            }
+        });
+    }
+
+    if (trackOrderBtn) {
+        trackOrderBtn.addEventListener('click', () => {
+            const orderNumber = trackOrderBtn.dataset.orderNumber || '';
+            if (orderNumber) {
+                window.location.href = `${baseUrl}/track-order?order_number=${encodeURIComponent(orderNumber)}`;
             }
         });
     }

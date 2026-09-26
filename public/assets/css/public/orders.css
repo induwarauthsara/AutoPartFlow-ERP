@@ -1,0 +1,331 @@
+.orders-page {
+    min-height: calc(100vh - 150px);
+    padding: 28px 20px 56px;
+    background: var(--surface, #f7f8fc);
+}
+
+.orders-container {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.orders-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    margin: 12px 0 24px;
+}
+
+.orders-heading h1 {
+    margin: 0 0 6px;
+    color: var(--primary);
+    font-size: clamp(28px, 4vw, 38px);
+}
+
+.orders-heading p,
+.orders-card__header p,
+.orders-edit-box p {
+    margin: 0;
+    color: var(--on-surface-variant);
+    font-size: 14px;
+}
+
+.orders-back-link,
+.orders-secondary-btn,
+.orders-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.orders-card {
+    margin-bottom: 24px;
+    background: var(--surface-container-lowest, #fff);
+    border: 1px solid var(--outline-variant);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft, 0 2px 12px rgba(20, 35, 70, .06));
+    overflow: hidden;
+}
+
+.orders-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--outline-variant);
+}
+
+.orders-card__header h2 {
+    margin: 0 0 5px;
+    color: var(--primary);
+    font-size: 19px;
+}
+
+.orders-card__header > .material-symbols-outlined {
+    color: var(--secondary);
+    font-size: 30px;
+}
+
+.orders-lookup-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+    padding: 22px;
+}
+
+.orders-lookup-btn {
+    min-height: 42px;
+    white-space: nowrap;
+}
+
+.orders-alert {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.orders-alert--success {
+    background: #edf9f0;
+    color: #1f6b35;
+    border: 1px solid #b9e2c3;
+}
+
+.orders-alert--error {
+    background: #fff4f2;
+    color: #9f2d20;
+    border: 1px solid #efc0ba;
+}
+
+.orders-table-wrap {
+    overflow-x: auto;
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--outline-variant);
+    text-align: left;
+    font-size: 13px;
+}
+
+.orders-table th {
+    color: var(--on-surface-variant);
+    background: var(--surface-low, #f7f8fc);
+    font-weight: 700;
+}
+
+.orders-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.order-code,
+.order-code-large,
+.orders-table code {
+    font-family: var(--mono, monospace);
+}
+
+.order-code {
+    color: var(--primary);
+}
+
+.order-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--surface-low, #f1f3f8);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.order-status--pending {
+    background: #fff5dc;
+    color: #8a5a00;
+}
+
+.order-status--confirmed,
+.order-status--processing,
+.order-status--ready {
+    background: #edf3ff;
+    color: #285a9f;
+}
+
+.order-status--delivered {
+    background: #edf9f0;
+    color: #1f6b35;
+}
+
+.order-status--cancelled {
+    background: #fff0ee;
+    color: #a83226;
+}
+
+.orders-empty {
+    padding: 56px 24px;
+    text-align: center;
+}
+
+.orders-empty .material-symbols-outlined {
+    color: var(--outline);
+    font-size: 48px;
+}
+
+.orders-empty h3 {
+    margin: 10px 0 6px;
+    color: var(--primary);
+}
+
+.orders-empty p {
+    margin: 0 0 18px;
+    color: var(--on-surface-variant);
+    font-size: 14px;
+}
+
+.orders-empty .btn-primary {
+    display: inline-flex;
+    text-decoration: none;
+}
+
+.orders-detail-card {
+    padding-bottom: 22px;
+}
+
+.orders-kicker {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--on-surface-variant);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.order-code-large {
+    margin: 0 0 4px;
+    color: var(--primary);
+    font-size: 22px;
+}
+
+.orders-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 20px 22px;
+}
+
+.orders-detail-panel {
+    padding: 16px;
+    border-radius: 8px;
+    background: var(--surface-low, #f7f8fc);
+}
+
+.orders-detail-panel h3,
+.orders-items-wrap h3,
+.orders-edit-box h3 {
+    margin: 0 0 8px;
+    color: var(--primary);
+    font-size: 15px;
+}
+
+.orders-detail-panel p {
+    margin: 4px 0;
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.orders-items-wrap {
+    padding: 0 22px;
+}
+
+.orders-total-box {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    width: min(360px, calc(100% - 44px));
+    margin: 18px 22px 0 auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--outline-variant);
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.orders-edit-box {
+    margin: 22px;
+    padding: 18px;
+    border: 1px solid var(--outline-variant);
+    border-radius: 9px;
+    background: var(--surface-low, #f7f8fc);
+}
+
+.orders-update-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    margin-top: 14px;
+    align-items: end;
+}
+
+.orders-update-form .form-textarea {
+    min-height: 78px;
+}
+
+.orders-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 22px;
+}
+
+.orders-cancel-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #efc0ba;
+    border-radius: 7px;
+    background: #fff5f4;
+    color: #a83226;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (max-width: 800px) {
+    .orders-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .orders-lookup-form,
+    .orders-detail-grid,
+    .orders-update-form {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-update-form .btn-primary {
+        justify-self: start;
+    }
+}
