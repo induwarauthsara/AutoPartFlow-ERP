@@ -75,7 +75,6 @@
             <p class="summary-empty" id="summary-empty">Add a part to start this order.</p>
             <div class="summary-totals">
                 <div><span>Subtotal</span><strong id="summary-subtotal">Rs. 0.00</strong></div>
-                <div><span>Tax</span><strong id="summary-tax">Rs. 0.00</strong></div>
                 <div class="summary-totals__grand"><span>Total</span><strong id="summary-total">Rs. 0.00</strong></div>
                 <label for="order-notes">Order notes</label>
                 <textarea id="order-notes" rows="3" placeholder="Delivery instructions or customer notes..."></textarea>
