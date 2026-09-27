@@ -4,6 +4,7 @@ $products = $products ?? [];
 $categories = $categories ?? [];
 $brands = $brands ?? [];
 $vehicleBrands = $vehicleBrands ?? [];
+$canManageCatalog = (bool) ($canManageCatalog ?? false);
 ?>
 
 <div class="catalog-page">
@@ -35,7 +36,7 @@ $vehicleBrands = $vehicleBrands ?? [];
                 <h1>Product Catalog</h1>
                 <p>Browse auto parts, check vehicle compatibility, and manage inventory catalog.</p>
             </div>
-            <?php if (auth_check() && in_array(auth_role(), ['store_manager', 'owner'], true)): ?>
+            <?php if ($canManageCatalog): ?>
             <button type="button" class="btn-primary" id="btn-add-part" style="padding:10px 18px; border-radius:8px; display:inline-flex; align-items:center; gap:8px;">
                 <span class="material-symbols-outlined" style="font-size:20px;">add_circle</span>
                 <span>Add Spare Part</span>
@@ -114,6 +115,12 @@ $vehicleBrands = $vehicleBrands ?? [];
                             <?php
                                 $status = $product['stock_status'];
                                 $statusClass = strtolower(str_replace(' ', '-', $status));
+                                $specifications = is_string($product['specifications'] ?? null)
+                                    ? (json_decode($product['specifications'], true) ?: [])
+                                    : ($product['specifications'] ?? []);
+                                $specifications = is_array($specifications) ? $specifications : [];
+                                $oemReference = (string) ($specifications['OEM Reference'] ?? '');
+                                $oemSpecifications = (string) ($specifications['OEM Specifications'] ?? '');
                             ?>
                             <article class="product-card">
                                 <div class="product-image-box">
@@ -151,17 +158,20 @@ $vehicleBrands = $vehicleBrands ?? [];
                                         <span class="material-symbols-outlined">add_shopping_cart</span> Add
                                     </button>
                                 </div>
+                                <?php if ($canManageCatalog): ?>
                                 <div class="product-admin-actions" style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1; font-size:12px;">
                                     <button type="button" class="btn-edit-part" style="background:none; border:none; color:var(--primary); font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:4px 0;"
                                         data-id="<?= e((string) $product['id']) ?>"
                                         data-code="<?= e($product['product_code']) ?>"
                                         data-name="<?= e($product['name']) ?>"
+                                        data-barcode="<?= e($product['barcode'] ?? '') ?>"
                                         data-category-id="<?= e((string) $product['category_id']) ?>"
                                         data-brand-id="<?= e((string) ($product['brand_id'] ?? '')) ?>"
                                         data-cost-price="<?= e((string) ($product['cost_price'] ?? '0')) ?>"
                                         data-selling-price="<?= e((string) $product['selling_price']) ?>"
                                         data-wholesale-price="<?= e((string) ($product['wholesale_price'] ?? '')) ?>"
-                                        data-warranty="<?= e((string) ($product['warranty_months'] ?? '12')) ?>"
+                                        data-oem-reference="<?= e($oemReference) ?>"
+                                        data-oem-specifications="<?= e($oemSpecifications) ?>"
                                         data-reorder="<?= e((string) ($product['reorder_level'] ?? '5')) ?>"
                                         data-image="<?= e($product['image_path'] ?? '') ?>"
                                         data-desc="<?= e($product['description'] ?? '') ?>">
@@ -171,9 +181,10 @@ $vehicleBrands = $vehicleBrands ?? [];
                                         data-id="<?= e((string) $product['id']) ?>"
                                         data-name="<?= e($product['name']) ?>"
                                         data-code="<?= e($product['product_code']) ?>">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">delete</span> Remove
+                                        <span class="material-symbols-outlined" style="font-size:16px;">archive</span> Archive
                                     </button>
                                 </div>
+                                <?php endif; ?>
                             </article>
                         <?php endforeach; ?>
                     </div>
@@ -241,6 +252,7 @@ $vehicleBrands = $vehicleBrands ?? [];
 </div>
 
 <!-- Add / Edit Spare Part Modal -->
+<?php if ($canManageCatalog): ?>
 <div class="modal-overlay" id="part-modal" aria-hidden="true">
     <div class="modal-card modal-card--lg" style="max-height:90vh; display:flex; flex-direction:column;">
         <div class="modal-header">
@@ -308,8 +320,8 @@ $vehicleBrands = $vehicleBrands ?? [];
                     </div>
                 </div>
 
-                <!-- Row 4: Initial Stock & Warranty -->
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+                <!-- Row 4: Initial Stock, threshold and OEM reference -->
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
                     <div id="part-initial-stock-group">
                         <label for="part-initial-stock" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">Initial Stock Quantity</label>
                         <input type="number" min="0" id="part-initial-stock" name="initial_stock" value="10" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box;">
@@ -319,9 +331,14 @@ $vehicleBrands = $vehicleBrands ?? [];
                         <input type="number" min="0" id="part-reorder-level" name="reorder_level" value="5" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box;">
                     </div>
                     <div>
-                        <label for="part-warranty" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">Warranty (Months)</label>
-                        <input type="number" min="0" id="part-warranty" name="warranty_months" value="12" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box;">
+                        <label for="part-oem-reference" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">OEM Reference Number</label>
+                        <input type="text" id="part-oem-reference" name="oem_reference" maxlength="100" placeholder="e.g. 04465-0D150" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box;">
                     </div>
+                </div>
+
+                <div>
+                    <label for="part-oem-specifications" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">OEM Specifications</label>
+                    <textarea id="part-oem-specifications" name="oem_specifications" rows="2" maxlength="1000" placeholder="OEM dimensions, material, rating, interchange codes, or installation notes" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box; resize:vertical;"></textarea>
                 </div>
 
                 <!-- Image URL -->
@@ -392,6 +409,7 @@ $vehicleBrands = $vehicleBrands ?? [];
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <!-- Toast notification container -->
 <div id="catalog-toast" class="toast-container" aria-live="polite"></div>

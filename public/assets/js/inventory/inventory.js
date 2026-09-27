@@ -40,8 +40,9 @@
     function deriveStatus(item) {
         if (item.status === 'restocking') return 'restocking';
         const reorder = Number(item.reorderLevel) || 10;
-        if (item.qty <= Math.max(1, Math.floor(reorder / 2))) return 'critical';
-        if (item.qty <= reorder) return 'low';
+        const available = Number(item.availableQty ?? item.qty);
+        if (available <= Math.max(1, Math.floor(reorder / 2))) return 'critical';
+        if (available <= reorder) return 'low';
         return 'optimal';
     }
 
@@ -107,7 +108,9 @@
             return '<tr class="inventory-row' + zebra + '" data-product-id="' + item.id + '">' +
                 '<td class="inventory-part">' + escapeHtml(item.partNo) + '</td>' +
                 '<td><div style="font-weight:600;">' + escapeHtml(item.name) + '</div><div style="font-size:11px;color:var(--sales-on-surface-variant,#64748b);">' + escapeHtml(item.category || 'Auto Parts') + '</div></td>' +
-                '<td class="inventory-table__qty' + qtyClass + '">' + escapeHtml(item.qty.toLocaleString('en-LK')) + '</td>' +
+                '<td class="inventory-table__qty' + qtyClass + '"><strong>' + escapeHtml(item.qty.toLocaleString('en-LK')) + '</strong>' +
+                    '<div style="font-size:10px;color:var(--sales-on-surface-variant,#64748b);">Available ' + escapeHtml(Number(item.availableQty ?? item.qty).toLocaleString('en-LK')) +
+                    (Number(item.reservedQty || 0) ? ' · Reserved ' + escapeHtml(Number(item.reservedQty).toLocaleString('en-LK')) : '') + '</div></td>' +
                 '<td class="inventory-table__threshold">' +
                     '<div style="display:inline-flex;align-items:center;gap:6px;">' +
                         '<span class="threshold-value" style="font-weight:600;font-variant-numeric:tabular-nums;">' + escapeHtml(threshold) + ' units</span>' +
@@ -261,9 +264,10 @@
         if (!item || !dialog) return;
         byId('writeoff-product-id').value = String(item.id);
         byId('writeoff-product-name').textContent = item.partNo + ' — ' + item.name;
-        byId('writeoff-current-onhand').textContent = String(item.qty);
+        const available = Number(item.availableQty ?? item.qty);
+        byId('writeoff-current-onhand').textContent = String(available);
         byId('writeoff-qty').value = '';
-        byId('writeoff-qty').max = String(item.qty);
+        byId('writeoff-qty').max = String(available);
         byId('writeoff-reason').value = '';
         dialog.showModal();
     }
@@ -500,8 +504,8 @@
             showToast('Enter a positive damaged quantity and a reason.');
             return false;
         }
-        if (item && quantity > item.qty) {
-            showToast('Write-off quantity cannot exceed on-hand stock.');
+        if (item && quantity > Number(item.availableQty ?? item.qty)) {
+            showToast('Write-off quantity cannot exceed unreserved stock.');
             return false;
         }
         submitBtn.disabled = true;

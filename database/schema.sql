@@ -261,7 +261,6 @@ CREATE TABLE products (
     cost_price      DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     selling_price   DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     wholesale_price DECIMAL(12,2) DEFAULT NULL,
-    warranty_months TINYINT UNSIGNED DEFAULT 0,
     image_path      VARCHAR(255) DEFAULT NULL,
     specifications  JSON         DEFAULT NULL COMMENT 'Free-form specs: dimensions, material, etc.',
     is_active       TINYINT(1)   NOT NULL DEFAULT 1,
@@ -666,7 +665,7 @@ INSERT INTO settings (setting_key, setting_value, setting_group, description) VA
 
 -- Default role seed users (passwords: admin123, sales123, store123, customer123)
 INSERT INTO users (id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 1, 'admin',        'admin@smartauto.lk',    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+94 77 000 0001'),
+(1, 1, 'admin',        'admin@smartauto.lk',    '$2y$10$GLUwO3APErocxRuEW9DmV.XSAun4CxjgBLCCIAa524B6FKjjDSBre', 'System Administrator', '+94 77 000 0001'),
 (2, 2, 'salesrep',     'sales@smartauto.lk',    '$2y$10$3lE7etljcCJny6YNXONCAe3B3TLFVEsI19SunzOvRNTkeC0aGJZMq', 'Sunil Perera',         '+94 77 000 0002'),
 (3, 3, 'storemanager', 'store@smartauto.lk',    '$2y$10$5aMskCJvrPv3Mcf3B/n5Qelnnez3fTIJ8r.XhvoeMz0T2O9UcEy2S', 'Kamal Fernando',       '+94 77 000 0003'),
 (4, 4, 'shopcustomer', 'customer@smartauto.lk', '$2y$10$cVni8gJI7slnbjY.MVikuuDcvUaYfGVqS6.KpHi67V/7tjMjJj.ye', 'City Auto Works',      '+94 77 111 0001');
@@ -740,15 +739,15 @@ INSERT INTO vehicle_engines (vehicle_model_id, engine_code, displacement_cc, fue
 (12, 'Theta II',1998, 'petrol', 'automatic', 2015, NULL);
 
 -- Sample products
-INSERT INTO products (product_code, barcode, name, description, category_id, brand_id, cost_price, selling_price, wholesale_price, warranty_months) VALUES
-('PRD-00001', '8901234567001', 'Front Brake Pad Set - Corolla',    'Ceramic brake pads for Toyota Corolla 2014-2019', 1, 4, 3200.00, 4500.00, 4000.00, 6),
-('PRD-00002', '8901234567002', 'Oil Filter - Universal',           'Spin-on oil filter compatible with most Japanese cars', 2, 6, 450.00, 750.00, 650.00, 0),
-('PRD-00003', '8901234567003', 'Spark Plug Iridium (Set of 4)',    'NGK iridium spark plugs set', 8, 2, 2800.00, 4200.00, 3800.00, 12),
-('PRD-00004', '8901234567004', 'Alternator 90A - Honda Civic',     'Remanufactured alternator for Honda Civic R18', 4, 1, 12500.00, 18900.00, 17000.00, 12),
-('PRD-00005', '8901234567005', 'Front Shock Absorber - Hilux',     'Gas-filled front shock for Toyota Hilux 2016+', 5, 6, 5800.00, 8500.00, 7800.00, 12),
-('PRD-00006', '8901234567006', 'Air Filter - Suzuki Alto',         'Panel air filter for Suzuki Alto K10', 2, 6, 350.00, 600.00, 520.00, 0),
-('PRD-00007', '8901234567007', 'Timing Belt Kit - Hyundai Elantra','Timing belt with tensioner and water pump', 3, 7, 8200.00, 12500.00, 11000.00, 12),
-('PRD-00008', '8901234567008', 'Engine Oil 5W-30 (4L)',            'Semi-synthetic engine oil 4 litre pack', 7, 1, 3200.00, 4800.00, 4400.00, 0);
+INSERT INTO products (product_code, barcode, name, description, category_id, brand_id, cost_price, selling_price, wholesale_price) VALUES
+('PRD-00001', '8901234567001', 'Front Brake Pad Set - Corolla',    'Ceramic brake pads for Toyota Corolla 2014-2019', 1, 4, 3200.00, 4500.00, 4000.00),
+('PRD-00002', '8901234567002', 'Oil Filter - Universal',           'Spin-on oil filter compatible with most Japanese cars', 2, 6, 450.00, 750.00, 650.00),
+('PRD-00003', '8901234567003', 'Spark Plug Iridium (Set of 4)',    'NGK iridium spark plugs set', 8, 2, 2800.00, 4200.00, 3800.00),
+('PRD-00004', '8901234567004', 'Alternator 90A - Honda Civic',     'Remanufactured alternator for Honda Civic R18', 4, 1, 12500.00, 18900.00, 17000.00),
+('PRD-00005', '8901234567005', 'Front Shock Absorber - Hilux',     'Gas-filled front shock for Toyota Hilux 2016+', 5, 6, 5800.00, 8500.00, 7800.00),
+('PRD-00006', '8901234567006', 'Air Filter - Suzuki Alto',         'Panel air filter for Suzuki Alto K10', 2, 6, 350.00, 600.00, 520.00),
+('PRD-00007', '8901234567007', 'Timing Belt Kit - Hyundai Elantra','Timing belt with tensioner and water pump', 3, 7, 8200.00, 12500.00, 11000.00),
+('PRD-00008', '8901234567008', 'Engine Oil 5W-30 (4L)',            'Semi-synthetic engine oil 4 litre pack', 7, 1, 3200.00, 4800.00, 4400.00);
 
 UPDATE sequences SET current_value = 8 WHERE seq_type = 'product_code';
 

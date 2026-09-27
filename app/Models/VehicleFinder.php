@@ -214,7 +214,6 @@ class VehicleFinder extends Model
                 p.description,
                 p.unit,
                 p.selling_price,
-                p.warranty_months,
 
                 b.name AS brand_name,
                 c.name AS category_name,

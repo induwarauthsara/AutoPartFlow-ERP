@@ -285,7 +285,7 @@
         const nonNegativeKeywords = [
             'salary', 'qty', 'quantity', 'cost', 'price', 'stock', 'reorder',
             'discount', 'rate', 'paid', 'amount', 'fee', 'charge', 'retention',
-            'threshold', 'due_days', 'warranty', 'year'
+            'threshold', 'due_days', 'year'
         ];
 
         return nonNegativeKeywords.some(function (kw) { return identifier.includes(kw); });

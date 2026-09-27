@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
+    function escapeHtml(value) {
+        const node = document.createElement('div');
+        node.textContent = String(value ?? '');
+        return node.innerHTML;
+    }
     // 1. Sort & Filter Handling
     const form = document.getElementById('catalog-filter-form');
     const sortSelect = document.getElementById('sort-select');
@@ -222,9 +227,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (p.specifications) {
                         try {
                             const specsObj = typeof p.specifications === 'string' ? JSON.parse(p.specifications) : p.specifications;
-                            specsHtml = Object.entries(specsObj).map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`).join('');
+                            specsHtml = Object.entries(specsObj).map(([k, v]) => `<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('');
                         } catch (e) {
-                            specsHtml = p.specifications;
+                            specsHtml = escapeHtml(p.specifications);
                         }
                     }
 
@@ -257,17 +262,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </span>
                                 </div>
                                 <div class="detail-row">
-                                    <span class="detail-label">Warranty</span>
-                                    <span class="detail-val">${p.warranty_months > 0 ? p.warranty_months + ' Months' : 'Standard'}</span>
-                                </div>
-                                <div class="detail-row">
                                     <span class="detail-label">Unit Type</span>
                                     <span class="detail-val">${p.unit || 'pcs'}</span>
                                 </div>
                                 ${p.description ? `
                                 <div style="margin-top:8px;">
                                     <span class="detail-label" style="display:block; margin-bottom:4px;">Description:</span>
-                                    <p style="margin:0; font-size:13px; color:var(--on-surface-variant); line-height:1.4;">${p.description}</p>
+                                    <p style="margin:0; font-size:13px; color:var(--on-surface-variant); line-height:1.4;">${escapeHtml(p.description)}</p>
                                 </div>` : ''}
                                 ${specsHtml ? `
                                 <div style="margin-top:6px;">
@@ -359,12 +360,14 @@ document.addEventListener('DOMContentLoaded', function () {
             partModalSubtitle.textContent = `Update Part: ${data.code || ''}`;
             partIdInput.value = data.id || '';
             document.getElementById('part-name').value = data.name || '';
+            document.getElementById('part-barcode').value = data.barcode || '';
             document.getElementById('part-category').value = data.categoryId || '';
             document.getElementById('part-brand').value = data.brandId || '';
             document.getElementById('part-selling-price').value = data.sellingPrice || '';
             document.getElementById('part-cost-price').value = data.costPrice || '';
             document.getElementById('part-wholesale-price').value = data.wholesalePrice || '';
-            document.getElementById('part-warranty').value = data.warranty || '12';
+            document.getElementById('part-oem-reference').value = data.oemReference || '';
+            document.getElementById('part-oem-specifications').value = data.oemSpecifications || '';
             document.getElementById('part-reorder-level').value = data.reorder || '5';
             document.getElementById('part-image').value = data.image || '';
             document.getElementById('part-description').value = data.desc || '';
@@ -484,12 +487,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 id: this.dataset.id,
                 code: this.dataset.code,
                 name: this.dataset.name,
+                barcode: this.dataset.barcode,
                 categoryId: this.dataset.categoryId,
                 brandId: this.dataset.brandId,
                 costPrice: this.dataset.costPrice,
                 sellingPrice: this.dataset.sellingPrice,
                 wholesalePrice: this.dataset.wholesalePrice,
-                warranty: this.dataset.warranty,
+                oemReference: this.dataset.oemReference,
+                oemSpecifications: this.dataset.oemSpecifications,
                 reorder: this.dataset.reorder,
                 image: this.dataset.image,
                 desc: this.dataset.desc,
@@ -504,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const name = this.dataset.name || 'this part';
             const code = this.dataset.code || '';
 
-            if (!confirm(`Are you sure you want to remove "${name}" (${code}) from the catalog? This will mark it as discontinued.`)) {
+            if (!confirm(`Archive "${name}" (${code})? It will be deactivated and removed from the active catalog.`)) {
                 return;
             }
 
@@ -522,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(res => res.json())
                 .then(data => {
                     if (data.ok) {
-                        showToast(`Spare part <strong>${name}</strong> removed successfully.`);
+                        showToast(`Spare part <strong>${escapeHtml(name)}</strong> archived successfully.`);
                         const card = btn.closest('.product-card');
                         if (card) {
                             card.style.transition = 'opacity 0.3s, transform 0.3s';
@@ -568,7 +573,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 selling_price: parseFloat(document.getElementById('part-selling-price').value),
                 cost_price: parseFloat(document.getElementById('part-cost-price')?.value || '0'),
                 wholesale_price: document.getElementById('part-wholesale-price')?.value ? parseFloat(document.getElementById('part-wholesale-price').value) : null,
-                warranty_months: parseInt(document.getElementById('part-warranty')?.value || '12', 10),
+                oem_reference: document.getElementById('part-oem-reference')?.value.trim() || '',
+                oem_specifications: document.getElementById('part-oem-specifications')?.value.trim() || '',
                 reorder_level: parseInt(document.getElementById('part-reorder-level')?.value || '5', 10),
                 initial_stock: parseInt(document.getElementById('part-initial-stock')?.value || '10', 10),
                 image_path: document.getElementById('part-image')?.value.trim() || '',

@@ -1443,7 +1443,7 @@ def generate_txt():
         "7.3 Deliverable 3: Individual 4-Operation CRUD Verification:",
         "  • K. I. U. Thisera (24021059) - Sales Orders CRUD: Create order via Checkout/POS, Read order status on Track Order, Update delivery details, Void/Cancel pending orders.",
         "  • L. A. C. R. Jayamali (24020451) - System Users CRUD: Create staff account with role, Read user directory & audit logs, Update role permissions, Suspend/Soft-delete user accounts.",
-        "  • V. Pavalaraj (24020771) - Spare Parts CRUD: Create part with OEM specs, Read catalog with dynamic filters & fitment API, Update pricing/warranty, Deactivate discontinued parts.",
+        "  • V. Pavalaraj (24020771) - Spare Parts CRUD: Create part with OEM specs, Read catalog with dynamic filters & fitment API, Update pricing/OEM specifications, Deactivate discontinued parts.",
         "  • R. A. S. Thivanka (24021067) - Inventory CRUD: Create stock receipt via Stock-In modal, Read on-hand quantities & alerts, Update inventory count adjustments, Write-off damaged stock.",
         "================================================================================"
     ]

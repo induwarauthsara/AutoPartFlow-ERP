@@ -27,7 +27,6 @@ public function catalog(array $filters = []): array
             p.cost_price,
             p.selling_price,
             p.wholesale_price,
-            p.warranty_months,
             p.specifications,
             p.image_path,
             c.id AS category_id,
@@ -61,6 +60,7 @@ public function catalog(array $filters = []): array
                 OR p.product_code LIKE :search_code
                 OR p.barcode LIKE :search_barcode
                 OR p.description LIKE :search_description
+                OR CAST(p.specifications AS CHAR) LIKE :search_specifications
                 OR c.name LIKE :search_category
                 OR b.name LIKE :search_brand
             )
@@ -72,6 +72,7 @@ public function catalog(array $filters = []): array
         $params['search_code'] = $search;
         $params['search_barcode'] = $search;
         $params['search_description'] = $search;
+        $params['search_specifications'] = $search;
         $params['search_category'] = $search;
         $params['search_brand'] = $search;
     }
@@ -236,15 +237,15 @@ public function catalog(array $filters = []): array
             $brandId = !empty($data['brand_id']) ? (int) $data['brand_id'] : null;
             $costPrice = (float) ($data['cost_price'] ?? 0);
             $wholesalePrice = !empty($data['wholesale_price']) ? (float) $data['wholesale_price'] : null;
-            $warrantyMonths = (int) ($data['warranty_months'] ?? 12);
             $description = trim((string) ($data['description'] ?? ''));
+            $specifications = $this->oemSpecifications($data);
             $imagePath = trim((string) ($data['image_path'] ?? ''));
             $initialStock = (int) ($data['initial_stock'] ?? 10);
             $reorderLevel = (int) ($data['reorder_level'] ?? 5);
 
             $stmt = $this->db->prepare(
-                'INSERT INTO products (product_code, barcode, name, description, category_id, brand_id, cost_price, selling_price, wholesale_price, warranty_months, image_path, is_active)
-                 VALUES (:code, :barcode, :name, :desc, :cat, :brand, :cost, :price, :wholesale, :warranty, :img, 1)'
+                'INSERT INTO products (product_code, barcode, name, description, category_id, brand_id, cost_price, selling_price, wholesale_price, specifications, image_path, is_active)
+                 VALUES (:code, :barcode, :name, :desc, :cat, :brand, :cost, :price, :wholesale, :specifications, :img, 1)'
             );
             $stmt->execute([
                 'code' => $code,
@@ -256,7 +257,7 @@ public function catalog(array $filters = []): array
                 'cost' => $costPrice,
                 'price' => $sellingPrice,
                 'wholesale' => $wholesalePrice,
-                'warranty' => $warrantyMonths,
+                'specifications' => $specifications,
                 'img' => $imagePath ?: null,
             ]);
             $productId = (int) $this->db->lastInsertId();
@@ -313,28 +314,30 @@ public function catalog(array $filters = []): array
         $this->db->beginTransaction();
         try {
             $brandId = !empty($data['brand_id']) ? (int) $data['brand_id'] : null;
+            $barcode = !empty($data['barcode']) ? trim((string) $data['barcode']) : null;
             $costPrice = (float) ($data['cost_price'] ?? 0);
             $wholesalePrice = !empty($data['wholesale_price']) ? (float) $data['wholesale_price'] : null;
-            $warrantyMonths = (int) ($data['warranty_months'] ?? 12);
             $description = trim((string) ($data['description'] ?? ''));
+            $specifications = $this->oemSpecifications($data);
             $imagePath = trim((string) ($data['image_path'] ?? ''));
             $isActive = isset($data['is_active']) ? (int) (bool) $data['is_active'] : 1;
 
             $stmt = $this->db->prepare(
-                'UPDATE products SET name=:name, description=:desc, category_id=:cat, brand_id=:brand,
+                'UPDATE products SET name=:name, barcode=:barcode, description=:desc, category_id=:cat, brand_id=:brand,
                                     cost_price=:cost, selling_price=:price, wholesale_price=:wholesale,
-                                    warranty_months=:warranty, image_path=:img, is_active=:active
+                                    specifications=:specifications, image_path=:img, is_active=:active
                  WHERE id=:id AND deleted_at IS NULL'
             );
             $stmt->execute([
                 'name' => $name,
+                'barcode' => $barcode,
                 'desc' => $description ?: null,
                 'cat' => $categoryId,
                 'brand' => $brandId,
                 'cost' => $costPrice,
                 'price' => $sellingPrice,
                 'wholesale' => $wholesalePrice,
-                'warranty' => $warrantyMonths,
+                'specifications' => $specifications,
                 'img' => $imagePath ?: null,
                 'active' => $isActive,
                 'id' => $id,
@@ -430,7 +433,7 @@ public function catalog(array $filters = []): array
         $sql = "
             SELECT
                 p.id, p.product_code, p.barcode, p.name, p.description,
-                p.unit, p.selling_price, p.warranty_months,
+                p.unit, p.selling_price,
                 p.image_path, p.specifications, p.is_active,
                 c.name AS category,
                 b.name AS brand,
@@ -479,5 +482,25 @@ public function catalog(array $filters = []): array
         );
 
         return $stmt->fetchAll();
+    }
+
+    private function oemSpecifications(array $data): ?string
+    {
+        $reference = trim((string) ($data['oem_reference'] ?? ''));
+        $details = trim((string) ($data['oem_specifications'] ?? ''));
+        if (strlen($reference) > 100) {
+            throw new \InvalidArgumentException('OEM reference cannot exceed 100 characters.');
+        }
+        if (strlen($details) > 1000) {
+            throw new \InvalidArgumentException('OEM specifications cannot exceed 1000 characters.');
+        }
+        $specifications = [];
+        if ($reference !== '') {
+            $specifications['OEM Reference'] = $reference;
+        }
+        if ($details !== '') {
+            $specifications['OEM Specifications'] = $details;
+        }
+        return $specifications ? json_encode($specifications, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
     }
 }

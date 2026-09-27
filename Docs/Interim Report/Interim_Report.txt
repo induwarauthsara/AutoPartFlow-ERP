@@ -206,5 +206,5 @@ The project team has fully completed all mandatory interim requirements:
 7.3 Deliverable 3: Individual 4-Operation CRUD Verification:
   • Induwara Uthsara — Sales Orders CRUD: Create order via Checkout/POS, Read order status on Track Order, Update delivery details, Void/Cancel pending orders.
   • Chathumi — System Users CRUD: Create staff account with role, Read user directory & audit logs, Update role permissions, Suspend/Soft-delete user accounts.
-  • Varshika — Spare Parts CRUD: Create part with OEM specs, Read catalog with dynamic filters & fitment API, Update pricing/warranty, Deactivate discontinued parts.
+  • Varshika — Spare Parts CRUD: Create part with OEM specs, Read catalog with dynamic filters & fitment API, Update pricing/OEM specifications, Deactivate discontinued parts.
   • Sashik — Inventory CRUD: Create stock receipt via Stock-In modal, Read on-hand quantities & alerts, Update inventory count adjustments, Write-off damaged stock.

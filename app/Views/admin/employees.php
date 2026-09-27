@@ -198,6 +198,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
 
 <dialog id="empDlg">
     <form method="post" id="empForm" class="dlg" action="<?= url('admin/employees/store') ?>">
+        <?= csrf_field() ?>
         <input type="hidden" name="id" id="fId">
         <h3 id="dlgTitle">New employee</h3>
 
@@ -285,6 +286,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
 
 <dialog id="delDlg">
     <form method="post" class="dlg" action="<?= url('admin/employees/delete') ?>">
+        <?= csrf_field() ?>
         <input type="hidden" name="id" id="delId">
         <h3>Remove employee?</h3>
         <p id="delText" style="margin:8px 0 0;color:var(--slate-500);"></p>
