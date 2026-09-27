@@ -100,7 +100,7 @@ $workspaceSub = $isStore ? 'Store Workspace' : 'Admin Workspace';
             </div>
             <div style="flex:1;min-width:0;">
                 <div class="name" style="color:#fff;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;"><?= e($userName) ?></div>
-                <div class="role" style="color:#94a3b8;font-size:11px;margin-top:2px;"><?= e(ucwords(str_replace('_', ' ', $roleSlug))) ?></div>
+                <div class="sidebar-user-role" style="color:#94a3b8;font-size:11px;margin-top:2px;background:transparent !important;border:none !important;padding:0 !important;text-align:left !important;display:block !important;box-shadow:none !important;"><?= e(ucwords(str_replace('_', ' ', $roleSlug))) ?></div>
             </div>
             <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:#94a3b8;flex-shrink:0;"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
         </a>
