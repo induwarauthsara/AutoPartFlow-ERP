@@ -449,7 +449,7 @@ class SalesWorkspace extends Model
     private function validateItems(array $items, bool $includeReserved): array
     {
         $product = $this->db->prepare(
-            'SELECT p.id product_id, p.selling_price unit_price, p.cost_price, p.tax_rate,
+            'SELECT p.id product_id, p.selling_price unit_price, p.cost_price,
                     i.id inventory_id, i.quantity_on_hand, i.quantity_reserved
              FROM products p JOIN inventory i ON i.product_id=p.id
              WHERE p.id=:id AND p.deleted_at IS NULL AND p.is_active=1 ORDER BY i.id LIMIT 1 FOR UPDATE'
@@ -472,7 +472,7 @@ class SalesWorkspace extends Model
             }
             $validated[] = [
                 'product_id' => (int) $row['product_id'], 'inventory_id' => (int) $row['inventory_id'], 'quantity' => $quantity,
-                'unit_price' => (float) $row['unit_price'], 'cost_price' => (float) $row['cost_price'], 'tax_rate' => (float) $row['tax_rate'],
+                'unit_price' => (float) $row['unit_price'], 'cost_price' => (float) $row['cost_price'],
                 'line_total' => round((float) $row['unit_price'] * $quantity, 2),
             ];
         }
