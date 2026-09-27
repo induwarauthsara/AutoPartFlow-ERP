@@ -42,10 +42,6 @@
                     <span>Discount</span>
                     <span id="modal-discount">- Rs. 0.00</span>
                 </div>
-                <div class="checkout-summary__row">
-                    <span>Tax (18%)</span>
-                    <span id="modal-tax">Rs. 0.00</span>
-                </div>
                 <div class="checkout-summary__row checkout-summary__row--total">
                     <span>Total</span>
                     <strong id="modal-total">Rs. 0.00</strong>
