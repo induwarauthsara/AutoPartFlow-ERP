@@ -15,7 +15,7 @@ class HomeController extends Controller
         $this->view('home/index', [
             'title' => 'AutoPartFlow ERP | Enterprise Auto Parts Management',
             'flash' => $this->getFlash(),
-        ]);
+        ], 'public');
     }
 
     public function login(): void

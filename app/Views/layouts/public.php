@@ -1,8 +1,3 @@
-<?php
-$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-$base = rtrim(BASE_URL, '/');
-$isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,58 +25,10 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
 <meta name="base-url" content="<?= url() ?>">
 </head>
 <body class="public-body">
-<header class="public-header">
-    <div class="public-header__inner">
-        <a class="public-brand" href="<?= url() ?>">
-            <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
-            <span>AutoPartFlow</span>
-        </a>
-
-        <nav class="public-nav" aria-label="Public navigation">
-            <a class="<?= $currentPath === $base . '/' || $currentPath === '/' ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
-            <a class="<?= str_contains($currentPath, '/finder') ? 'active' : '' ?>" href="<?= url('finder') ?>">Spare Parts Finder</a>
-            <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
-            <a class="<?= str_contains($currentPath, '/track-order') ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
-            <?php if ($isShopCustomer): ?>
-                <a class="<?= str_contains($currentPath, '/customer/dashboard') ? 'active' : '' ?>" href="<?= url('customer/dashboard') ?>">Dashboard</a>
-                <a class="<?= str_contains($currentPath, '/orders') || str_contains($currentPath, '/my-orders') ? 'active' : '' ?>" href="<?= url('orders') ?>">My Orders</a>
-            <?php endif; ?>
-        </nav>
-
-        <div class="public-actions">
-            <form class="public-search" action="<?= url('catalog') ?>" method="get">
-                <span class="material-symbols-outlined">search</span>
-                <input type="search" name="q" value="<?= e($filters['search'] ?? '') ?>" placeholder="Search parts..." aria-label="Search parts">
-            </form>
-            <a class="cart-button" href="<?= url('cart') ?>" aria-label="Shopping cart">
-                <span class="material-symbols-outlined">shopping_cart</span>
-                <span class="cart-count">0</span>
-            </a>
-            <span class="header-divider"></span>
-            <?php if (auth_check()): ?>
-                <a class="sign-in-button sign-in-button--dashboard" href="<?= auth_dashboard_url() ?>">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <?= e(auth_dashboard_label()) ?>
-                </a>
-                <a class="sign-in-button sign-in-button--profile" href="<?= url('profile') ?>" title="Edit Profile">
-                    <span class="material-symbols-outlined">person</span>
-                    Profile
-                </a>
-                <a class="sign-in-button sign-in-button--logout" href="<?= url('logout') ?>" title="Sign Out">
-                    <span class="material-symbols-outlined">logout</span>
-                    <span class="logout-text">Sign Out</span>
-                </a>
-            <?php else: ?>
-                <a class="sign-in-button" href="<?= url('login') ?>">
-                    <span class="material-symbols-outlined">login</span>
-                    Sign In
-                </a>
-            <?php endif; ?>
-        </div>
-    </div>
-</header>
+<?php require APP_PATH . '/Views/partials/navbar.php'; ?>
 
 <main class="public-main">
+    <?php if (!empty($flash)): ?><div class="container" style="margin-top: 16px;"><div role="status" class="alert alert-<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div></div><?php endif; ?>
     <?= $content ?>
 </main>
 
@@ -89,7 +36,9 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
     <div class="public-footer__bottom">
         <span>&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</span>
         <div>
+            <a href="<?= url('finder') ?>">Spare Parts Finder</a>
             <a href="<?= url('catalog') ?>">Catalog</a>
+            <a href="<?= url('track-order') ?>">Track Order</a>
         </div>
     </div>
 </footer>

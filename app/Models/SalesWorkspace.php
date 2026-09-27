@@ -220,8 +220,10 @@ class SalesWorkspace extends Model
                 $stmt->execute(['type' => $type, 'name' => $name, 'phone' => $phone, 'email' => $email ?: null,
                     'address' => trim((string) ($data['address'] ?? '')) ?: null, 'city' => trim((string) ($data['city'] ?? '')) ?: null, 'id' => $id]);
             } else {
-                $next = (int) $this->db->query('SELECT COALESCE(MAX(id), 0) + 1 FROM customers FOR UPDATE')->fetchColumn();
-                $code = 'CUS-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+                $maxCusStmt = $this->db->query("SELECT MAX(CAST(SUBSTRING(customer_code, 5) AS UNSIGNED)) FROM customers WHERE customer_code LIKE 'CUS-%' FOR UPDATE");
+                $maxCus = (int) $maxCusStmt->fetchColumn();
+                $nextId = (int) $this->db->query('SELECT COALESCE(MAX(id), 0) + 1 FROM customers FOR UPDATE')->fetchColumn();
+                $code = 'CUS-' . str_pad((string) max($maxCus + 1, $nextId), 5, '0', STR_PAD_LEFT);
                 $stmt = $this->db->prepare(
                     'INSERT INTO customers (customer_code, customer_type, name, phone, email, address, city)
                      VALUES (:code, :type, :name, :phone, :email, :address, :city)'
@@ -507,7 +509,13 @@ class SalesWorkspace extends Model
         $quantities = [];
         foreach ($items as $raw) {
             $id = (int) ($raw['id'] ?? $raw['product_id'] ?? 0);
-            $quantity = (int) ($raw['quantity'] ?? 0);
+            if ($id === 0 && !empty($raw['sku'] ?? $raw['code'] ?? '')) {
+                $sku = (string) ($raw['sku'] ?? $raw['code']);
+                $st = $this->db->prepare('SELECT id FROM products WHERE product_code = :sku LIMIT 1');
+                $st->execute(['sku' => $sku]);
+                $id = (int) ($st->fetchColumn() ?: 0);
+            }
+            $quantity = (int) ($raw['quantity'] ?? $raw['qty'] ?? 0);
             if ($id < 1 || $quantity < 1) {
                 throw new \InvalidArgumentException('Every line item needs a valid product and quantity.');
             }
