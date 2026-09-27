@@ -80,6 +80,12 @@ class User extends Model
         $isActive = isset($data['is_active']) ? (int) (bool) $data['is_active'] : 1;
         $password = (string) ($data['password'] ?? '');
 
+        if ($roleId <= 0 && !empty($data['role_slug'])) {
+            $rStmt = $this->db->prepare('SELECT id FROM roles WHERE slug = :slug LIMIT 1');
+            $rStmt->execute(['slug' => $data['role_slug']]);
+            $roleId = (int) ($rStmt->fetchColumn() ?: 0);
+        }
+
         if ($fullName === '' || $email === '' || $roleId <= 0) {
             throw new \InvalidArgumentException('Full name, valid email, and role are required.');
         }

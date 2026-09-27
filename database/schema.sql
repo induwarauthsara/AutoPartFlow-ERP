@@ -791,7 +791,7 @@ INSERT INTO supplier_products (supplier_id, product_id, supplier_sku, cost_price
 
 -- Sample B2B shop customers
 INSERT INTO customers (customer_code, customer_type, name, contact_person, phone, email, address, city) VALUES
-('CUS-00001', 'shop', 'City Auto Works',       'Mr. Silva',   '+94 77 111 0001', 'cityauto@gmail.com',    '45 Galle Road, Dehiwala',     'Dehiwala'),
+('CUS-00001', 'shop', 'City Auto Works',       'Mr. Silva',   '+94 77 111 0001', 'customer@smartauto.lk',    '45 Galle Road, Dehiwala',     'Dehiwala'),
 ('CUS-00002', 'shop', 'Highway Garage & Parts', 'Mr. Jayawardena', '+94 77 111 0002', 'highway@garage.lk', 'Km 12, Colombo-Kandy Road', 'Kadawatha'),
 ('CUS-00003', 'shop', 'Nuwara Motors',          'Mr. Kumara',  '+94 77 111 0003', 'nuwara@motors.lk',      'Main Street, Nuwara Eliya',   'Nuwara Eliya'),
 ('CUS-00004', 'walking', 'Walk-in Customer',    NULL,          NULL,              NULL,                    NULL,                          NULL);

@@ -91,3 +91,10 @@ function auth_dashboard_label(): string
         default => 'Dashboard',
     };
 }
+
+function navbar(array $data = []): void
+{
+    extract($data, EXTR_SKIP);
+    require APP_PATH . '/Views/partials/navbar.php';
+}
+

@@ -278,7 +278,7 @@ class Order extends Model
                 }
 
                 $code = trim((string) ($item['code'] ?? ''));
-                $rawQty = $item['qty'] ?? null;
+                $rawQty = $item['qty'] ?? ($item['quantity'] ?? null);
                 $qty = filter_var($rawQty, FILTER_VALIDATE_INT, [
                     'options' => ['min_range' => 1, 'max_range' => 99],
                 ]);

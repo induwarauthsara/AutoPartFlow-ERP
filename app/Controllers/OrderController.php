@@ -138,11 +138,11 @@ class OrderController extends Controller
             $fullName = trim((string) ($_SESSION['full_name'] ?? 'Shop Customer'));
         }
 
-        $phoneNumber = trim((string) ($accountCustomer['phone'] ?? ''));
-        $inputPhone  = trim((string) ($data['phoneNumber'] ?? ''));
+        $phoneNumber = preg_replace('/[\s\-]+/', '', trim((string) ($accountCustomer['phone'] ?? '')));
+        $inputPhone  = preg_replace('/[\s\-]+/', '', trim((string) ($data['phoneNumber'] ?? '')));
 
-        // If phone is missing in user/customer profile, update it from input
-        if ($phoneNumber === '' && $inputPhone !== '') {
+        // If phone is missing or invalid in user/customer profile, update it from input
+        if (($phoneNumber === '' || !preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $phoneNumber)) && $inputPhone !== '') {
             if (preg_match('/^(?:07\d{8}|0\d{9}|\+94\d{9})$/', $inputPhone)) {
                 $phoneNumber = $inputPhone;
                 $db = \App\Core\Database::getConnection();
