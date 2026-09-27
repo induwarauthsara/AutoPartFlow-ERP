@@ -99,8 +99,10 @@ $statusLabel = static fn(string $status): string => ucwords(str_replace('_', ' '
         </section>
     </main>
 </div>
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script>window.PURCHASE_CONFIG = <?= json_encode(['csrfToken' => $csrfToken, 'baseUrl' => rtrim(url(), '/')], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
 <script>
+
 (function () {
     const search = document.querySelector('[data-purchase-search]');
     if (!search) return;

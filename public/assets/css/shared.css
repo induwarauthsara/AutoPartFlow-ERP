@@ -86,3 +86,62 @@ button, a, input, select, textarea { accent-color: var(--sales-primary); }
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ==========================================================================
+   Real-Time Form Validation & Input Guard Styles (Single Source of Truth)
+   ========================================================================== */
+.is-invalid,
+.border-error,
+input.is-invalid,
+select.is-invalid,
+textarea.is-invalid {
+    border-color: #dc2626 !important;
+    background-color: #fffaf9 !important;
+}
+
+.is-invalid:focus,
+.border-error:focus,
+input.is-invalid:focus,
+select.is-invalid:focus,
+textarea.is-invalid:focus {
+    outline: none !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18) !important;
+}
+
+.is-valid,
+input.is-valid,
+select.is-valid,
+textarea.is-valid {
+    border-color: #16a34a !important;
+}
+
+.field-error-message,
+.err,
+.error-hint {
+    color: #dc2626 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    margin-top: 5px !important;
+    margin-bottom: 2px !important;
+    display: block !important;
+    line-height: 1.4 !important;
+    animation: fieldErrorFadeIn 0.2s ease-in-out;
+}
+
+.field-error-message.hidden,
+.err:empty {
+    display: none !important;
+}
+
+@keyframes fieldErrorFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+

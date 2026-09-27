@@ -63,17 +63,21 @@
                 <label>
                     Customer or Business Name
                     <input type="text" id="customer-form-name" name="name" required maxlength="100">
+                    <span class="field-error" id="customer-form-name-error"></span>
                 </label>
                 <div class="form-grid">
                     <label>
                         Phone Number
                         <input type="tel" id="customer-form-phone" name="phone" required maxlength="20">
+                        <span class="field-error" id="customer-form-phone-error"></span>
                     </label>
                     <label>
                         Email Address
                         <input type="email" id="customer-form-email" name="email" maxlength="120">
+                        <span class="field-error" id="customer-form-email-error"></span>
                     </label>
                 </div>
+
                 <label>
                     Address
                     <textarea id="customer-form-address" name="address" rows="3" maxlength="250"></textarea>

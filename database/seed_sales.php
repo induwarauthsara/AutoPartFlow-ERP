@@ -54,15 +54,15 @@ foreach ($products as $p) {
 $saleInsert = $pdo->prepare(
     "INSERT INTO sales (
         invoice_number, customer_id, sales_rep_id, sale_date, sale_type, 
-        payment_method, subtotal, discount_amount, tax_amount, total_amount, 
+        payment_method, subtotal, discount_amount, total_amount, 
         amount_paid, change_amount, payment_status, notes, created_by, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
 
 $itemInsert = $pdo->prepare(
     "INSERT INTO sale_items (
-        sale_id, product_id, quantity, unit_price, cost_price, discount_amount, tax_rate, line_total, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        sale_id, product_id, quantity, unit_price, cost_price, discount_amount, line_total, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 );
 
 $paymentMethods = ['cash', 'card', 'bank_transfer', 'credit'];
@@ -118,10 +118,7 @@ $generateSale = function (string $dateStr, array $preferredCategories = []) use 
     }
 
     $discountAmount = (rand(1, 10) === 1) ? round($subtotal * 0.02, 2) : 0.0;
-    $taxRate = 18.00; // 18% VAT
-    $taxable = $subtotal - $discountAmount;
-    $taxAmount = round($taxable * ($taxRate / 100), 2);
-    $totalAmount = round($taxable + $taxAmount, 2);
+    $totalAmount = round($subtotal - $discountAmount, 2);
 
     $payStatus = 'paid';
     $amountPaid = $totalAmount;
@@ -143,7 +140,6 @@ $generateSale = function (string $dateStr, array $preferredCategories = []) use 
         $payMethod,
         $subtotal,
         $discountAmount,
-        $taxAmount,
         $totalAmount,
         $amountPaid,
         $changeAmount,
@@ -163,7 +159,6 @@ $generateSale = function (string $dateStr, array $preferredCategories = []) use 
             $it['unit_price'],
             $it['cost_price'],
             $it['discount'],
-            $taxRate,
             $it['line_total'],
             $dateTimeStr,
         ]);

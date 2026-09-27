@@ -1,10 +1,67 @@
-/* Admin presentation aligned with the sales workspace. No data behavior. */
-.sidebar { width: 256px; background: var(--sales-primary); padding: 20px 12px; overflow-y: auto; }
-.sidebar .brand { min-height: 68px; padding: 0 6px 20px; gap: 12px; }
-.sidebar .brand-title { font-size: 18px; color: white; }
-.sidebar .brand-sub { font-size: 12px; color: var(--sales-inverse-primary); text-transform: none; }
-.sidebar .nav-link { min-height: 44px; padding: 10px 12px; margin-bottom: 4px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--sales-inverse-primary); text-decoration: none; }
-.sidebar .nav-link.active, .sidebar .nav-link:hover { background: var(--sales-primary-container); color: white; }
+:root {
+    --sales-primary: #0f1f38;
+    --sales-primary-container: #1e3a5f;
+    --sales-inverse-primary: #adc7f7;
+    --sales-outline-variant: #e2e8f0;
+    --sales-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --navy-900: #0f1f38;
+    --navy-800: #162a4a;
+    --navy-700: #1e3a5f;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --indigo-500: #4f5bd5;
+    --indigo-600: #4338ca;
+    --green: #16a34a;
+    --green-soft: #dcfce7;
+    --red: #dc2626;
+    --red-soft: #fee2e2;
+    --amber: #d97706;
+    --amber-soft: #fef3c7;
+    --blue: #2563eb;
+    --blue-soft: #dbeafe;
+    --purple: #7c3aed;
+    --purple-soft: #ede9fe;
+    --teal: #0d9488;
+    --teal-soft: #ccfbf1;
+    --radius-lg: 12px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background: var(--slate-50, #f8fafc);
+    color: var(--slate-900, #0f172a);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background: var(--slate-50, #f8fafc);
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    background: var(--slate-50, #f8fafc);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
 .sidebar {
     width: 256px;
     background: var(--sales-primary, #0f1f38);
@@ -34,10 +91,10 @@ body.sales-app .sidebar {
 .sidebar-footer { margin-top: auto; padding: 14px 10px 6px; border-top: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 10px; }
 .sidebar-footer .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--indigo-500, #4f5bd5); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
 .sidebar-footer .name { color: #fff; font-size: 13px; font-weight: 600; line-height: 1.2; }
-.sidebar-footer .role { color: var(--sales-inverse-primary, #7f8bb0); font-size: 11px; margin-top: 2px; }
-.topbar { min-height: 64px; background: white; border-bottom: 1px solid var(--sales-outline-variant); }
+.sidebar-footer .role, .sidebar-footer .sidebar-user-role { color: var(--sales-inverse-primary, #7f8bb0); font-size: 11px; margin-top: 2px; }
+.topbar { min-height: 64px; background: white; border-bottom: 1px solid var(--slate-200, #e2e8f0); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-sizing: border-box; }
 .topbar a { color: var(--sales-primary); text-decoration: none; font-size: 13px; font-weight: 600; }
-.content { padding: 28px; }
+.content { padding: 28px; flex: 1; min-width: 0; box-sizing: border-box; }
 .page-head h1 { font-size: 28px; letter-spacing: -.025em; }
 .card { border-radius: 12px; box-shadow: var(--sales-shadow); }
 .btn, .btn-primary, .form-control { min-height: 40px; border-radius: 9px; }
@@ -66,3 +123,22 @@ body.sales-app .sidebar {
     .settings-layout, .form-row { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 480px) { .grid-4 { grid-template-columns: 1fr; } .page-head { flex-wrap: wrap; gap: 16px; } }
+
+@media print {
+    aside.sidebar, .sidebar, #admin-sidebar, .sales-sidebar, .topbar {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .app-shell, .main {
+        display: block !important;
+        width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}

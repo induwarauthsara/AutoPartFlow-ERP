@@ -87,7 +87,9 @@
 
     <script src="<?= asset('js/sales-rep/utils.js') ?>"></script>
     <script src="<?= asset('js/sales-rep/shell.js') ?>"></script>
+    <script src="<?= asset('js/validation.js') ?>"></script>
     <script src="<?= asset('js/inventory/inventory-mock-data.js') ?>"></script>
     <script src="<?= asset('js/inventory/inventory.js') ?>"></script>
 </body>
 </html>
+

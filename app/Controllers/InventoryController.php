@@ -27,7 +27,6 @@ class InventoryController extends Controller
             'title'              => $isOwner ? 'Inventory Management | Admin' : 'Inventory Management',
             'inventoryItems'     => $this->inventory->getInventoryItems(),
             'inventorySummary'   => $this->inventory->getSummary(),
-            'inventoryLocations' => $this->inventory->getLocations(),
             'categories'         => $productModel->categories(),
             'kpis'               => $this->inventory->kpis(),
             'products'           => $this->inventory->productsList(),
@@ -43,7 +42,6 @@ class InventoryController extends Controller
         $this->api(function (array $data): array {
             $productId = (int) ($data['product_id'] ?? 0);
             $quantity  = (int) ($data['quantity'] ?? 0);
-            $location  = trim((string) ($data['location'] ?? 'Main Warehouse'));
             $notes     = trim((string) ($data['notes'] ?? ''));
 
             if ($productId <= 0) {
@@ -56,7 +54,6 @@ class InventoryController extends Controller
             $result = $this->inventory->addStock(
                 $productId,
                 $quantity,
-                $location !== '' ? $location : 'Main Warehouse',
                 $notes,
                 isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null
             );
@@ -75,6 +72,36 @@ class InventoryController extends Controller
     public function stockIn(): void
     {
         $this->recordStockIn();
+    }
+
+    /**
+     * POST /inventory/update-threshold
+     * Update the low stock alert threshold for an inventory item.
+     */
+    public function updateThreshold(): void
+    {
+        $this->api(function (array $data): array {
+            $productId    = (int) ($data['product_id'] ?? 0);
+            $reorderLevel = (int) ($data['reorder_level'] ?? 0);
+
+            if ($productId <= 0) {
+                throw new \InvalidArgumentException('Please select a valid product.');
+            }
+            if ($reorderLevel < 0) {
+                throw new \InvalidArgumentException('Low stock alert threshold cannot be negative.');
+            }
+
+            $updatedItem = $this->inventory->updateThreshold($productId, $reorderLevel);
+
+            return [
+                'ok'      => true,
+                'message' => "Low stock alert threshold for {$updatedItem['partNo']} updated to {$reorderLevel} units.",
+                'item'    => $updatedItem,
+                'items'   => $this->inventory->getInventoryItems(),
+                'summary' => $this->inventory->getSummary(),
+                'kpis'    => $this->inventory->kpis(),
+            ];
+        });
     }
 
     public function adjust(): void
@@ -111,7 +138,6 @@ class InventoryController extends Controller
             $sellingPrice = (float) ($data['selling_price'] ?? 0);
             $quantity     = (int) ($data['quantity_on_hand'] ?? $data['quantity'] ?? 0);
             $reorderLevel = (int) ($data['reorder_level'] ?? 10);
-            $location     = trim((string) ($data['location'] ?? 'Main Warehouse'));
             $notes        = trim((string) ($data['notes'] ?? ''));
 
             if ($productCode === '') {
@@ -138,7 +164,6 @@ class InventoryController extends Controller
                 'selling_price'    => $sellingPrice,
                 'quantity_on_hand' => $quantity,
                 'reorder_level'    => $reorderLevel > 0 ? $reorderLevel : 10,
-                'location'         => $location,
                 'notes'            => $notes,
             ], isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null);
 

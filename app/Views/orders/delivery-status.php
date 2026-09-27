@@ -44,9 +44,10 @@ $statusLabel = $statusLabels[$status] ?? 'Delivery Status';
                     </div>
                     <div class="delivery-field">
                         <label for="delivery-phone">Phone Number</label>
-                        <input id="delivery-phone" name="phone" value="<?= e($phone) ?>" placeholder="0712345678" required>
+                        <input id="delivery-phone" name="phone" type="tel" value="<?= e($phone) ?>" placeholder="0712345678" required>
                     </div>
                     <button class="delivery-primary" type="submit"><span class="material-symbols-outlined">search</span> Check Status</button>
+
                 </form>
             </section>
         <?php else: ?>

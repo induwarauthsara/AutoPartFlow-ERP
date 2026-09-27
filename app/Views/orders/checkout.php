@@ -197,6 +197,8 @@
     </div>
 </footer>
 
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script src="<?= asset('js/public/checkout.js') ?>"></script>
 </body>
 </html>
+

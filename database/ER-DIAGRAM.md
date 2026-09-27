@@ -223,7 +223,6 @@ erDiagram
         decimal credit_balance
         tinyint payment_terms_days
         int assigned_rep_id FK
-        varchar tax_number
         datetime deleted_at
         timestamp created_at
         timestamp updated_at

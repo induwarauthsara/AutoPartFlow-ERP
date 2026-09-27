@@ -81,6 +81,8 @@ $base = rtrim(BASE_URL, '/');
     </div>
 </footer>
 
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script src="<?= asset('js/public/catalog.js') ?>"></script>
 </body>
 </html>
+

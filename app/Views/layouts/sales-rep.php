@@ -165,6 +165,7 @@
     <script src="<?= asset('js/sales-rep/utils.js') ?>"></script>
     <script src="<?= asset('js/sales-rep/mock-data.js') ?>"></script>
     <script src="<?= asset('js/sales-rep/shell.js') ?>"></script>
+    <script src="<?= asset('js/validation.js') ?>"></script>
     <script src="<?= asset('js/sales-rep/dashboard.js') ?>"></script>
     <script src="<?= asset('js/sales-rep/customers.js') ?>"></script>
     <script src="<?= asset('js/sales-rep/orders.js') ?>"></script>
@@ -172,3 +173,4 @@
     <script src="<?= asset('js/sales-rep/pos.js') ?>"></script>
 </body>
 </html>
+

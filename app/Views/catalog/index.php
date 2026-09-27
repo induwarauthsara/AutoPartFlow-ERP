@@ -315,7 +315,7 @@ $vehicleBrands = $vehicleBrands ?? [];
                         <input type="number" min="0" id="part-initial-stock" name="initial_stock" value="10" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box;">
                     </div>
                     <div>
-                        <label for="part-reorder-level" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">Reorder Alert Level</label>
+                        <label for="part-reorder-level" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px;">Low Stock Alert Threshold</label>
                         <input type="number" min="0" id="part-reorder-level" name="reorder_level" value="5" style="width:100%; padding:9px 12px; border:1px solid var(--outline-variant); border-radius:6px; font-size:13px; box-sizing:border-box;">
                     </div>
                     <div>

@@ -69,5 +69,7 @@ h2{margin:0 0 6px;font-size:22px;}
         </div>
     </div>
 </div>
+<script src="<?= asset('js/validation.js') ?>"></script>
 </body>
 </html>
+
