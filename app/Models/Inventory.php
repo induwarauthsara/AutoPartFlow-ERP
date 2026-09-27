@@ -77,7 +77,7 @@ class Inventory extends Model
              FROM inventory i
              INNER JOIN products p ON p.id = i.product_id
              WHERE p.deleted_at IS NULL
-               AND i.quantity_on_hand <= i.reorder_level"
+               AND (i.quantity_on_hand - i.quantity_reserved) <= i.reorder_level"
         )->fetchColumn();
 
         $incomingPurchases = (int) $this->db->query(
@@ -219,11 +219,15 @@ class Inventory extends Model
 
         $this->db->beginTransaction();
         try {
-            $stmt = $this->db->prepare('SELECT id, quantity_on_hand FROM inventory WHERE product_id = :pid FOR UPDATE');
+            $stmt = $this->db->prepare('SELECT id, quantity_on_hand, quantity_reserved FROM inventory WHERE product_id = :pid FOR UPDATE');
             $stmt->execute(['pid' => $productId]);
             $row = $stmt->fetch();
 
             $before = $row ? (int) $row['quantity_on_hand'] : 0;
+            $reserved = $row ? (int) $row['quantity_reserved'] : 0;
+            if ($newQuantity < $reserved) {
+                throw new \InvalidArgumentException("Physical count cannot be lower than {$reserved} units reserved for pending orders.");
+            }
             $diff = $newQuantity - $before;
             $mtype = $diff >= 0 ? 'adjustment_in' : 'adjustment_out';
 
@@ -382,7 +386,7 @@ class Inventory extends Model
 
         $this->db->beginTransaction();
         try {
-            $stmt = $this->db->prepare('SELECT id, quantity_on_hand, quantity_damaged FROM inventory WHERE product_id = :pid FOR UPDATE');
+            $stmt = $this->db->prepare('SELECT id, quantity_on_hand, quantity_reserved, quantity_damaged FROM inventory WHERE product_id = :pid FOR UPDATE');
             $stmt->execute(['pid' => $productId]);
             $row = $stmt->fetch();
 
@@ -391,8 +395,9 @@ class Inventory extends Model
             }
 
             $before = (int) $row['quantity_on_hand'];
-            if ($quantity > $before) {
-                throw new \InvalidArgumentException('Write-off quantity (' . $quantity . ') exceeds on-hand stock (' . $before . ').');
+            $available = max(0, $before - (int) $row['quantity_reserved']);
+            if ($quantity > $available) {
+                throw new \InvalidArgumentException('Write-off quantity (' . $quantity . ') exceeds unreserved stock (' . $available . ').');
             }
 
             $after = $before - $quantity;
@@ -544,6 +549,8 @@ class Inventory extends Model
     private function mapItem(array $row): array
     {
         $qty = (int) $row['quantity_on_hand'];
+        $reserved = (int) ($row['quantity_reserved'] ?? 0);
+        $available = max(0, $qty - $reserved);
         $reorder = (int) $row['reorder_level'];
 
         return [
@@ -553,8 +560,11 @@ class Inventory extends Model
             'name'         => $row['name'],
             'category'     => $row['category'],
             'qty'          => $qty,
+            'reservedQty'  => $reserved,
+            'availableQty' => $available,
+            'damagedQty'   => (int) ($row['quantity_damaged'] ?? 0),
             'reorderLevel' => $reorder,
-            'status'       => $this->deriveStatus($qty, $reorder),
+            'status'       => $this->deriveStatus($available, $reorder),
             'lastMovement' => $this->formatLastMovement($row),
             'unitCost'     => (float) $row['cost_price'],
             'sellingPrice' => (float) ($row['selling_price'] ?? 0),

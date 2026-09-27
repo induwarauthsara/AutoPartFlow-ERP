@@ -60,6 +60,7 @@ class CatalogController extends Controller
             'brands' => $this->productModel->brands(),
             'vehicleBrands' => $this->productModel->vehicleBrands(),
             'filters' => $filters,
+            'canManageCatalog' => in_array((string) ($_SESSION['role_slug'] ?? ''), ['owner', 'store_manager'], true),
         ], 'public');
     }
 
@@ -134,7 +135,7 @@ class CatalogController extends Controller
         $this->api(function (array $data): array {
             $id = (int) ($data['id'] ?? 0);
             $this->productModel->deleteProduct($id);
-            return ['ok' => true, 'message' => 'Spare part discontinued / removed from catalog.'];
+            return ['ok' => true, 'message' => 'Spare part archived and deactivated successfully.'];
         });
     }
 
@@ -180,6 +181,10 @@ class CatalogController extends Controller
 
     private function api(callable $action): void
     {
+        if (empty($_SESSION['user_id']) || !in_array((string) ($_SESSION['role_slug'] ?? ''), ['owner', 'store_manager'], true)) {
+            $this->json(['ok' => false, 'message' => 'Only Business Owners and Store Managers can change the catalog.'], 403);
+            return;
+        }
         $data = json_decode((string) file_get_contents('php://input'), true);
         if (!is_array($data)) {
             $data = $_POST;

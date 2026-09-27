@@ -44,7 +44,8 @@
     <?= $content ?>
 
     <nav class="sales-mobile-nav" aria-label="Mobile navigation">
-        <?php if (($_SESSION['role_slug'] ?? '') === 'owner' || ($_SESSION['role_id'] ?? 0) === 1): ?>
+        <?php $isInventoryOwner = (($_SESSION['role_slug'] ?? '') === 'owner' || ($_SESSION['role_id'] ?? 0) === 1); ?>
+        <?php if ($isInventoryOwner): ?>
         <a href="<?= url('admin/dashboard') ?>" class="sales-mobile-nav__item">
             <svg class="sales-icon"><use href="#sales-icon-dashboard"></use></svg>
             <span>Dashboard</span>
@@ -54,6 +55,11 @@
             <svg class="sales-icon"><use href="#sales-icon-inventory"></use></svg>
             <span>Inventory</span>
         </a>
+        <a href="<?= url('catalog') ?>" class="sales-mobile-nav__item">
+            <svg class="sales-icon" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 4v12h16V7H4Zm3 3h4v4H7v-4Zm6 0h4v2h-4v-2Zm0 4h4v2h-4v-2Z"/></svg>
+            <span>Catalog</span>
+        </a>
+        <?php if ($isInventoryOwner): ?>
         <a href="<?= url('admin/reports') ?>" class="sales-mobile-nav__item">
             <svg class="sales-icon" viewBox="0 0 24 24"><path d="M4 3h2v16h15v2H4V3Zm5 8h3v6H9v-6Zm5-5h3v11h-3V6Z"/></svg>
             <span>Reports</span>
@@ -66,6 +72,7 @@
             <svg class="sales-icon" viewBox="0 0 24 24"><path d="M3 5h18v2H3V5Zm4 6h10v2H7v-2Zm3 6h4v2h-4v-2Z"/></svg>
             <span>Settings</span>
         </a>
+        <?php endif; ?>
     </nav>
 
     <svg class="sales-svg-sprite" aria-hidden="true">

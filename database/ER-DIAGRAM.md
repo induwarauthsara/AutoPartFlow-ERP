@@ -280,7 +280,6 @@ erDiagram
         decimal cost_price
         decimal selling_price
         decimal wholesale_price
-        tinyint warranty_months
         varchar image_path
         json specifications
         tinyint is_active

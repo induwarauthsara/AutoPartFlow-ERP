@@ -15,6 +15,7 @@
 $rawUri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
 
 $activeItem = match (true) {
+    str_contains($rawUri, '/catalog')             => 'catalog',
     str_contains($rawUri, '/inventory')           => 'inventory',
     str_contains($rawUri, '/admin/purchases')     => 'purchases',
     str_contains($rawUri, '/admin/reports')       => 'reports',
@@ -52,6 +53,10 @@ $workspaceSub = $isStore ? 'Store Workspace' : 'Admin Workspace';
                 <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.2L6.2 7 12 9.8 17.8 7 12 4.2ZM5 8.6v7.7l6 3v-7.7l-6-3Zm8 10.7 6-3V8.6l-6 3v7.7Z"/></svg>
                 <span>Inventory</span>
             </a>
+            <a class="nav-link <?= $activeItem === 'catalog' ? 'active' : '' ?>" <?= $activeItem === 'catalog' ? 'aria-current="page"' : '' ?> href="<?= url('catalog') ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 4v12h16V7H4Zm3 3h4v4H7v-4Zm6 0h4v2h-4v-2Zm0 4h4v2h-4v-2Z"/></svg>
+                <span>Spare Parts Catalog</span>
+            </a>
             <a class="nav-link <?= $activeItem === 'purchases' ? 'active' : '' ?>" <?= $activeItem === 'purchases' ? 'aria-current="page"' : '' ?> href="<?= url('admin/purchases') ?>">
                 <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v2H4V4Zm-1 4h18v12H3V8Zm2 2v8h14v-8H5Zm2 2h10v2H7v-2Z"/></svg>
                 <span>Purchases</span>
@@ -84,6 +89,10 @@ $workspaceSub = $isStore ? 'Store Workspace' : 'Admin Workspace';
             <a class="nav-link <?= $activeItem === 'inventory' ? 'active' : '' ?>" <?= $activeItem === 'inventory' ? 'aria-current="page"' : '' ?> href="<?= url('inventory') ?>">
                 <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 9 4.5v11L12 22l-9-4.5v-11L12 2Zm0 2.2L6.2 7 12 9.8 17.8 7 12 4.2ZM5 8.6v7.7l6 3v-7.7l-6-3Zm8 10.7 6-3V8.6l-6 3v7.7Z"/></svg>
                 <span>Inventory Management</span>
+            </a>
+            <a class="nav-link <?= $activeItem === 'catalog' ? 'active' : '' ?>" <?= $activeItem === 'catalog' ? 'aria-current="page"' : '' ?> href="<?= url('catalog') ?>">
+                <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 4v12h16V7H4Zm3 3h4v4H7v-4Zm6 0h4v2h-4v-2Zm0 4h4v2h-4v-2Z"/></svg>
+                <span>Catalog Management</span>
             </a>
         <?php endif; ?>
         <a class="nav-link" href="<?= url() ?>">

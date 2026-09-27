@@ -100,7 +100,7 @@ window.ORDER_MOCK_DATA = window.ORDER_MOCK_DATA || {
     products: [
         { id: 1, sku: 'INJ-882-X', name: 'High-Flow Fuel Injector (V8)', description: 'OEM-certified direct replacement for V8 engines.', category: 'Engine', stock: 45, price: 24900 },
         { id: 2, sku: 'BLT-204-T', name: 'Timing Belt Tensioner', description: 'Heavy-duty tensioner assembly with sealed bearing.', category: 'Engine', stock: 12, price: 28350 },
-        { id: 3, sku: 'BAT-12V-90', name: '12V Maintenance-Free Battery', description: '90 Ah automotive battery with 18-month warranty.', category: 'Electrical', stock: 26, price: 18900 },
+        { id: 3, sku: 'BAT-12V-90', name: '12V Maintenance-Free Battery', description: '90 Ah maintenance-free automotive battery.', category: 'Electrical', stock: 26, price: 18900 },
         { id: 4, sku: 'SUS-HLX-22', name: 'Shock Absorber — Hilux', description: 'Gas-filled front shock absorber for Toyota Hilux.', category: 'Suspension', stock: 18, price: 27850 },
         { id: 5, sku: 'FLT-V8-01', name: 'Synthetic Oil Filter V8', description: 'High-efficiency filter for synthetic engine oil.', category: 'Filtration', stock: 68, price: 2300 },
         { id: 6, sku: 'BRK-FX9', name: 'Brake Rotor FX-9', description: 'Ventilated front brake rotor with anti-corrosion coating.', category: 'Suspension', stock: 34, price: 45900 }

@@ -868,10 +868,11 @@
             </div>
 
             <div class="form-group">
-                <label for="fRole">System Role *</label>
+                <label for="fRole">System Role &amp; Permissions *</label>
                 <select id="fRole" required>
                     <!-- Populated dynamically from roles -->
                 </select>
+                <span class="form-hint" id="rolePermissionSummary">Select a role to view its granted permissions.</span>
                 <span class="form-error" id="eRole"></span>
             </div>
 
@@ -944,6 +945,7 @@
             'name' => $r['name'],
             'slug' => $r['slug'],
             'description' => $r['description'] ?? '',
+            'permissions' => json_decode((string) ($r['permissions'] ?? '{}'), true) ?: [],
         ];
     }, $roles), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
@@ -1202,6 +1204,22 @@
         <option value="${r.id}">${esc(r.name)} (${esc(r.slug)})</option>
     `).join('');
 
+    function updateRolePermissionSummary() {
+        const role = state.roles.find(r => Number(r.id) === Number(roleSelect.value));
+        const summary = document.getElementById('rolePermissionSummary');
+        if (!role) {
+            summary.textContent = 'Select a role to view its granted permissions.';
+            return;
+        }
+        const permissions = Object.entries(role.permissions || {})
+            .filter(([, enabled]) => Boolean(enabled))
+            .map(([name]) => name.replace(/_/g, ' '));
+        summary.textContent = permissions.length
+            ? 'Granted: ' + permissions.join(', ')
+            : (role.description || 'No explicit permissions configured.');
+    }
+    roleSelect.addEventListener('change', updateRolePermissionSummary);
+
     function openUserModal(user = null) {
         document.getElementById('fId').value = user ? user.id : 0;
         document.getElementById('dlgTitle').textContent = user ? 'Edit User Profile' : 'Add New User';
@@ -1212,6 +1230,7 @@
         document.getElementById('fEmail').value = user ? user.email : '';
         document.getElementById('fPhone').value = user ? user.phone : '';
         document.getElementById('fRole').value = user ? user.roleId : (state.roles[0]?.id || 1);
+        updateRolePermissionSummary();
         document.getElementById('fActive').checked = user ? user.active : true;
         document.getElementById('fPassword').value = '';
 

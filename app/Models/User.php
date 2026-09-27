@@ -29,7 +29,7 @@ class User extends Model
 
     public function allRoles(): array
     {
-        return $this->db->query("SELECT id, name, slug, description FROM roles ORDER BY id ASC")->fetchAll();
+        return $this->db->query("SELECT id, name, slug, description, permissions FROM roles ORDER BY id ASC")->fetchAll();
     }
 
     public function recentActivity(int $limit = 100): array
@@ -73,6 +73,7 @@ class User extends Model
     {
         $id = (int) ($data['id'] ?? 0);
         $fullName = trim((string) ($data['full_name'] ?? ''));
+        $username = trim((string) ($data['username'] ?? ''));
         $email = trim((string) ($data['email'] ?? ''));
         $roleId = (int) ($data['role_id'] ?? 0);
         $phone = trim((string) ($data['phone'] ?? '')) ?: null;
@@ -86,15 +87,54 @@ class User extends Model
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new \InvalidArgumentException('Please provide a valid email address.');
         }
+        if ($username !== '' && !preg_match('/^[A-Za-z0-9._-]{3,50}$/', $username)) {
+            throw new \InvalidArgumentException('Username must be 3-50 characters using letters, numbers, dots, dashes, or underscores.');
+        }
+        $roleCheck = $this->db->prepare('SELECT slug FROM roles WHERE id=:id LIMIT 1');
+        $roleCheck->execute(['id' => $roleId]);
+        $newRoleSlug = $roleCheck->fetchColumn();
+        if ($newRoleSlug === false) {
+            throw new \InvalidArgumentException('Select a valid system role.');
+        }
 
         $this->db->beginTransaction();
         try {
             if ($id > 0) {
-                // Check email uniqueness among other users
-                $check = $this->db->prepare('SELECT id FROM users WHERE email = :email AND id != :id AND deleted_at IS NULL LIMIT 1');
-                $check->execute(['email' => $email, 'id' => $id]);
+                $currentStmt = $this->db->prepare(
+                    'SELECT u.username, u.is_active, r.slug role_slug
+                     FROM users u JOIN roles r ON r.id=u.role_id
+                     WHERE u.id=:id AND u.deleted_at IS NULL FOR UPDATE'
+                );
+                $currentStmt->execute(['id' => $id]);
+                $current = $currentStmt->fetch();
+                if (!$current) {
+                    throw new \RuntimeException('User account not found.');
+                }
+                if ($username === '') {
+                    $username = (string) $current['username'];
+                }
+                if ($operatorId === $id && $isActive === 0) {
+                    throw new \RuntimeException('You cannot deactivate your own account.');
+                }
+                if (($current['role_slug'] === 'owner' && (string) $newRoleSlug !== 'owner') ||
+                    ($current['role_slug'] === 'owner' && (int) $current['is_active'] === 1 && $isActive === 0)) {
+                    $ownerCount = (int) $this->db->query(
+                        "SELECT COUNT(*) FROM users u JOIN roles r ON r.id=u.role_id
+                         WHERE r.slug='owner' AND u.is_active=1 AND u.deleted_at IS NULL"
+                    )->fetchColumn();
+                    if ($ownerCount <= 1) {
+                        throw new \RuntimeException('The last active Business Owner cannot be demoted or deactivated.');
+                    }
+                }
+
+                // Check email and username uniqueness among other users
+                $check = $this->db->prepare(
+                    'SELECT id FROM users
+                     WHERE (email=:email OR username=:username) AND id!=:id AND deleted_at IS NULL LIMIT 1'
+                );
+                $check->execute(['email' => $email, 'username' => $username, 'id' => $id]);
                 if ($check->fetch()) {
-                    throw new \InvalidArgumentException('Another user with this email already exists.');
+                    throw new \InvalidArgumentException('Another user already uses this email or username.');
                 }
 
                 if ($password !== '') {
@@ -103,17 +143,17 @@ class User extends Model
                     }
                     $hash = password_hash($password, PASSWORD_BCRYPT);
                     $stmt = $this->db->prepare(
-                        'UPDATE users SET full_name=:name, email=:email, phone=:phone, role_id=:role,
+                        'UPDATE users SET full_name=:name, username=:username, email=:email, phone=:phone, role_id=:role,
                                           password_hash=:hash, password_changed_at=NOW(), is_active=:active
                          WHERE id=:id AND deleted_at IS NULL'
                     );
-                    $stmt->execute(['name' => $fullName, 'email' => $email, 'phone' => $phone, 'role' => $roleId, 'hash' => $hash, 'active' => $isActive, 'id' => $id]);
+                    $stmt->execute(['name' => $fullName, 'username' => $username, 'email' => $email, 'phone' => $phone, 'role' => $roleId, 'hash' => $hash, 'active' => $isActive, 'id' => $id]);
                 } else {
                     $stmt = $this->db->prepare(
-                        'UPDATE users SET full_name=:name, email=:email, phone=:phone, role_id=:role, is_active=:active
+                        'UPDATE users SET full_name=:name, username=:username, email=:email, phone=:phone, role_id=:role, is_active=:active
                          WHERE id=:id AND deleted_at IS NULL'
                     );
-                    $stmt->execute(['name' => $fullName, 'email' => $email, 'phone' => $phone, 'role' => $roleId, 'active' => $isActive, 'id' => $id]);
+                    $stmt->execute(['name' => $fullName, 'username' => $username, 'email' => $email, 'phone' => $phone, 'role' => $roleId, 'active' => $isActive, 'id' => $id]);
                 }
 
                 // Update employee info if designation or department provided
@@ -147,7 +187,6 @@ class User extends Model
             }
 
             // Create new user
-            $username = trim((string) ($data['username'] ?? ''));
             if ($username === '') {
                 $username = strtolower(explode('@', $email)[0]) . '_' . rand(100, 999);
             }

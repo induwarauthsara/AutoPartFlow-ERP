@@ -81,7 +81,7 @@
         <div class="sales-card__header">
             <div>
                 <h2>Detailed Inventory</h2>
-                <p>On-hand quantity, low stock thresholds, and stock movements</p>
+                <p>Live on-hand, available and reserved quantities with low-stock alerts</p>
             </div>
             <button class="sales-icon-button" type="button" aria-label="More inventory options">
                 <svg class="sales-icon"><use href="#sales-icon-more"></use></svg>
@@ -299,7 +299,7 @@
             <div class="customer-dialog__body">
                 <input type="hidden" id="writeoff-product-id" name="product_id">
                 <p><strong id="writeoff-product-name">Product Name</strong></p>
-                <p style="color:var(--sales-text-secondary, #64748b);font-size:12px;">Current on-hand: <span id="writeoff-current-onhand">0</span></p>
+                <p style="color:var(--sales-text-secondary, #64748b);font-size:12px;">Available, unreserved stock: <span id="writeoff-current-onhand">0</span></p>
                 <label>
                     Damaged Quantity to Write Off
                     <input type="number" id="writeoff-qty" name="quantity" min="1" step="1" required>
