@@ -1282,7 +1282,6 @@ async function openSaleModal(saleId) {
 
         const subtotal = parseFloat(s.subtotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
         const discount = parseFloat(s.discount_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
-        const tax = parseFloat(s.tax_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
         const total = parseFloat(s.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
         const paid = parseFloat(s.amount_paid || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
 
@@ -1319,7 +1318,6 @@ async function openSaleModal(saleId) {
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px;font-size:13px;">
                 <div style="display:flex;justify-content:space-between;"><span>Subtotal:</span><span>Rs. ${subtotal}</span></div>
                 <div style="display:flex;justify-content:space-between;color:var(--red);"><span>Discounts:</span><span>- Rs. ${discount}</span></div>
-                <div style="display:flex;justify-content:space-between;"><span>Tax (VAT):</span><span>Rs. ${tax}</span></div>
                 <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1px solid #cbd5e1;padding-top:6px;color:var(--navy-900);">
                     <span>Total Amount:</span><span>Rs. ${total}</span>
                 </div>

@@ -51,7 +51,7 @@ class ProfileController extends Controller
 
         if ($user['role_slug'] === 'shop_customer') {
             $cusStmt = $this->db->prepare(
-                'SELECT c.*, s.shop_name, s.tax_number, s.registration_no, s.credit_limit, s.credit_balance
+                'SELECT c.*, s.shop_name, s.registration_no, s.credit_limit, s.credit_balance
                  FROM customers c
                  LEFT JOIN shops s ON s.customer_id = c.id
                  WHERE (c.email = :email OR c.phone = :phone) AND c.deleted_at IS NULL
@@ -162,7 +162,6 @@ class ProfileController extends Controller
                 $shopName  = trim((string) $this->input('shop_name', ''));
                 $address   = trim((string) $this->input('address', ''));
                 $city      = trim((string) $this->input('city', ''));
-                $taxNumber = trim((string) $this->input('tax_number', ''));
 
                 $cStmt = $this->db->prepare('SELECT id FROM customers WHERE email = :email OR phone = :phone LIMIT 1');
                 $cStmt->execute(['email' => $email, 'phone' => $phone]);
@@ -181,13 +180,12 @@ class ProfileController extends Controller
                         'cid'   => $customerId,
                     ]);
 
-                    if ($shopName !== '' || $taxNumber !== '') {
+                    if ($shopName !== '') {
                         $updShop = $this->db->prepare(
-                            'UPDATE shops SET shop_name = COALESCE(NULLIF(:sname, ""), shop_name), tax_number = :tax WHERE customer_id = :cid'
+                            'UPDATE shops SET shop_name = COALESCE(NULLIF(:sname, ""), shop_name) WHERE customer_id = :cid'
                         );
                         $updShop->execute([
                             'sname' => $shopName,
-                            'tax'   => $taxNumber !== '' ? $taxNumber : null,
                             'cid'   => $customerId,
                         ]);
                     }
