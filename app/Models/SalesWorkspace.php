@@ -279,11 +279,17 @@ class SalesWorkspace extends Model
                 'subtotal' => $subtotal, 'total' => $subtotal, 'notes' => $notes ?: null]);
             $orderId = (int) $this->db->lastInsertId();
             $line = $this->db->prepare(
-                'INSERT INTO order_items (order_id, product_id, quantity, unit_price, tax_rate, line_total)
-                 VALUES (:order_id, :product_id, :quantity, :unit_price, :tax_rate, :line_total)'
+                'INSERT INTO order_items (order_id, product_id, quantity, unit_price, line_total)
+                 VALUES (:order_id, :product_id, :quantity, :unit_price, :line_total)'
             );
             foreach ($validated as $item) {
-                $line->execute(['order_id' => $orderId] + $item);
+                $line->execute([
+                    'order_id'   => $orderId,
+                    'product_id' => $item['product_id'],
+                    'quantity'   => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'line_total' => $item['line_total'],
+                ]);
                 $reserve = $this->db->prepare('UPDATE inventory SET quantity_reserved = quantity_reserved + :quantity WHERE id=:inventory_id');
                 $reserve->execute(['quantity' => $item['quantity'], 'inventory_id' => $item['inventory_id']]);
             }
@@ -393,12 +399,18 @@ class SalesWorkspace extends Model
                 'payment_status' => $paymentStatus, 'created_by' => $userId]);
             $saleId = (int) $this->db->lastInsertId();
             $line = $this->db->prepare(
-                'INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, cost_price, tax_rate, line_total)
-                 VALUES (:sale_id, :product_id, :quantity, :unit_price, :cost_price, :tax_rate, :line_total)'
+                'INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, cost_price, line_total)
+                 VALUES (:sale_id, :product_id, :quantity, :unit_price, :cost_price, :line_total)'
             );
             foreach ($validated as $item) {
-                $line->execute(['sale_id' => $saleId, 'product_id' => $item['product_id'], 'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'], 'cost_price' => $item['cost_price'], 'tax_rate' => $item['tax_rate'], 'line_total' => $item['line_total']]);
+                $line->execute([
+                    'sale_id'    => $saleId,
+                    'product_id' => $item['product_id'],
+                    'quantity'   => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'cost_price' => $item['cost_price'],
+                    'line_total' => $item['line_total'],
+                ]);
                 $stock = $this->db->prepare('UPDATE inventory SET quantity_on_hand=quantity_on_hand-:quantity WHERE id=:inventory_id');
                 $stock->execute(['quantity' => $item['quantity'], 'inventory_id' => $item['inventory_id']]);
             }
@@ -437,7 +449,7 @@ class SalesWorkspace extends Model
     private function validateItems(array $items, bool $includeReserved): array
     {
         $product = $this->db->prepare(
-            'SELECT p.id product_id, p.selling_price unit_price, p.cost_price, p.tax_rate,
+            'SELECT p.id product_id, p.selling_price unit_price, p.cost_price,
                     i.id inventory_id, i.quantity_on_hand, i.quantity_reserved
              FROM products p JOIN inventory i ON i.product_id=p.id
              WHERE p.id=:id AND p.deleted_at IS NULL AND p.is_active=1 ORDER BY i.id LIMIT 1 FOR UPDATE'
@@ -460,7 +472,7 @@ class SalesWorkspace extends Model
             }
             $validated[] = [
                 'product_id' => (int) $row['product_id'], 'inventory_id' => (int) $row['inventory_id'], 'quantity' => $quantity,
-                'unit_price' => (float) $row['unit_price'], 'cost_price' => (float) $row['cost_price'], 'tax_rate' => (float) $row['tax_rate'],
+                'unit_price' => (float) $row['unit_price'], 'cost_price' => (float) $row['cost_price'],
                 'line_total' => round((float) $row['unit_price'] * $quantity, 2),
             ];
         }

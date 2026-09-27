@@ -27,7 +27,6 @@ public function catalog(array $filters = []): array
             p.cost_price,
             p.selling_price,
             p.wholesale_price,
-            p.tax_rate,
             p.warranty_months,
             p.specifications,
             p.image_path,
@@ -431,7 +430,7 @@ public function catalog(array $filters = []): array
         $sql = "
             SELECT
                 p.id, p.product_code, p.barcode, p.name, p.description,
-                p.unit, p.selling_price, p.tax_rate, p.warranty_months,
+                p.unit, p.selling_price, p.warranty_months,
                 p.image_path, p.specifications, p.is_active,
                 c.name AS category,
                 b.name AS brand,
