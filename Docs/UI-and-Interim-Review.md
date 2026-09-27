@@ -90,7 +90,7 @@ These are findings from the reviewed code and checks, not a claim that every pos
 ### Business owner / administrator — Chathumi
 
 - Existing screens: admin login, dashboard, users, employees, reports, notifications and settings.
-- Missing screens/forms: registration, password recovery/reset, completed user add/edit/delete, employee add/edit/delete, role/permission management, real activity log, invoice/tax/backup/preference settings panels.
+- Missing screens/forms: registration, password recovery/reset, completed user add/edit/delete, employee add/edit/delete, role/permission management, real activity log, invoice/backup/preference settings panels.
 - Missing behavior: complete role-based authentication/authorization, live KPI/report calculations, useful report periods/exports, searches, pagination, notification read state/filter actions and settings saves.
 
 ### Customer / public user — Varshika

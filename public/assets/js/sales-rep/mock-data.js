@@ -1,7 +1,7 @@
 /**
  * Frontend mock data for Sales Rep screens.
  * Replace with PHP: pass JSON from SalesController or fetch your APIs.
- * Totals are subtotal minus discount — no tax rate in this module.
+ * Totals are subtotal minus discount.
  */
 window.SALES_REP_MOCK_DATA = {
     weeklySales: {

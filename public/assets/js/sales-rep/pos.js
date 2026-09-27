@@ -1,6 +1,6 @@
 /**
  * Sales Rep POS: search, walk-in vs trade, cart, discount, checkout, invoice.
- * Totals: subtotal minus discount. No tax. PHP later: POST /api/sales.
+ * Totals: subtotal minus discount. PHP later: POST /api/sales.
  */
 (function () {
     'use strict';
@@ -39,7 +39,7 @@
     }
 
     /**
-     * Discount comes off the subtotal. Due amount is afterDiscount (no tax).
+     * Discount comes off the subtotal. Due amount is afterDiscount.
      */
     function getCartTotals() {
         const subtotal = state.cart.reduce(function (sum, item) { return sum + item.price * item.quantity; }, 0);
