@@ -20,7 +20,7 @@
 <meta name="base-url" content="<?= url() ?>">
 </head>
 <body class="public-body">
-<?php require APP_PATH . '/Views/partials/navbar.php'; ?>
+<?php navbar(); ?>
 
 <main class="public-main">
 <?php if (!empty($flash)): ?><div class="container"><div role="status" class="alert alert-<?= e($flash['type']) ?>"><?= e($flash['message']) ?></div></div><?php endif; ?>

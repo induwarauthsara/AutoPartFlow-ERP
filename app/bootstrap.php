@@ -95,6 +95,78 @@ function auth_dashboard_label(): string
 function navbar(array $data = []): void
 {
     extract($data, EXTR_SKIP);
-    require APP_PATH . '/Views/partials/navbar.php';
+    $path = APP_PATH . '/Views/partials/navbar.php';
+    if (file_exists($path)) {
+        require $path;
+        return;
+    }
+
+    $altPath = APP_PATH . '/Views/layouts/partials/navbar.php';
+    if (file_exists($altPath)) {
+        require $altPath;
+        return;
+    }
+
+    $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $base = rtrim(BASE_URL, '/');
+    $isHome = ($currentPath === $base . '/' || $currentPath === '/' || ($base !== '' && $currentPath === $base) || $currentPath === '');
+    $isFinder = str_contains($currentPath, '/finder');
+    $isCatalog = str_contains($currentPath, '/catalog');
+    $isTrack = str_contains($currentPath, '/track-order');
+    $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
+    $isCustomerDashboard = str_contains($currentPath, '/customer/dashboard');
+    $isOrders = str_contains($currentPath, '/orders') || str_contains($currentPath, '/my-orders');
+    $searchQuery = $filters['search'] ?? ($_GET['q'] ?? '');
+    ?>
+    <header class="public-header">
+        <div class="public-header__inner">
+            <a class="public-brand" href="<?= url() ?>">
+                <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
+                <span>AutoPartFlow</span>
+            </a>
+            <nav class="public-nav" aria-label="Public navigation">
+                <a class="<?= $isHome ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
+                <a class="<?= $isFinder ? 'active' : '' ?>" href="<?= url('finder') ?>">Spare Parts Finder</a>
+                <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
+                <a class="<?= $isTrack ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
+                <?php if ($isShopCustomer): ?>
+                    <a class="<?= $isCustomerDashboard ? 'active' : '' ?>" href="<?= url('customer/dashboard') ?>">Dashboard</a>
+                    <a class="<?= $isOrders ? 'active' : '' ?>" href="<?= url('orders') ?>">My Orders</a>
+                <?php endif; ?>
+            </nav>
+            <div class="public-actions">
+                <form class="public-search" action="<?= url('catalog') ?>" method="get">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" name="q" value="<?= e($searchQuery) ?>" placeholder="Search parts..." aria-label="Search parts">
+                </form>
+                <a class="cart-button" href="<?= url('cart') ?>" aria-label="Shopping cart">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span class="cart-count">0</span>
+                </a>
+                <span class="header-divider"></span>
+                <?php if (auth_check()): ?>
+                    <a class="sign-in-button sign-in-button--dashboard" href="<?= auth_dashboard_url() ?>">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <?= e(auth_dashboard_label()) ?>
+                    </a>
+                    <a class="sign-in-button sign-in-button--profile" href="<?= url('profile') ?>" title="Edit Profile">
+                        <span class="material-symbols-outlined">person</span>
+                        Profile
+                    </a>
+                    <a class="sign-in-button sign-in-button--logout" href="<?= url('logout') ?>" title="Sign Out">
+                        <span class="material-symbols-outlined">logout</span>
+                        <span class="logout-text">Sign Out</span>
+                    </a>
+                <?php else: ?>
+                    <a class="sign-in-button" href="<?= url('login') ?>">
+                        <span class="material-symbols-outlined">login</span>
+                        Sign In
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+    </header>
+    <?php
 }
+
 
