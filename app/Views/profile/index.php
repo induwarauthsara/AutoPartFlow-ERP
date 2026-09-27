@@ -153,15 +153,9 @@ $roleBadgeColor = match ($roleSlug) {
                         <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #e2e8f0;">
                             <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0 0 12px;">Shop Business Profile</h3>
                             
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px;">
-                                <div>
-                                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Shop / Company Name</label>
-                                    <input type="text" name="shop_name" value="<?= e($customer['shop_name'] ?? '') ?>" placeholder="e.g. City Auto Works" style="width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                                </div>
-                                <div>
-                                    <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Tax / BR Number</label>
-                                    <input type="text" name="tax_number" value="<?= e($customer['tax_number'] ?? '') ?>" placeholder="Optional registration / VAT #" style="width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                                </div>
+                            <div style="margin-bottom: 14px;">
+                                <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Shop / Company Name</label>
+                                <input type="text" name="shop_name" value="<?= e($customer['shop_name'] ?? '') ?>" placeholder="e.g. City Auto Works" style="width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 14px; border: 1px solid #cbd5e1; border-radius: 8px;">
                             </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
