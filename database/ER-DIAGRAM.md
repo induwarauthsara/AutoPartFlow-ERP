@@ -280,7 +280,6 @@ erDiagram
         decimal cost_price
         decimal selling_price
         decimal wholesale_price
-        decimal tax_rate
         tinyint warranty_months
         varchar image_path
         json specifications
@@ -468,7 +467,6 @@ erDiagram
         date expected_date
         enum status
         decimal subtotal
-        decimal tax_amount
         decimal discount_amount
         decimal total_amount
         decimal amount_paid
@@ -488,7 +486,6 @@ erDiagram
         int quantity_ordered
         int quantity_received
         decimal unit_cost
-        decimal tax_rate
         decimal line_total
         timestamp created_at
         timestamp updated_at
@@ -543,7 +540,6 @@ erDiagram
         enum order_source
         decimal subtotal
         decimal discount_amount
-        decimal tax_amount
         decimal total_amount
         enum payment_status
         text delivery_address
@@ -560,7 +556,6 @@ erDiagram
         int quantity
         decimal unit_price
         decimal discount_amount
-        decimal tax_rate
         decimal line_total
         timestamp created_at
     }
@@ -618,7 +613,6 @@ erDiagram
         enum payment_method
         decimal subtotal
         decimal discount_amount
-        decimal tax_amount
         decimal total_amount
         decimal amount_paid
         decimal change_amount
@@ -638,7 +632,6 @@ erDiagram
         decimal unit_price
         decimal cost_price
         decimal discount_amount
-        decimal tax_rate
         decimal line_total
         timestamp created_at
     }

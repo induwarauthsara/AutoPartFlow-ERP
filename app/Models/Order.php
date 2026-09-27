@@ -316,18 +316,17 @@ class Order extends Model
             }
 
             $deliveryFee = 350.00;
-            $taxAmount = 0.00;
             $totalAmount = $subtotal + $deliveryFee;
             $notes = 'Payment Method: Cash on Delivery';
 
             $orderStmt = $this->db->prepare(
                 "INSERT INTO orders (
                     order_number, customer_id, order_source, status,
-                    subtotal, discount_amount, tax_amount, total_amount,
+                    subtotal, discount_amount, total_amount,
                     payment_status, delivery_address, notes
                 ) VALUES (
                     :order_number, :customer_id, 'shop_portal', 'pending',
-                    :subtotal, 0.00, :tax_amount, :total_amount,
+                    :subtotal, 0.00, :total_amount,
                     'unpaid', :delivery_address, :notes
                 )"
             );
@@ -335,7 +334,6 @@ class Order extends Model
                 'order_number' => $orderNumber,
                 'customer_id' => $customerId,
                 'subtotal' => $subtotal,
-                'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount,
                 'delivery_address' => $customerData['deliveryAddress'],
                 'notes' => $notes,
@@ -345,9 +343,9 @@ class Order extends Model
 
             $itemStmt = $this->db->prepare(
                 "INSERT INTO order_items (
-                    order_id, product_id, quantity, unit_price, discount_amount, tax_rate, line_total
+                    order_id, product_id, quantity, unit_price, discount_amount, line_total
                 ) VALUES (
-                    :order_id, :product_id, :quantity, :unit_price, 0.00, 0.00, :line_total
+                    :order_id, :product_id, :quantity, :unit_price, 0.00, :line_total
                 )"
             );
 
@@ -461,7 +459,6 @@ class Order extends Model
                 o.status,
                 o.subtotal,
                 o.discount_amount,
-                o.tax_amount,
                 o.total_amount,
                 o.payment_status,
                 o.delivery_address,
@@ -499,7 +496,6 @@ class Order extends Model
                 o.status,
                 o.subtotal,
                 o.discount_amount,
-                o.tax_amount,
                 o.total_amount,
                 o.payment_status,
                 o.delivery_address,
