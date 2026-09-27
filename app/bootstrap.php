@@ -112,9 +112,7 @@ function navbar(array $data = []): void
     $isHome = ($currentPath === $base . '/' || $currentPath === '/' || ($base !== '' && $currentPath === $base) || $currentPath === '');
     $isFinder = str_contains($currentPath, '/finder');
     $isCatalog = str_contains($currentPath, '/catalog');
-    $isTrack = str_contains($currentPath, '/track-order');
     $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
-    $isCustomerDashboard = str_contains($currentPath, '/customer/dashboard');
     $isOrders = str_contains($currentPath, '/orders') || str_contains($currentPath, '/my-orders');
     $searchQuery = $filters['search'] ?? ($_GET['q'] ?? '');
     ?>
@@ -128,9 +126,7 @@ function navbar(array $data = []): void
                 <a class="<?= $isHome ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
                 <a class="<?= $isFinder ? 'active' : '' ?>" href="<?= url('finder') ?>">Spare Parts Finder</a>
                 <a class="<?= str_contains($currentPath, '/catalog') ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
-                <a class="<?= $isTrack ? 'active' : '' ?>" href="<?= url('track-order') ?>">Track Order</a>
                 <?php if ($isShopCustomer): ?>
-                    <a class="<?= $isCustomerDashboard ? 'active' : '' ?>" href="<?= url('customer/dashboard') ?>">Dashboard</a>
                     <a class="<?= $isOrders ? 'active' : '' ?>" href="<?= url('orders') ?>">My Orders</a>
                 <?php endif; ?>
             </nav>
