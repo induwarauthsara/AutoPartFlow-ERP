@@ -1198,13 +1198,25 @@
     const userDlg = document.getElementById('userDlg');
     const delDlg = document.getElementById('delDlg');
 
-    // Populate role options in select
-    const roleSelect = document.getElementById('fRole');
-    roleSelect.innerHTML = state.roles.map(r => `
-        <option value="${r.id}">${esc(r.name)} (${esc(r.slug)})</option>
-    `).join('');
+    // Populate role options in select (excluding manager from Add User modal)
+    const isManagerRole = r => {
+        const s = (r.slug || '').toLowerCase();
+        const n = (r.name || '').toLowerCase();
+        return s === 'store_manager' || s === 'manager' || n.includes('manager');
+    };
+
+    function populateRoleSelect(selectedRoleId = null) {
+        const roleSelect = document.getElementById('fRole');
+        const roles = state.roles.filter(r => !isManagerRole(r) || (selectedRoleId !== null && Number(r.id) === Number(selectedRoleId)));
+        roleSelect.innerHTML = roles.map(r => `
+            <option value="${r.id}">${esc(r.name)} (${esc(r.slug)})</option>
+        `).join('');
+    }
+
+    populateRoleSelect(null);
 
     function updateRolePermissionSummary() {
+        const roleSelect = document.getElementById('fRole');
         const role = state.roles.find(r => Number(r.id) === Number(roleSelect.value));
         const summary = document.getElementById('rolePermissionSummary');
         if (!role) {
@@ -1218,7 +1230,7 @@
             ? 'Granted: ' + permissions.join(', ')
             : (role.description || 'No explicit permissions configured.');
     }
-    roleSelect.addEventListener('change', updateRolePermissionSummary);
+    document.getElementById('fRole').addEventListener('change', updateRolePermissionSummary);
 
     function openUserModal(user = null) {
         document.getElementById('fId').value = user ? user.id : 0;
@@ -1229,7 +1241,10 @@
         document.getElementById('fUsername').value = user ? user.username : '';
         document.getElementById('fEmail').value = user ? user.email : '';
         document.getElementById('fPhone').value = user ? user.phone : '';
-        document.getElementById('fRole').value = user ? user.roleId : (state.roles[0]?.id || 1);
+
+        populateRoleSelect(user ? user.roleId : null);
+        const defaultRole = state.roles.find(r => !isManagerRole(r));
+        document.getElementById('fRole').value = user ? user.roleId : (defaultRole?.id || 1);
         updateRolePermissionSummary();
         document.getElementById('fActive').checked = user ? user.active : true;
         document.getElementById('fPassword').value = '';

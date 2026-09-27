@@ -85,10 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cart.length === 0) {
             itemsContainer.innerHTML = '';
             emptyState.classList.remove('hidden');
+            emptyState.hidden = false;
             return;
         }
 
         emptyState.classList.add('hidden');
+        emptyState.hidden = true;
         itemsContainer.innerHTML = cart.map(item => `
             <article class="cart-item" data-code="${escapeHTML(item.code)}">
                 <div>

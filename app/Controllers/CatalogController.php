@@ -24,14 +24,75 @@ class CatalogController extends Controller
         $selectedCategories = is_array($selectedCategories) ? $selectedCategories : [$selectedCategories];
         $selectedBrands = is_array($selectedBrands) ? $selectedBrands : [$selectedBrands];
 
+        $vBrandId = (int) ($this->input('vehicle_brand_id') ?: $this->input('brand_id', 0));
+        $vModelId = (int) ($this->input('vehicle_model_id') ?: $this->input('model_id', 0));
+        $vEngineId = (int) ($this->input('vehicle_engine_id') ?: $this->input('engine_id', 0));
+        $vYear = (int) $this->input('year', 0);
+
+        $currentYear = (int) date('Y');
+        if ($vYear !== 0 && ($vYear < 1900 || $vYear > ($currentYear + 1))) {
+            $vYear = 0;
+        }
+
+        $hasVehicleFilter = ($vBrandId > 0 || $vModelId > 0 || $vEngineId > 0 || $vYear > 0);
+
         $filters = [
-            'search'     => trim((string) $this->input('q', '')),
-            'categories' => array_values(array_filter($selectedCategories)),
-            'brands'     => array_values(array_filter($selectedBrands)),
-            'sort'       => (string) $this->input('sort', 'relevance'),
+            'search'            => trim((string) $this->input('q', '')),
+            'categories'        => array_values(array_filter($selectedCategories)),
+            'brands'            => array_values(array_filter($selectedBrands)),
+            'sort'              => (string) $this->input('sort', 'relevance'),
+            'vehicle_brand_id'  => $vBrandId > 0 ? $vBrandId : null,
+            'vehicle_model_id'  => $vModelId > 0 ? $vModelId : null,
+            'vehicle_engine_id' => $vEngineId > 0 ? $vEngineId : null,
+            'vehicle_year'      => $vYear > 0 ? $vYear : null,
         ];
 
         $products = $this->productModel->catalog($filters);
+
+        // Vehicle info lookup for display
+        $vehicleSelectionTitle = '';
+        $selectedBrandName = '';
+        $selectedModelName = '';
+        $selectedEngineCode = '';
+
+        if ($hasVehicleFilter) {
+            $finder = new \App\Models\VehicleFinder();
+            if ($vEngineId > 0) {
+                $veh = $finder->getEngineVehicle($vEngineId);
+                if ($veh) {
+                    $selectedBrandName = $veh['brand_name'] ?? '';
+                    $selectedModelName = $veh['model_name'] ?? '';
+                    $selectedEngineCode = $veh['engine_code'] ?? '';
+                }
+            } elseif ($vModelId > 0) {
+                $veh = $finder->getModelVehicle($vModelId);
+                if ($veh) {
+                    $selectedBrandName = $veh['brand_name'] ?? '';
+                    $selectedModelName = $veh['model_name'] ?? '';
+                }
+            } elseif ($vBrandId > 0) {
+                $veh = $finder->getBrandVehicle($vBrandId);
+                if ($veh) {
+                    $selectedBrandName = $veh['brand_name'] ?? '';
+                }
+            }
+
+            $titleParts = [];
+            if ($vYear > 0) {
+                $titleParts[] = (string) $vYear;
+            }
+            if (!empty($selectedBrandName)) {
+                $titleParts[] = $selectedBrandName;
+            }
+            if (!empty($selectedModelName)) {
+                $titleParts[] = $selectedModelName;
+            }
+            if (!empty($selectedEngineCode)) {
+                $titleParts[] = '(' . $selectedEngineCode . ')';
+            }
+
+            $vehicleSelectionTitle = implode(' ', $titleParts);
+        }
 
         // Product Catalog image fallback map
         $imageMap = [
@@ -54,12 +115,22 @@ class CatalogController extends Controller
         unset($product);
 
         $this->view('catalog/index', [
-            'title' => 'Product Catalog | AutoPartFlow',
+            'title' => 'Product Catalog & Spare Part Finder | AutoPartFlow',
             'products' => $products,
             'categories' => $this->productModel->categories(),
             'brands' => $this->productModel->brands(),
             'vehicleBrands' => $this->productModel->vehicleBrands(),
+            'vehicleModels' => $vBrandId > 0 ? $this->productModel->vehicleModels($vBrandId) : [],
+            'vehicleEngines' => $vModelId > 0 ? $this->productModel->vehicleEngines($vModelId) : [],
             'filters' => $filters,
+            'vehicleFilter' => [
+                'brand_id'  => $vBrandId,
+                'model_id'  => $vModelId,
+                'engine_id' => $vEngineId,
+                'year'      => $vYear,
+            ],
+            'vehicleSelectionTitle' => $vehicleSelectionTitle,
+            'hasVehicleFilter' => $hasVehicleFilter,
             'canManageCatalog' => in_array((string) ($_SESSION['role_slug'] ?? ''), ['owner', 'store_manager'], true),
         ], 'public');
     }
@@ -159,21 +230,24 @@ class CatalogController extends Controller
 
     public function vehicleData(): void
     {
-        $brandId = !empty($_GET['brand_id']) ? (int) $_GET['brand_id'] : null;
-        $modelId = !empty($_GET['model_id']) ? (int) $_GET['model_id'] : null;
+        $brandId = !empty($_GET['brand_id']) ? (int) $_GET['brand_id'] : (!empty($_GET['vehicle_brand_id']) ? (int) $_GET['vehicle_brand_id'] : null);
+        $modelId = !empty($_GET['model_id']) ? (int) $_GET['model_id'] : (!empty($_GET['vehicle_model_id']) ? (int) $_GET['vehicle_model_id'] : null);
 
         if ($modelId) {
-            $this->json(['ok' => true, 'engines' => $this->productModel->vehicleEngines($modelId)]);
+            $engines = $this->productModel->vehicleEngines($modelId);
+            $this->json(['ok' => true, 'status' => 'success', 'engines' => $engines]);
             return;
         }
 
         if ($brandId) {
-            $this->json(['ok' => true, 'models' => $this->productModel->vehicleModels($brandId)]);
+            $models = $this->productModel->vehicleModels($brandId);
+            $this->json(['ok' => true, 'status' => 'success', 'models' => $models]);
             return;
         }
 
         $this->json([
             'ok' => true,
+            'status' => 'success',
             'brands' => $this->productModel->vehicleBrands(),
             'models' => $this->productModel->vehicleModels(),
         ]);

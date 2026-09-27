@@ -117,22 +117,76 @@ class AdminController extends Controller
     /** GET /admin/purchases */
     public function purchases(): void
     {
-        $purchaseModel = new \App\Models\Purchase();
+        $purchaseModel  = new \App\Models\Purchase();
+        $supplierModel  = new \App\Models\Supplier();
+        $inventoryModel = new \App\Models\Inventory();
+
         $orders = $purchaseModel->recentOrders();
-        $isMock = !$orders;
+        $isMock = empty($orders);
 
         $this->view('admin.purchases', [
-            'title'   => 'Purchase Management - AutoPartFlow',
-            'summary' => $isMock ? [
-                'pendingApproval' => 12,
-                'inTransit' => 8,
+            'title'     => 'Purchase Management - AutoPartFlow',
+            'summary'   => $isMock ? [
+                'pendingApproval'  => 12,
+                'inTransit'        => 8,
                 'receivedThisWeek' => 45,
-                'fulfillmentRate' => 98,
+                'fulfillmentRate'  => 98,
             ] : $purchaseModel->summary(),
-            'orders'  => $orders ?: $purchaseModel->mockOrders(),
-            'isMock'  => $isMock,
+            'orders'    => $orders ?: $purchaseModel->mockOrders(),
+            'isMock'    => $isMock,
+            'suppliers' => $supplierModel->allWithSummary(),
+            'products'  => $inventoryModel->productsList(),
             'csrfToken' => csrf_token(),
         ], null);
+    }
+
+    /** POST /admin/purchases/create */
+    public function createPurchaseOrder(): void
+    {
+        $data = json_decode((string) file_get_contents('php://input'), true);
+        $data = is_array($data) ? $data : $_POST;
+        $token = (string) ($data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+
+        if ($token === '' || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $token)) {
+            $this->json(['ok' => false, 'message' => 'Your session expired. Refresh the page and try again.'], 419);
+        }
+
+        try {
+            $purchaseModel = new \App\Models\Purchase();
+            $userId = !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+            $order = $purchaseModel->create($data, $userId);
+
+            $this->json([
+                'ok'      => true,
+                'message' => "Purchase Order {$order['po_number']} created successfully.",
+                'order'   => $order,
+                'summary' => $purchaseModel->summary(),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            $this->json(['ok' => false, 'message' => 'The purchase order could not be created. Please try again: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /** GET /admin/purchases/view */
+    public function viewPurchaseOrder(): void
+    {
+        $orderId = (int) ($_GET['id'] ?? 0);
+        if ($orderId <= 0) {
+            $this->json(['ok' => false, 'message' => 'Invalid purchase order ID.'], 400);
+        }
+
+        try {
+            $purchaseModel = new \App\Models\Purchase();
+            $order = $purchaseModel->getOrder($orderId);
+            if (!$order) {
+                $this->json(['ok' => false, 'message' => 'Purchase order not found.'], 404);
+            }
+            $this->json(['ok' => true, 'order' => $order]);
+        } catch (\Throwable $e) {
+            $this->json(['ok' => false, 'message' => 'Could not retrieve purchase order.'], 500);
+        }
     }
 
     /** POST /admin/purchases/status */
@@ -147,8 +201,13 @@ class AdminController extends Controller
         }
 
         try {
-            (new \App\Models\Purchase())->updateStatus((int) ($data['order_id'] ?? 0), (string) ($data['status'] ?? ''));
-            $this->json(['ok' => true, 'message' => 'Purchase order status updated.']);
+            $purchaseModel = new \App\Models\Purchase();
+            $purchaseModel->updateStatus((int) ($data['order_id'] ?? 0), (string) ($data['status'] ?? ''));
+            $this->json([
+                'ok'      => true,
+                'message' => 'Purchase order status updated.',
+                'summary' => $purchaseModel->summary(),
+            ]);
         } catch (\InvalidArgumentException $e) {
             $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
         } catch (\Throwable $e) {

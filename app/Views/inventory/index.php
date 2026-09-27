@@ -66,14 +66,6 @@
                     <button type="button" role="menuitemradio" aria-checked="false" data-status-filter="restocking">Restocking</button>
                 </div>
             </div>
-            <button class="sales-button sales-button--secondary" type="button" id="add-item-toolbar">
-                <svg class="sales-icon"><use href="#sales-icon-plus"></use></svg>
-                New Item
-            </button>
-            <button class="sales-button sales-button--primary" type="button" id="add-stock-toolbar">
-                <svg class="sales-icon"><use href="#sales-icon-plus"></use></svg>
-                Add Stock
-            </button>
         </div>
     </section>
 

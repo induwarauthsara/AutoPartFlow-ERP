@@ -93,6 +93,8 @@ class App
         $this->router->get('/admin/suppliers', 'AdminController@suppliers');
         $this->router->post('/admin/suppliers', 'AdminController@createSupplier');
         $this->router->get('/admin/purchases', 'AdminController@purchases');
+        $this->router->post('/admin/purchases/create', 'AdminController@createPurchaseOrder');
+        $this->router->get('/admin/purchases/view', 'AdminController@viewPurchaseOrder');
         $this->router->post('/admin/purchases/status', 'AdminController@updatePurchaseStatus');
         $this->router->get('/admin/reports', 'AdminController@reports');
         $this->router->get('/admin/reports/sale-items', 'AdminController@saleItems');

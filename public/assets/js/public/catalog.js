@@ -625,6 +625,83 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 8. Vehicle Fitment Selector Cascading Dropdowns
+    const vBrandSelectTop = document.getElementById('v_brand_id');
+    const vModelSelectTop = document.getElementById('v_model_id');
+    const vEngineSelectTop = document.getElementById('v_engine_id');
+
+    if (vBrandSelectTop && vModelSelectTop && vEngineSelectTop) {
+        const baseUrl = window.APP_CONFIG?.baseUrl || document.querySelector('meta[name="base-url"]')?.content || '';
+
+        vBrandSelectTop.addEventListener('change', function () {
+            const brandId = this.value;
+            vModelSelectTop.innerHTML = '<option value="">All Models</option>';
+            vEngineSelectTop.innerHTML = '<option value="">All Engines</option>';
+
+            if (!brandId) {
+                vModelSelectTop.disabled = true;
+                vEngineSelectTop.disabled = true;
+                return;
+            }
+
+            vModelSelectTop.disabled = true;
+            vModelSelectTop.innerHTML = '<option value="">Loading models...</option>';
+
+            fetch(`${baseUrl}/catalog/vehicle-data?brand_id=${encodeURIComponent(brandId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    vModelSelectTop.innerHTML = '<option value="">All Models</option>';
+                    if (data.ok && Array.isArray(data.models)) {
+                        data.models.forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.id;
+                            opt.textContent = m.name + (m.body_type ? ` (${m.body_type})` : '');
+                            vModelSelectTop.appendChild(opt);
+                        });
+                        vModelSelectTop.disabled = false;
+                    }
+                    vEngineSelectTop.disabled = true;
+                })
+                .catch(() => {
+                    vModelSelectTop.innerHTML = '<option value="">All Models</option>';
+                    vModelSelectTop.disabled = false;
+                });
+        });
+
+        vModelSelectTop.addEventListener('change', function () {
+            const modelId = this.value;
+            vEngineSelectTop.innerHTML = '<option value="">All Engines</option>';
+
+            if (!modelId) {
+                vEngineSelectTop.disabled = true;
+                return;
+            }
+
+            vEngineSelectTop.disabled = true;
+            vEngineSelectTop.innerHTML = '<option value="">Loading engines...</option>';
+
+            fetch(`${baseUrl}/catalog/vehicle-data?model_id=${encodeURIComponent(modelId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    vEngineSelectTop.innerHTML = '<option value="">All Engines</option>';
+                    if (data.ok && Array.isArray(data.engines)) {
+                        data.engines.forEach(e => {
+                            const opt = document.createElement('option');
+                            opt.value = e.id;
+                            const extras = [e.displacement_cc ? `${e.displacement_cc}cc` : '', e.fuel_type].filter(Boolean).join(' · ');
+                            opt.textContent = e.engine_code + (extras ? ` (${extras})` : '');
+                            vEngineSelectTop.appendChild(opt);
+                        });
+                        vEngineSelectTop.disabled = false;
+                    }
+                })
+                .catch(() => {
+                    vEngineSelectTop.innerHTML = '<option value="">All Engines</option>';
+                    vEngineSelectTop.disabled = false;
+                });
+        });
+    }
+
     // Escape key to close any active modal
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {

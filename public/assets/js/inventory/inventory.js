@@ -734,23 +734,19 @@
         });
     }
 
-    ['add-stock', 'add-stock-toolbar'].forEach(function (id) {
-        const el = byId(id);
-        if (el) {
-            el.addEventListener('click', function () {
-                openStockDialog('');
-            });
-        }
-    });
+    const addStockBtn = byId('add-stock');
+    if (addStockBtn) {
+        addStockBtn.addEventListener('click', function () {
+            openStockDialog('');
+        });
+    }
 
-    ['add-item-btn', 'add-item-toolbar'].forEach(function (id) {
-        const el = byId(id);
-        if (el) {
-            el.addEventListener('click', function () {
-                openItemDialog();
-            });
-        }
-    });
+    const addItemBtn = byId('add-item-btn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', function () {
+            openItemDialog();
+        });
+    }
 
     const productSelect = byId('stock-in-product');
     if (productSelect) {

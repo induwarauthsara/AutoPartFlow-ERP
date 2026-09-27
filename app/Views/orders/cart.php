@@ -38,7 +38,7 @@ $cartTitle = $title ?? 'Shopping Cart | AutoPartFlow';
 
                 <div id="cartItems" class="cart-items" aria-live="polite"></div>
 
-                <div id="cartEmpty" class="cart-empty hidden">
+                <div id="cartEmpty" class="cart-empty hidden" hidden>
                     <span class="material-symbols-outlined">shopping_cart</span>
                     <h3>Your cart is empty</h3>
                     <p>Add spare parts from the catalog before continuing to checkout.</p>

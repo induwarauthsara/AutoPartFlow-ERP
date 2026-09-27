@@ -12,8 +12,7 @@ $base = rtrim(BASE_URL, '/');
 
 // Active route detection
 $isHome = ($currentPath === $base . '/' || $currentPath === '/' || ($base !== '' && $currentPath === $base) || $currentPath === '');
-$isFinder = str_contains($currentPath, '/finder');
-$isCatalog = str_contains($currentPath, '/catalog');
+$isCatalog = str_contains($currentPath, '/catalog') || str_contains($currentPath, '/finder');
 $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
 $isOrders = str_contains($currentPath, '/orders') || str_contains($currentPath, '/my-orders');
 
@@ -28,8 +27,7 @@ $searchQuery = $filters['search'] ?? ($_GET['q'] ?? '');
 
         <nav class="public-nav" aria-label="Public navigation">
             <a class="<?= $isHome ? 'active' : '' ?>" href="<?= url() ?>">Home</a>
-            <a class="<?= $isFinder ? 'active' : '' ?>" href="<?= url('finder') ?>">Spare Parts Finder</a>
-            <a class="<?= $isCatalog ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog</a>
+            <a class="<?= $isCatalog ? 'active' : '' ?>" href="<?= url('catalog') ?>">Catalog & Parts Finder</a>
             <?php if ($isShopCustomer): ?>
                 <a class="<?= $isOrders ? 'active' : '' ?>" href="<?= url('orders') ?>">My Orders</a>
             <?php endif; ?>
