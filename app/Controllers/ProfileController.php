@@ -162,7 +162,6 @@ class ProfileController extends Controller
                 $shopName  = trim((string) $this->input('shop_name', ''));
                 $address   = trim((string) $this->input('address', ''));
                 $city      = trim((string) $this->input('city', ''));
-                $taxNumber = trim((string) $this->input('tax_number', ''));
 
                 $cStmt = $this->db->prepare('SELECT id FROM customers WHERE email = :email OR phone = :phone LIMIT 1');
                 $cStmt->execute(['email' => $email, 'phone' => $phone]);
@@ -181,13 +180,12 @@ class ProfileController extends Controller
                         'cid'   => $customerId,
                     ]);
 
-                    if ($shopName !== '' || $taxNumber !== '') {
+                    if ($shopName !== '') {
                         $updShop = $this->db->prepare(
-                            'UPDATE shops SET shop_name = COALESCE(NULLIF(:sname, ""), shop_name), tax_number = :tax WHERE customer_id = :cid'
+                            'UPDATE shops SET shop_name = COALESCE(NULLIF(:sname, ""), shop_name) WHERE customer_id = :cid'
                         );
                         $updShop->execute([
                             'sname' => $shopName,
-                            'tax'   => $taxNumber !== '' ? $taxNumber : null,
                             'cid'   => $customerId,
                         ]);
                     }
