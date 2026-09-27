@@ -560,8 +560,7 @@ class ReportManager
         $sql = "SELECT 
                     COALESCE(SUM(s.total_amount), 0)    AS gross,
                     COUNT(s.id)                         AS tx,
-                    COALESCE(SUM(s.discount_amount), 0) AS disc,
-                    COALESCE(SUM(s.tax_amount), 0)      AS tax
+                    COALESCE(SUM(s.discount_amount), 0) AS disc
                 FROM sales s
                 JOIN customers c ON c.id = s.customer_id
                 WHERE s.deleted_at IS NULL AND {$dateSql} {$filterSql}";
@@ -569,7 +568,7 @@ class ReportManager
         $stmt = $this->db->prepare($sql);
         $stmt->execute(array_merge($dateParams, $filterParams));
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $res ?: ['gross' => 0, 'tx' => 0, 'disc' => 0, 'tax' => 0];
+        return $res ?: ['gross' => 0, 'tx' => 0, 'disc' => 0];
     }
 
     /**
@@ -899,7 +898,6 @@ class ReportManager
                     s.payment_status,
                     s.subtotal,
                     s.discount_amount,
-                    s.tax_amount,
                     s.total_amount,
                     s.amount_paid,
                     c.name            AS customer_name,
@@ -1053,7 +1051,6 @@ class ReportManager
             'Payment Status',
             'Subtotal (Rs.)',
             'Discount (Rs.)',
-            'Tax (Rs.)',
             'Total Amount (Rs.)',
             'Amount Paid (Rs.)',
         ]);
@@ -1073,7 +1070,6 @@ class ReportManager
                 strtoupper((string) $r['payment_status']),
                 number_format((float) $r['subtotal'], 2, '.', ''),
                 number_format((float) $r['discount_amount'], 2, '.', ''),
-                number_format((float) $r['tax_amount'], 2, '.', ''),
                 number_format((float) $r['total_amount'], 2, '.', ''),
                 number_format((float) $r['amount_paid'], 2, '.', ''),
             ]);
