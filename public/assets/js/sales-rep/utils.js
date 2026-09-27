@@ -74,7 +74,9 @@
     function statusBadgeClass(status) {
         const key = String(status).toLowerCase();
         if (key === 'pending') return 'sales-badge--pending';
+        if (key === 'confirmed') return 'sales-badge--confirmed';
         if (key === 'processing' || key === 'shipped') return 'sales-badge--processing';
+        if (key === 'ready' || key === 'ready for delivery') return 'sales-badge--ready';
         if (key === 'delivered') return 'sales-badge--delivered';
         if (key === 'cancelled' || key === 'returned') return 'sales-badge--cancelled';
         return 'sales-badge--info';
