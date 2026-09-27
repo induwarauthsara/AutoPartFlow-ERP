@@ -218,7 +218,9 @@ textarea:focus-visible,
 }
 
 .status-dot--pending { background: var(--sales-warning); }
+.status-dot--confirmed { background: #8b5cf6; }
 .status-dot--processing { background: var(--sales-info); }
+.status-dot--ready { background: #0891b2; }
 .status-dot--delivered { background: var(--sales-success); }
 .status-dot--cancelled,
 .status-dot--returned { background: var(--sales-error); }
@@ -238,10 +240,20 @@ textarea:focus-visible,
     background: var(--sales-warning-container);
 }
 
+.sales-badge--confirmed {
+    color: #7c3aed;
+    background: #ede9fe;
+}
+
 .sales-badge--processing,
 .sales-badge--info {
     color: var(--sales-info);
     background: var(--sales-info-container);
+}
+
+.sales-badge--ready {
+    color: #0e7490;
+    background: #cffafe;
 }
 
 .sales-badge--delivered,

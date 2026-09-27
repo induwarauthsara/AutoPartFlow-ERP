@@ -7,8 +7,20 @@
     max-width: 1660px;
     margin: 0 auto 16px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 12px;
+}
+
+@media (max-width: 1400px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .stat-card {
@@ -32,7 +44,9 @@
 }
 
 .stat-card__hint--warning { color: var(--sales-warning); }
+.stat-card__hint--confirmed { color: #8b5cf6; }
 .stat-card__hint--info { color: var(--sales-info); }
+.stat-card__hint--ready { color: #0891b2; }
 .stat-card__hint--success { color: var(--sales-success); }
 
 .order-workspace {
@@ -292,4 +306,215 @@
     .order-workspace { grid-template-columns: minmax(0, 1fr); }
     .order-toolbar { grid-template-columns: minmax(0, 1fr) 40px; }
     .date-filter { width: min(310px, 100%); }
+}
+
+/* Order Status Dialog & Action Enhancements */
+.order-status-dialog {
+    width: min(520px, calc(100% - 32px));
+    border-radius: var(--sales-radius-lg);
+    overflow: hidden;
+}
+
+.order-status-dialog__header {
+    padding: 20px 24px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--sales-outline-variant);
+}
+
+.order-status-dialog__header h2 {
+    margin: 0;
+    color: var(--sales-primary);
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.order-status-dialog__header p {
+    margin: 4px 0 0;
+    color: var(--sales-on-surface-variant);
+    font-size: 13px;
+}
+
+.order-status-dialog__body {
+    padding: 20px 24px;
+    display: grid;
+    gap: 16px;
+}
+
+.order-status-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--sales-surface-low);
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: var(--sales-radius-md);
+    align-items: center;
+}
+
+.order-status-meta .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.order-status-meta .meta-label {
+    color: var(--sales-outline);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.order-status-meta strong,
+.order-status-meta span {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.status-dialog-notice {
+    padding: 12px 14px;
+    border-radius: var(--sales-radius-md);
+    font-size: 13px;
+    line-height: 1.45;
+    background: var(--sales-surface-container);
+    border-left: 4px solid var(--sales-primary);
+    color: var(--sales-on-surface);
+}
+
+.status-dialog-notice--warning {
+    border-left-color: var(--sales-warning);
+    background: rgba(234, 179, 8, 0.08);
+}
+
+.status-dialog-notice--success {
+    border-left-color: var(--sales-success);
+    background: rgba(34, 197, 94, 0.08);
+}
+
+.status-dialog-notice--danger {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.status-dialog-notice--info {
+    border-left-color: var(--sales-info);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.order-status-dialog__footer {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--sales-outline-variant);
+    background: var(--sales-surface-low);
+}
+
+.detail-header-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.detail-actions {
+    flex-wrap: wrap;
+}
+
+.detail-actions .sales-button {
+    flex: 1 1 calc(50% - 10px);
+    min-width: 130px;
+}
+
+/* 5-Stage Customer Tracking Progress Stepper */
+.order-stepper {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin: 16px 0 20px;
+    padding: 14px 10px;
+    background: var(--sales-surface-low);
+    border: 1px solid var(--sales-outline-variant);
+    border-radius: var(--sales-radius-md);
+}
+
+.order-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.order-step__circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    border: 2px solid var(--sales-outline-variant);
+    background: var(--sales-surface-lowest);
+    color: var(--sales-outline);
+    transition: all 0.2s ease;
+}
+
+.order-step__circle .sales-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.order-step--done .order-step__circle {
+    background: var(--sales-primary);
+    border-color: var(--sales-primary);
+    color: #fff;
+}
+
+.order-step--current:not(.order-step--done) .order-step__circle {
+    background: var(--sales-surface-lowest);
+    border-color: var(--sales-primary);
+    color: var(--sales-primary);
+    box-shadow: 0 0 0 3px rgba(27, 42, 74, 0.15);
+}
+
+.order-step__label {
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--sales-on-surface-variant);
+    word-break: break-word;
+}
+
+.order-step--done .order-step__label,
+.order-step--current .order-step__label {
+    font-weight: 700;
+    color: var(--sales-primary);
+}
+
+.order-stepper--cancelled {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--sales-radius-md);
+    color: var(--sales-error);
+    font-weight: 700;
+    font-size: 13px;
+    margin: 16px 0 20px;
+}
+
+.order-stepper--cancelled .sales-icon {
+    width: 18px;
+    height: 18px;
 }

@@ -105,8 +105,10 @@ class SalesController extends Controller
             if ($id === 0 && !empty($data['order_number'])) {
                 $id = $this->workspace->orderIdByNumber((string) $data['order_number']);
             }
-            $this->workspace->updateOrderStatus($id, strtolower((string) ($data['status'] ?? '')));
-            return ['ok' => true];
+            $status = strtolower(trim((string) ($data['status'] ?? '')));
+            $note = trim((string) ($data['note'] ?? $data['notes'] ?? ''));
+            $this->workspace->updateOrderStatus($id, $status, $note);
+            return ['ok' => true, 'status' => ucfirst($status)];
         });
     }
 
@@ -129,8 +131,9 @@ class SalesController extends Controller
             if ($id === 0 && !empty($data['order_number'])) {
                 $id = $this->workspace->orderIdByNumber((string) $data['order_number']);
             }
-            $this->workspace->cancelOrder($id);
-            return ['ok' => true];
+            $note = trim((string) ($data['note'] ?? $data['notes'] ?? ''));
+            $this->workspace->cancelOrder($id, $note);
+            return ['ok' => true, 'status' => 'Cancelled'];
         });
     }
 

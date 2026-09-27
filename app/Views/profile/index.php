@@ -244,11 +244,6 @@ $roleBadgeColor = match ($roleSlug) {
                     </div>
 
                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-                        <span style="color: #64748b;">Role Code</span>
-                        <code style="font-size: 12px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;"><?= e($roleSlug) ?></code>
-                    </div>
-
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
                         <span style="color: #64748b;">Account Status</span>
                         <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #16a34a;">
                             <span style="width: 8px; height: 8px; border-radius: 50%; background: #16a34a;"></span>

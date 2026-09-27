@@ -22,17 +22,27 @@
         <article class="stat-card">
             <span class="stat-card__label">All Orders</span>
             <strong id="stat-all">0</strong>
-            <span class="stat-card__hint">Current records</span>
+            <span class="stat-card__hint">Total orders</span>
         </article>
         <article class="stat-card">
-            <span class="stat-card__label">Pending</span>
+            <span class="stat-card__label">Order Placed</span>
             <strong id="stat-pending">0</strong>
-            <span class="stat-card__hint stat-card__hint--warning">Needs attention</span>
+            <span class="stat-card__hint stat-card__hint--warning">Pending review</span>
+        </article>
+        <article class="stat-card">
+            <span class="stat-card__label">Confirmed</span>
+            <strong id="stat-confirmed">0</strong>
+            <span class="stat-card__hint stat-card__hint--confirmed">Stock allocated</span>
         </article>
         <article class="stat-card">
             <span class="stat-card__label">Processing</span>
             <strong id="stat-processing">0</strong>
-            <span class="stat-card__hint stat-card__hint--info">In progress</span>
+            <span class="stat-card__hint stat-card__hint--info">In preparation</span>
+        </article>
+        <article class="stat-card">
+            <span class="stat-card__label">Ready for Delivery</span>
+            <strong id="stat-ready">0</strong>
+            <span class="stat-card__hint stat-card__hint--ready">Ready to dispatch</span>
         </article>
         <article class="stat-card">
             <span class="stat-card__label">Delivered</span>
@@ -50,8 +60,10 @@
                 </div>
                 <div class="filter-chips" id="status-filters" aria-label="Filter orders by status">
                     <button type="button" class="filter-chip filter-chip--active" data-status="all">All Orders</button>
-                    <button type="button" class="filter-chip" data-status="Pending"><span class="status-dot status-dot--pending"></span>Pending</button>
+                    <button type="button" class="filter-chip" data-status="Pending"><span class="status-dot status-dot--pending"></span>Order Placed</button>
+                    <button type="button" class="filter-chip" data-status="Confirmed"><span class="status-dot status-dot--confirmed"></span>Confirmed</button>
                     <button type="button" class="filter-chip" data-status="Processing"><span class="status-dot status-dot--processing"></span>Processing</button>
+                    <button type="button" class="filter-chip" data-status="Ready"><span class="status-dot status-dot--ready"></span>Ready for Delivery</button>
                     <button type="button" class="filter-chip" data-status="Delivered"><span class="status-dot status-dot--delivered"></span>Delivered</button>
                     <button type="button" class="filter-chip" data-status="Cancelled"><span class="status-dot status-dot--cancelled"></span>Cancelled</button>
                 </div>
@@ -100,6 +112,65 @@
             <!-- Rendered by orders.js -->
         </aside>
     </div>
+
+    <dialog class="sales-dialog order-status-dialog" id="order-status-dialog" aria-labelledby="order-status-dialog-title">
+        <div class="order-status-dialog__content">
+            <div class="order-status-dialog__header">
+                <div>
+                    <h2 id="order-status-dialog-title">Edit Order Status</h2>
+                    <p id="order-status-dialog-subtitle">Update or reverse the order progress stage.</p>
+                </div>
+                <button class="sales-icon-button" type="button" id="order-status-dialog-close" aria-label="Close dialog">
+                    <svg class="sales-icon"><use href="#sales-icon-close"></use></svg>
+                </button>
+            </div>
+            <div class="order-status-dialog__body">
+                <div class="order-status-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Order</span>
+                        <strong id="status-dialog-order-id">ORD-0000</strong>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Customer</span>
+                        <span id="status-dialog-customer">—</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Current Status</span>
+                        <span id="status-dialog-current-badge"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="status-dialog-select" class="form-label">
+                        Select New Status
+                    </label>
+                    <select id="status-dialog-select" class="sales-select">
+                        <option value="Pending">Order Placed (Stock reserved, awaiting review)</option>
+                        <option value="Confirmed">Confirmed (Order verified &amp; confirmed)</option>
+                        <option value="Processing">Processing (Items picking &amp; packing)</option>
+                        <option value="Ready">Ready for Delivery (Ready for courier / in transit)</option>
+                        <option value="Delivered">Delivered (Handed over / Stock consumed)</option>
+                        <option value="Cancelled">Cancelled (Order voided / Stock released)</option>
+                    </select>
+                </div>
+
+                <div class="status-dialog-notice" id="status-dialog-notice">
+                    Select a status above to review workflow implications.
+                </div>
+
+                <div class="form-group">
+                    <label for="status-dialog-note" class="form-label">
+                        Reason / Note <span class="form-label-hint">(optional)</span>
+                    </label>
+                    <input type="text" id="status-dialog-note" class="sales-input" placeholder="e.g. Correcting mistaken delivery status, customer request..." autocomplete="off">
+                </div>
+            </div>
+            <div class="order-status-dialog__footer">
+                <button class="sales-button sales-button--secondary" type="button" id="status-dialog-cancel">Cancel</button>
+                <button class="sales-button sales-button--primary" type="button" id="status-dialog-save">Save Status</button>
+            </div>
+        </div>
+    </dialog>
 
     <div class="toast" id="order-toast" role="status" aria-live="polite"></div>
 </main>

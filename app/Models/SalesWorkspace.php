@@ -270,7 +270,10 @@ class SalesWorkspace extends Model
         if ($customerId < 1 || !$items) {
             throw new \InvalidArgumentException('Select a customer and add at least one product.');
         }
-        $this->db->beginTransaction();
+        $isOwnTx = !$this->db->inTransaction();
+        if ($isOwnTx) {
+            $this->db->beginTransaction();
+        }
         try {
             $number = $this->nextNumber('order');
             $validated = $this->validateItems($items);
@@ -298,54 +301,108 @@ class SalesWorkspace extends Model
                 $reserve = $this->db->prepare('UPDATE inventory SET quantity_reserved = quantity_reserved + :quantity WHERE id=:inventory_id');
                 $reserve->execute(['quantity' => $item['quantity'], 'inventory_id' => $item['inventory_id']]);
             }
-            $this->db->commit();
+            if ($isOwnTx) {
+                $this->db->commit();
+            }
             return $number;
         } catch (\Throwable $e) {
-            $this->db->rollBack();
+            if ($isOwnTx && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             throw $e;
         }
     }
 
-    public function updateOrderStatus(int $id, string $status): void
+    public function updateOrderStatus(int $id, string $status, string $note = ''): void
     {
-        $allowed = ['processing', 'delivered'];
+        $allowed = ['pending', 'confirmed', 'processing', 'ready', 'delivered', 'cancelled'];
+        $status = strtolower($status);
         if (!in_array($status, $allowed, true)) {
             throw new \InvalidArgumentException('Invalid order status.');
         }
-        $this->db->beginTransaction();
+        if ($id <= 0) {
+            throw new \InvalidArgumentException('Valid order ID is required.');
+        }
+
+        $isOwnTx = !$this->db->inTransaction();
+        if ($isOwnTx) {
+            $this->db->beginTransaction();
+        }
         try {
-            $order = $this->db->prepare('SELECT status FROM orders WHERE id=:id AND deleted_at IS NULL FOR UPDATE');
+            $order = $this->db->prepare('SELECT status, notes FROM orders WHERE id=:id AND deleted_at IS NULL FOR UPDATE');
             $order->execute(['id' => $id]);
-            $current = $order->fetchColumn();
-            if ($current === false) {
+            $row = $order->fetch();
+            if (!$row) {
                 throw new \RuntimeException('Order not found.');
             }
-            $valid = ($current === 'pending' && $status === 'processing') ||
-                     ($current === 'processing' && $status === 'delivered');
-            if (!$valid) {
-                throw new \RuntimeException('That status change is not allowed.');
+            $current = strtolower((string) $row['status']);
+
+            $reservedGroup = ['pending', 'confirmed', 'processing', 'ready'];
+            $isCurReserved = in_array($current, $reservedGroup, true);
+            $isTgtReserved = in_array($status, $reservedGroup, true);
+
+            if ($current !== $status) {
+                if ($isCurReserved && $isTgtReserved) {
+                    // Transition within reserved states (pending, confirmed, processing, ready):
+                    // Stock remains reserved.
+                    if ($status === 'ready') {
+                        $this->updateDeliveryStatusForOrder($id, 'in_transit');
+                    } else {
+                        $this->updateDeliveryStatusForOrder($id, 'pending');
+                    }
+                } elseif ($isCurReserved && $status === 'delivered') {
+                    // Fulfilling reserved order: consume stock from inventory on hand
+                    $this->consumeOrderStock($id);
+                    $this->updateDeliveryStatusForOrder($id, 'delivered');
+                } elseif ($isCurReserved && $status === 'cancelled') {
+                    // Cancelling reserved order: release reserved stock
+                    $this->releaseOrderStock($id);
+                    $this->updateDeliveryStatusForOrder($id, 'returned');
+                } elseif ($current === 'delivered' && $isTgtReserved) {
+                    // Reversing delivered order back to reserved: restore on hand and re-reserve
+                    $this->restoreDeliveredToReserved($id);
+                    if ($status === 'ready') {
+                        $this->updateDeliveryStatusForOrder($id, 'in_transit');
+                    } else {
+                        $this->updateDeliveryStatusForOrder($id, 'pending');
+                    }
+                } elseif ($current === 'delivered' && $status === 'cancelled') {
+                    // Cancelling delivered order: return goods back to inventory on hand
+                    $this->restoreDeliveredToOnHand($id);
+                    $this->updateDeliveryStatusForOrder($id, 'returned');
+                } elseif ($current === 'cancelled' && $isTgtReserved) {
+                    // Reopening cancelled order to reserved: verify stock and re-reserve
+                    $this->reReserveOrderStock($id);
+                    if ($status === 'ready') {
+                        $this->updateDeliveryStatusForOrder($id, 'in_transit');
+                    } else {
+                        $this->updateDeliveryStatusForOrder($id, 'pending');
+                    }
+                } elseif ($current === 'cancelled' && $status === 'delivered') {
+                    // Directly fulfilling previously cancelled order: verify stock and consume
+                    $this->consumeDirectFromCancelled($id);
+                    $this->updateDeliveryStatusForOrder($id, 'delivered');
+                }
+
+                $stmt = $this->db->prepare('UPDATE orders SET status=:status WHERE id=:id');
+                $stmt->execute(['status' => $status, 'id' => $id]);
             }
-            if ($status === 'delivered') {
-                $this->consumeOrderStock($id);
-            }
-            $stmt = $this->db->prepare('UPDATE orders SET status=:status WHERE id=:id');
-            $stmt->execute(['status' => $status, 'id' => $id]);
-            if ($status === 'processing') {
-                $delivery = $this->db->prepare(
-                    "UPDATE deliveries SET status='in_transit'
-                     WHERE order_id=:id AND status='pending'"
+
+            if ($note !== '') {
+                $auditLine = '[' . date('Y-m-d H:i') . '] Status updated from ' . ucfirst($current) . ' to ' . ucfirst($status) . ': ' . $note;
+                $noteStmt = $this->db->prepare(
+                    "UPDATE orders SET notes = CONCAT(COALESCE(CONCAT(notes, '\n'), ''), :note) WHERE id = :id"
                 );
-                $delivery->execute(['id' => $id]);
-            } elseif ($status === 'delivered') {
-                $delivery = $this->db->prepare(
-                    "UPDATE deliveries SET status='delivered', delivered_at=COALESCE(delivered_at, NOW())
-                     WHERE order_id=:id AND status IN ('pending','in_transit')"
-                );
-                $delivery->execute(['id' => $id]);
+                $noteStmt->execute(['note' => $auditLine, 'id' => $id]);
             }
-            $this->db->commit();
+
+            if ($isOwnTx) {
+                $this->db->commit();
+            }
         } catch (\Throwable $e) {
-            $this->db->rollBack();
+            if ($isOwnTx && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             throw $e;
         }
     }
@@ -358,7 +415,10 @@ class SalesWorkspace extends Model
         if ($address === '') {
             throw new \InvalidArgumentException('Delivery address is required.');
         }
-        $this->db->beginTransaction();
+        $isOwnTx = !$this->db->inTransaction();
+        if ($isOwnTx) {
+            $this->db->beginTransaction();
+        }
         try {
             $check = $this->db->prepare('SELECT status FROM orders WHERE id=:id AND deleted_at IS NULL FOR UPDATE');
             $check->execute(['id' => $id]);
@@ -366,49 +426,30 @@ class SalesWorkspace extends Model
             if ($status === false) {
                 throw new \RuntimeException('Order not found.');
             }
-            if ($status !== 'pending') {
-                throw new \RuntimeException('Only pending orders can have their delivery address updated.');
+            if (!in_array($status, ['pending', 'confirmed', 'processing', 'ready'], true)) {
+                throw new \RuntimeException('Only active unfulfilled orders (pending, confirmed, processing, or ready) can have their delivery address updated.');
             }
             $stmt = $this->db->prepare('UPDATE orders SET delivery_address=:address WHERE id=:id');
             $stmt->execute(['address' => $address, 'id' => $id]);
             $delivery = $this->db->prepare(
                 "UPDATE deliveries SET delivery_address=:address
-                 WHERE order_id=:id AND status='pending'"
+                 WHERE order_id=:id AND status IN ('pending', 'in_transit')"
             );
             $delivery->execute(['address' => $address, 'id' => $id]);
-            $this->db->commit();
+            if ($isOwnTx) {
+                $this->db->commit();
+            }
         } catch (\Throwable $e) {
-            $this->db->rollBack();
+            if ($isOwnTx && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             throw $e;
         }
     }
 
-    public function cancelOrder(int $id): void
+    public function cancelOrder(int $id, string $note = ''): void
     {
-        $this->db->beginTransaction();
-        try {
-            $stmt = $this->db->prepare('SELECT status FROM orders WHERE id=:id AND deleted_at IS NULL FOR UPDATE');
-            $stmt->execute(['id' => $id]);
-            $status = $stmt->fetchColumn();
-            if ($status === false) {
-                throw new \RuntimeException('Order not found.');
-            }
-            if ($status !== 'pending') {
-                throw new \RuntimeException('Only pending orders can be cancelled.');
-            }
-            $this->releaseOrderStock($id);
-            $cancel = $this->db->prepare("UPDATE orders SET status='cancelled' WHERE id=:id");
-            $cancel->execute(['id' => $id]);
-            $delivery = $this->db->prepare(
-                "UPDATE deliveries SET status='returned'
-                 WHERE order_id=:id AND status='pending'"
-            );
-            $delivery->execute(['id' => $id]);
-            $this->db->commit();
-        } catch (\Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+        $this->updateOrderStatus($id, 'cancelled', $note);
     }
 
     public function completeSale(?int $customerId, array $items, float $discount, string $method, float $paid, ?int $salesRepId, int $userId): array
@@ -493,7 +534,7 @@ class SalesWorkspace extends Model
         return [
             'todaySales' => (float) $today['total'],
             'ordersToday' => (int) $today['count'],
-            'pendingOrders' => count(array_filter($orders, static fn(array $order): bool => in_array($order['status'], ['Pending', 'Processing'], true))),
+            'pendingOrders' => count(array_filter($orders, static fn(array $order): bool => in_array(strtolower((string) $order['status']), ['pending', 'confirmed', 'processing', 'ready'], true))),
             'recentSales' => array_slice($orders, 0, 5),
         ];
     }
@@ -573,6 +614,93 @@ class SalesWorkspace extends Model
              WHERE oi.order_id=:order_id AND i.quantity_on_hand>=oi.quantity'
         );
         $stmt->execute(['order_id' => $orderId]);
+    }
+
+    private function restoreDeliveredToReserved(int $orderId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE inventory i JOIN order_items oi ON oi.product_id=i.product_id
+             SET i.quantity_on_hand = i.quantity_on_hand + oi.quantity,
+                 i.quantity_reserved = i.quantity_reserved + oi.quantity
+             WHERE oi.order_id = :order_id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+    }
+
+    private function restoreDeliveredToOnHand(int $orderId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE inventory i JOIN order_items oi ON oi.product_id=i.product_id
+             SET i.quantity_on_hand = i.quantity_on_hand + oi.quantity
+             WHERE oi.order_id = :order_id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+    }
+
+    private function assertStockAvailableForOrder(int $orderId): void
+    {
+        $stmt = $this->db->prepare(
+            'SELECT p.name, oi.quantity, (i.quantity_on_hand - i.quantity_reserved) AS available
+             FROM order_items oi
+             JOIN products p ON p.id = oi.product_id
+             JOIN inventory i ON i.product_id = oi.product_id
+             WHERE oi.order_id = :order_id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+        $items = $stmt->fetchAll();
+        foreach ($items as $item) {
+            if ((int) $item['quantity'] > (int) $item['available']) {
+                throw new \RuntimeException("Insufficient available stock for {$item['name']} (Needed: {$item['quantity']}, Available: {$item['available']}).");
+            }
+        }
+    }
+
+    private function reReserveOrderStock(int $orderId): void
+    {
+        $this->assertStockAvailableForOrder($orderId);
+        $stmt = $this->db->prepare(
+            'UPDATE inventory i JOIN order_items oi ON oi.product_id=i.product_id
+             SET i.quantity_reserved = i.quantity_reserved + oi.quantity
+             WHERE oi.order_id = :order_id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+    }
+
+    private function consumeDirectFromCancelled(int $orderId): void
+    {
+        $this->assertStockAvailableForOrder($orderId);
+        $stmt = $this->db->prepare(
+            'UPDATE inventory i JOIN order_items oi ON oi.product_id=i.product_id
+             SET i.quantity_on_hand = i.quantity_on_hand - oi.quantity
+             WHERE oi.order_id = :order_id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+    }
+
+    private function updateDeliveryStatusForOrder(int $orderId, string $status): void
+    {
+        if ($status === 'delivered') {
+            $stmt = $this->db->prepare(
+                "UPDATE deliveries SET status='delivered', delivered_at=COALESCE(delivered_at, NOW()), updated_at=CURRENT_TIMESTAMP
+                 WHERE order_id=:id"
+            );
+        } elseif ($status === 'in_transit') {
+            $stmt = $this->db->prepare(
+                "UPDATE deliveries SET status='in_transit', delivered_at=NULL, updated_at=CURRENT_TIMESTAMP
+                 WHERE order_id=:id"
+            );
+        } elseif ($status === 'returned') {
+            $stmt = $this->db->prepare(
+                "UPDATE deliveries SET status='returned', delivered_at=NULL, updated_at=CURRENT_TIMESTAMP
+                 WHERE order_id=:id"
+            );
+        } else {
+            $stmt = $this->db->prepare(
+                "UPDATE deliveries SET status='pending', delivered_at=NULL, updated_at=CURRENT_TIMESTAMP
+                 WHERE order_id=:id"
+            );
+        }
+        $stmt->execute(['id' => $orderId]);
     }
 
     private function initials(string $name): string
