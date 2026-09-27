@@ -160,14 +160,9 @@ $shopName = $customer['shop_name'] ?: ($customer['name'] ?: 'Shop Customer');
                 <div class="customer-panel customer-quick-links" style="padding: 20px;">
                     <span class="customer-eyebrow">QUICK ACCESS</span>
                     <h2 style="font-size: 16px; margin: 4px 0 12px;">What would you like to do?</h2>
-                    <a href="<?= url('finder') ?>">
-                        <span class="material-symbols-outlined">directions_car</span>
-                        <div><strong>Spare Parts Finder</strong><small>Find parts matching your vehicle make & model</small></div>
-                        <span class="material-symbols-outlined">chevron_right</span>
-                    </a>
                     <a href="<?= url('catalog') ?>">
-                        <span class="material-symbols-outlined">category</span>
-                        <div><strong>Product Catalog</strong><small>Browse inventory and order new parts</small></div>
+                        <span class="material-symbols-outlined">directions_car</span>
+                        <div><strong>Parts Catalog & Vehicle Finder</strong><small>Browse inventory and find parts matching your vehicle make & model</small></div>
                         <span class="material-symbols-outlined">chevron_right</span>
                     </a>
                     <a href="<?= url('orders') ?>">

@@ -129,6 +129,8 @@ textarea.is-valid {
     animation: fieldErrorFadeIn 0.2s ease-in-out;
 }
 
+.hidden,
+[hidden],
 .field-error-message.hidden,
 .err:empty {
     display: none !important;

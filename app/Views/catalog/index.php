@@ -4,7 +4,28 @@ $products = $products ?? [];
 $categories = $categories ?? [];
 $brands = $brands ?? [];
 $vehicleBrands = $vehicleBrands ?? [];
+$vehicleModels = $vehicleModels ?? [];
+$vehicleEngines = $vehicleEngines ?? [];
+$vehicleFilter = $vehicleFilter ?? ['brand_id' => 0, 'model_id' => 0, 'engine_id' => 0, 'year' => 0];
+$vehicleSelectionTitle = $vehicleSelectionTitle ?? '';
+$hasVehicleFilter = (bool) ($hasVehicleFilter ?? false);
 $canManageCatalog = (bool) ($canManageCatalog ?? false);
+
+// Base clear vehicle URL preserves category/brand/search/sort filters
+$clearVehicleParams = [];
+if (!empty($filters['search'])) $clearVehicleParams['q'] = $filters['search'];
+if (!empty($filters['categories'])) $clearVehicleParams['category'] = $filters['categories'];
+if (!empty($filters['brands'])) $clearVehicleParams['brand'] = $filters['brands'];
+if (!empty($filters['sort']) && $filters['sort'] !== 'relevance') $clearVehicleParams['sort'] = $filters['sort'];
+$clearVehicleUrl = url('catalog') . (!empty($clearVehicleParams) ? '?' . http_build_query($clearVehicleParams) : '');
+
+// Reset filters URL preserves vehicle selection
+$resetFiltersParams = [];
+if (!empty($vehicleFilter['brand_id'])) $resetFiltersParams['vehicle_brand_id'] = $vehicleFilter['brand_id'];
+if (!empty($vehicleFilter['model_id'])) $resetFiltersParams['vehicle_model_id'] = $vehicleFilter['model_id'];
+if (!empty($vehicleFilter['engine_id'])) $resetFiltersParams['vehicle_engine_id'] = $vehicleFilter['engine_id'];
+if (!empty($vehicleFilter['year'])) $resetFiltersParams['year'] = $vehicleFilter['year'];
+$resetFiltersUrl = url('catalog') . (!empty($resetFiltersParams) ? '?' . http_build_query($resetFiltersParams) : '');
 ?>
 
 <div class="catalog-page">
@@ -13,14 +34,18 @@ $canManageCatalog = (bool) ($canManageCatalog ?? false);
         <div class="breadcrumb">
             <a href="<?= url() ?>">Home</a>
             <span class="material-symbols-outlined">chevron_right</span>
-            <strong>Product Catalog</strong>
+            <strong>Parts Catalog & Spare Part Finder</strong>
         </div>
 
         <!-- Hero Banner -->
         <section class="catalog-hero">
             <div class="catalog-hero__content">
-                <h2>Parts for your next repair</h2>
-                <p>Browse by category or brand, then check compatibility in the part details. Have an account? Sign in below.</p>
+                <span class="catalog-hero-eyebrow" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; letter-spacing:0.08em; background:rgba(255,255,255,0.15); padding:4px 10px; border-radius:6px; margin-bottom:10px;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">directions_car</span>
+                    ALL-IN-ONE SPARE PART FINDER & CATALOG
+                </span>
+                <h2>Find the right spare parts for your vehicle</h2>
+                <p>Browse our complete catalog or select your vehicle make, model, engine, and year for verified compatible parts.</p>
             </div>
             <?php if (auth_check()): ?>
                 <a class="hero-register" href="<?= auth_dashboard_url() ?>"><?= e(auth_dashboard_label()) ?></a>
@@ -33,8 +58,8 @@ $canManageCatalog = (bool) ($canManageCatalog ?? false);
         <!-- Page Header -->
         <section class="catalog-heading" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div>
-                <h1>Product Catalog</h1>
-                <p>Browse auto parts, check vehicle compatibility, and manage inventory catalog.</p>
+                <h1>Parts Catalog & Vehicle Finder</h1>
+                <p>Search spare parts, check guaranteed vehicle fitment, and place orders directly in one place.</p>
             </div>
             <?php if ($canManageCatalog): ?>
             <button type="button" class="btn-primary" id="btn-add-part" style="padding:10px 18px; border-radius:8px; display:inline-flex; align-items:center; gap:8px;">
@@ -44,63 +69,163 @@ $canManageCatalog = (bool) ($canManageCatalog ?? false);
             <?php endif; ?>
         </section>
 
-        <!-- Main Layout: Filters Sidebar + Results Grid -->
-        <form class="catalog-layout" method="get" action="<?= url('catalog') ?>" id="catalog-filter-form">
-            <!-- Filter Sidebar -->
-            <aside class="filter-panel">
-                <div class="filter-panel__heading">
-                    <h2>Filters</h2>
-                    <a href="<?= url('catalog') ?>">Clear All</a>
-                </div>
-
-                <!-- Categories Filter -->
-                <div class="filter-group">
-                    <h3>Categories</h3>
-                    <div class="filter-options">
-                        <?php foreach ($categories as $category): ?>
-                            <?php $name = (string) $category['name']; ?>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category[]" value="<?= e($name) ?>" <?= in_array($name, $filters['categories'], true) ? 'checked' : '' ?>>
-                                <span><?= e($name) ?></span>
-                            </label>
-                        <?php endforeach; ?>
+        <!-- Main Form Wrapping Vehicle Finder & Catalog Layout -->
+        <form method="get" action="<?= url('catalog') ?>" id="catalog-filter-form">
+            <!-- Vehicle Fitment Selector Card -->
+            <section class="catalog-vehicle-card" id="vehicleFinderCard">
+                <div class="vfinder-card-header">
+                    <div class="vfinder-title-group">
+                        <div class="vfinder-icon-wrap">
+                            <span class="material-symbols-outlined">directions_car</span>
+                        </div>
+                        <div>
+                            <h3>Select Your Vehicle</h3>
+                            <p>Filter catalog items engineered for your car. Fill any details you know.</p>
+                        </div>
                     </div>
+                    <?php if ($hasVehicleFilter): ?>
+                        <a href="<?= e($clearVehicleUrl) ?>" class="btn-clear-vehicle" title="Clear vehicle filter and view all parts">
+                            <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>
+                            <span>Clear Vehicle Filter</span>
+                        </a>
+                    <?php endif; ?>
                 </div>
 
-                <!-- Brands Filter -->
-                <div class="filter-group filter-group--bordered">
-                    <h3>Brands</h3>
-                    <div class="filter-options filter-options--scroll">
-                        <?php foreach ($brands as $brand): ?>
-                            <?php $name = (string) $brand['name']; ?>
-                            <label class="filter-option">
-                                <input type="checkbox" name="brand[]" value="<?= e($name) ?>" <?= in_array($name, $filters['brands'], true) ? 'checked' : '' ?>>
-                                <span><?= e($name) ?></span>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <input type="hidden" name="q" value="<?= e($filters['search']) ?>">
-                <input type="hidden" name="sort" id="hidden-sort" value="<?= e($filters['sort']) ?>">
-                <button class="apply-filter-button" type="submit">Apply Filters</button>
-            </aside>
-
-            <!-- Product Grid Area -->
-            <section class="catalog-results">
-                <!-- Toolbar -->
-                <div class="results-toolbar">
-                    <strong><?= count($products) ?> Products</strong>
-                    <label class="sort-control">
-                        <span>Sort by:</span>
-                        <select id="sort-select">
-                            <option value="relevance" <?= $filters['sort'] === 'relevance' ? 'selected' : '' ?>>Relevance</option>
-                            <option value="price_asc" <?= $filters['sort'] === 'price_asc' ? 'selected' : '' ?>>Price: Low to High</option>
-                            <option value="price_desc" <?= $filters['sort'] === 'price_desc' ? 'selected' : '' ?>>Price: High to Low</option>
-                            <option value="name_asc" <?= $filters['sort'] === 'name_asc' ? 'selected' : '' ?>>Name: A to Z</option>
+                <div class="vfinder-grid">
+                    <!-- Make / Vehicle Brand -->
+                    <div class="vfinder-field">
+                        <label for="v_brand_id">Vehicle Make</label>
+                        <select id="v_brand_id" name="vehicle_brand_id" class="vfinder-select">
+                            <option value="">All Makes / Any</option>
+                            <?php foreach ($vehicleBrands as $vb): ?>
+                                <option value="<?= (int) $vb['id'] ?>" <?= ($vehicleFilter['brand_id'] ?? 0) === (int) $vb['id'] ? 'selected' : '' ?>>
+                                    <?= e($vb['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
-                    </label>
+                    </div>
+
+                    <!-- Model -->
+                    <div class="vfinder-field">
+                        <label for="v_model_id">Model</label>
+                        <select id="v_model_id" name="vehicle_model_id" class="vfinder-select" <?= !empty($vehicleFilter['brand_id']) ? '' : 'disabled' ?>>
+                            <option value="">All Models</option>
+                            <?php foreach ($vehicleModels as $vm): ?>
+                                <option value="<?= (int) $vm['id'] ?>" <?= ($vehicleFilter['model_id'] ?? 0) === (int) $vm['id'] ? 'selected' : '' ?>>
+                                    <?= e($vm['name']) ?><?= !empty($vm['body_type']) ? ' (' . e($vm['body_type']) . ')' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Engine -->
+                    <div class="vfinder-field">
+                        <label for="v_engine_id">Engine</label>
+                        <select id="v_engine_id" name="vehicle_engine_id" class="vfinder-select" <?= !empty($vehicleFilter['model_id']) ? '' : 'disabled' ?>>
+                            <option value="">All Engines</option>
+                            <?php foreach ($vehicleEngines as $ve): ?>
+                                <?php
+                                    $engineMeta = array_filter([
+                                        !empty($ve['displacement_cc']) ? $ve['displacement_cc'] . 'cc' : '',
+                                        $ve['fuel_type'] ?? ''
+                                    ]);
+                                    $engineLabel = $ve['engine_code'] . (!empty($engineMeta) ? ' (' . implode(' · ', $engineMeta) . ')' : '');
+                                ?>
+                                <option value="<?= (int) $ve['id'] ?>" <?= ($vehicleFilter['engine_id'] ?? 0) === (int) $ve['id'] ? 'selected' : '' ?>>
+                                    <?= e($engineLabel) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Year -->
+                    <div class="vfinder-field">
+                        <label for="v_year">Year</label>
+                        <input id="v_year" name="year" type="number" min="1900" max="<?= (int) date('Y') + 1 ?>"
+                            value="<?= !empty($vehicleFilter['year']) ? (int) $vehicleFilter['year'] : '' ?>"
+                            placeholder="e.g. 2018" class="vfinder-input">
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="vfinder-actions">
+                        <button type="submit" class="btn-find-parts">
+                            <span class="material-symbols-outlined" style="font-size:18px;">search</span>
+                            <span>Find Parts</span>
+                        </button>
+                    </div>
                 </div>
+
+                <?php if ($hasVehicleFilter && !empty($vehicleSelectionTitle)): ?>
+                    <div class="vfinder-active-badge">
+                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--success);">verified</span>
+                        <span>Showing parts verified for: <strong><?= e($vehicleSelectionTitle) ?></strong></span>
+                        <a href="<?= e($clearVehicleUrl) ?>" class="vfinder-badge-clear">Remove filter</a>
+                    </div>
+                <?php endif; ?>
+            </section>
+
+            <!-- Main Layout: Filters Sidebar + Results Grid -->
+            <div class="catalog-layout">
+                <!-- Filter Sidebar -->
+                <aside class="filter-panel">
+                    <div class="filter-panel__heading">
+                        <h2>Filters</h2>
+                        <a href="<?= e($resetFiltersUrl) ?>">Reset Filters</a>
+                    </div>
+
+                    <!-- Categories Filter -->
+                    <div class="filter-group">
+                        <h3>Categories</h3>
+                        <div class="filter-options">
+                            <?php foreach ($categories as $category): ?>
+                                <?php $name = (string) $category['name']; ?>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="category[]" value="<?= e($name) ?>" <?= in_array($name, $filters['categories'], true) ? 'checked' : '' ?>>
+                                    <span><?= e($name) ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- Brands Filter -->
+                    <div class="filter-group filter-group--bordered">
+                        <h3>Part Brands</h3>
+                        <div class="filter-options filter-options--scroll">
+                            <?php foreach ($brands as $brand): ?>
+                                <?php $name = (string) $brand['name']; ?>
+                                <label class="filter-option">
+                                    <input type="checkbox" name="brand[]" value="<?= e($name) ?>" <?= in_array($name, $filters['brands'], true) ? 'checked' : '' ?>>
+                                    <span><?= e($name) ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="q" value="<?= e($filters['search']) ?>">
+                    <input type="hidden" name="sort" id="hidden-sort" value="<?= e($filters['sort']) ?>">
+                    <button class="apply-filter-button" type="submit">Apply Filters</button>
+                </aside>
+
+                <!-- Product Grid Area -->
+                <section class="catalog-results">
+                    <!-- Toolbar -->
+                    <div class="results-toolbar">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <strong><?= count($products) ?> Product<?= count($products) === 1 ? '' : 's' ?></strong>
+                            <?php if ($hasVehicleFilter && !empty($vehicleSelectionTitle)): ?>
+                                <span class="toolbar-vehicle-badge" style="font-size:12px; background:var(--surface-low); color:var(--primary); padding:3px 8px; border-radius:6px; font-weight:600;">for <em><?= e($vehicleSelectionTitle) ?></em></span>
+                            <?php endif; ?>
+                        </div>
+                        <label class="sort-control">
+                            <span>Sort by:</span>
+                            <select id="sort-select">
+                                <option value="relevance" <?= $filters['sort'] === 'relevance' ? 'selected' : '' ?>>Relevance</option>
+                                <option value="price_asc" <?= $filters['sort'] === 'price_asc' ? 'selected' : '' ?>>Price: Low to High</option>
+                                <option value="price_desc" <?= $filters['sort'] === 'price_desc' ? 'selected' : '' ?>>Price: High to Low</option>
+                                <option value="name_asc" <?= $filters['sort'] === 'name_asc' ? 'selected' : '' ?>>Name: A to Z</option>
+                            </select>
+                        </label>
+                    </div>
 
                 <?php if (!$products): ?>
                     <div class="empty-products">
@@ -140,6 +265,19 @@ $canManageCatalog = (bool) ($canManageCatalog ?? false);
                                 </div>
                                 <h3><?= e($product['name']) ?></h3>
                                 <code><?= e($product['product_code']) ?></code>
+
+                                <?php if ($hasVehicleFilter): ?>
+                                    <div class="product-fit-badge">
+                                        <span class="material-symbols-outlined" style="font-size:15px;">verified</span>
+                                        <span>Guaranteed Fit</span>
+                                    </div>
+                                    <?php if (!empty($product['compatibility_notes'])): ?>
+                                        <div class="product-fit-note" title="<?= e($product['compatibility_notes']) ?>">
+                                            <span class="material-symbols-outlined" style="font-size:13px;">info</span>
+                                            <span><?= e($product['compatibility_notes']) ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
 
                                 <div class="product-price">
                                     <span>Retail Price</span>
@@ -190,6 +328,7 @@ $canManageCatalog = (bool) ($canManageCatalog ?? false);
                     </div>
                 <?php endif; ?>
             </section>
+            </div>
         </form>
     </div>
 </div>

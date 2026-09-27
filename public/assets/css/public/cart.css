@@ -236,6 +236,12 @@
     text-align: center;
 }
 
+.cart-empty.hidden,
+.hidden,
+[hidden] {
+    display: none !important;
+}
+
 .cart-empty .material-symbols-outlined {
     color: var(--outline);
     font-size: 52px;

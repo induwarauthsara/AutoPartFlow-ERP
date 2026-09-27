@@ -36,8 +36,7 @@
     <div class="public-footer__bottom">
         <span>&copy; <?= date('Y') ?> AutoPartFlow ERP. All rights reserved.</span>
         <div>
-            <a href="<?= url('finder') ?>">Spare Parts Finder</a>
-            <a href="<?= url('catalog') ?>">Catalog</a>
+            <a href="<?= url('catalog') ?>">Catalog & Parts Finder</a>
             <a href="<?= url('track-order') ?>">Track Order</a>
         </div>
     </div>

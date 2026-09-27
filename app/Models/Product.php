@@ -12,122 +12,165 @@ class Product extends Model
     protected string $table = 'products';
 
     /**
- * Get catalog products based on search, categories, brands, and sort filters.
- */
-public function catalog(array $filters = []): array
-{
-    $sql = "
-        SELECT
-            p.id,
-            p.product_code,
-            p.barcode,
-            p.name,
-            p.description,
-            p.unit,
-            p.cost_price,
-            p.selling_price,
-            p.wholesale_price,
-            p.specifications,
-            p.image_path,
-            c.id AS category_id,
-            c.name AS category,
-            b.id AS brand_id,
-            b.name AS brand,
-            COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
-            COALESCE(i.reorder_level, 0) AS reorder_level
-        FROM products p
-        INNER JOIN categories c ON c.id = p.category_id
-        LEFT JOIN brands b ON b.id = p.brand_id
-        LEFT JOIN inventory i ON i.product_id = p.id
-        WHERE p.is_active = 1
-          AND p.deleted_at IS NULL
-          AND c.is_active = 1
-          AND c.deleted_at IS NULL
-    ";
-
-    $params = [];
-
-    /*
-     * Search
-     *
-     * Use a separate placeholder for every LIKE condition.
-     * This avoids PDO HY093 errors caused by reusing :search.
+     * Get catalog products based on search, categories, brands, vehicle fitment, and sort filters.
      */
-    if (!empty($filters['search'])) {
-        $sql .= "
-            AND (
-                p.name LIKE :search_name
-                OR p.product_code LIKE :search_code
-                OR p.barcode LIKE :search_barcode
-                OR p.description LIKE :search_description
-                OR CAST(p.specifications AS CHAR) LIKE :search_specifications
-                OR c.name LIKE :search_category
-                OR b.name LIKE :search_brand
-            )
+    public function catalog(array $filters = []): array
+    {
+        $vBrandId = !empty($filters['vehicle_brand_id']) ? (int) $filters['vehicle_brand_id'] : null;
+        $vModelId = !empty($filters['vehicle_model_id']) ? (int) $filters['vehicle_model_id'] : null;
+        $vEngineId = !empty($filters['vehicle_engine_id']) ? (int) $filters['vehicle_engine_id'] : null;
+        $vYear = !empty($filters['vehicle_year']) ? (int) $filters['vehicle_year'] : null;
+
+        $hasVehicleFilter = ($vBrandId !== null || $vModelId !== null || $vEngineId !== null || $vYear !== null);
+
+        $notesSelect = $hasVehicleFilter ? ", GROUP_CONCAT(DISTINCT pc.notes SEPARATOR '; ') AS compatibility_notes" : "";
+        $compatJoin = $hasVehicleFilter ? " INNER JOIN product_compatibility pc ON pc.product_id = p.id " : "";
+
+        $sql = "
+            SELECT
+                p.id,
+                p.product_code,
+                p.barcode,
+                p.name,
+                p.description,
+                p.unit,
+                p.cost_price,
+                p.selling_price,
+                p.wholesale_price,
+                p.specifications,
+                p.image_path,
+                c.id AS category_id,
+                c.name AS category,
+                b.id AS brand_id,
+                b.name AS brand,
+                COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
+                COALESCE(i.reorder_level, 0) AS reorder_level
+                {$notesSelect}
+            FROM products p
+            INNER JOIN categories c ON c.id = p.category_id
+            LEFT JOIN brands b ON b.id = p.brand_id
+            LEFT JOIN inventory i ON i.product_id = p.id
+            {$compatJoin}
+            WHERE p.is_active = 1
+              AND p.deleted_at IS NULL
+              AND c.is_active = 1
+              AND c.deleted_at IS NULL
         ";
 
-        $search = '%' . trim((string) $filters['search']) . '%';
+        $params = [];
 
-        $params['search_name'] = $search;
-        $params['search_code'] = $search;
-        $params['search_barcode'] = $search;
-        $params['search_description'] = $search;
-        $params['search_specifications'] = $search;
-        $params['search_category'] = $search;
-        $params['search_brand'] = $search;
-    }
+        /*
+         * Vehicle Compatibility filters
+         */
+        if ($hasVehicleFilter) {
+            if ($vBrandId !== null) {
+                $sql .= " AND (pc.vehicle_brand_id IS NULL OR pc.vehicle_brand_id = :v_brand_id) ";
+                $params['v_brand_id'] = $vBrandId;
+            }
 
-    /*
-     * Category filters
-     */
-    if (!empty($filters['categories'])) {
-        $placeholders = [];
+            if ($vModelId !== null) {
+                $sql .= " AND (pc.vehicle_model_id IS NULL OR pc.vehicle_model_id = :v_model_id) ";
+                $params['v_model_id'] = $vModelId;
+            }
 
-        foreach ($filters['categories'] as $index => $category) {
-            $key = 'category_' . $index;
+            if ($vEngineId !== null) {
+                $sql .= " AND (pc.vehicle_engine_id IS NULL OR pc.vehicle_engine_id = :v_engine_id) ";
+                $params['v_engine_id'] = $vEngineId;
+            }
 
-            $placeholders[] = ':' . $key;
-            $params[$key] = $category;
+            if ($vYear !== null) {
+                $sql .= " AND (pc.year_from IS NULL OR pc.year_from <= :v_year_from)
+                          AND (pc.year_to IS NULL OR pc.year_to >= :v_year_to) ";
+                $params['v_year_from'] = $vYear;
+                $params['v_year_to'] = $vYear;
+            }
         }
 
-        $sql .= ' AND c.name IN (' . implode(', ', $placeholders) . ')';
-    }
+        /*
+         * Search
+         *
+         * Use a separate placeholder for every LIKE condition.
+         * This avoids PDO HY093 errors caused by reusing :search.
+         */
+        if (!empty($filters['search'])) {
+            $sql .= "
+                AND (
+                    p.name LIKE :search_name
+                    OR p.product_code LIKE :search_code
+                    OR p.barcode LIKE :search_barcode
+                    OR p.description LIKE :search_description
+                    OR CAST(p.specifications AS CHAR) LIKE :search_specifications
+                    OR c.name LIKE :search_category
+                    OR b.name LIKE :search_brand
+                )
+            ";
 
-    /*
-     * Brand filters
-     */
-    if (!empty($filters['brands'])) {
-        $placeholders = [];
+            $search = '%' . trim((string) $filters['search']) . '%';
 
-        foreach ($filters['brands'] as $index => $brand) {
-            $key = 'brand_' . $index;
-
-            $placeholders[] = ':' . $key;
-            $params[$key] = $brand;
+            $params['search_name'] = $search;
+            $params['search_code'] = $search;
+            $params['search_barcode'] = $search;
+            $params['search_description'] = $search;
+            $params['search_specifications'] = $search;
+            $params['search_category'] = $search;
+            $params['search_brand'] = $search;
         }
 
-        $sql .= ' AND b.name IN (' . implode(', ', $placeholders) . ')';
+        /*
+         * Category filters
+         */
+        if (!empty($filters['categories'])) {
+            $placeholders = [];
+
+            foreach ($filters['categories'] as $index => $category) {
+                $key = 'category_' . $index;
+
+                $placeholders[] = ':' . $key;
+                $params[$key] = $category;
+            }
+
+            $sql .= ' AND c.name IN (' . implode(', ', $placeholders) . ')';
+        }
+
+        /*
+         * Brand filters
+         */
+        if (!empty($filters['brands'])) {
+            $placeholders = [];
+
+            foreach ($filters['brands'] as $index => $brand) {
+                $key = 'brand_' . $index;
+
+                $placeholders[] = ':' . $key;
+                $params[$key] = $brand;
+            }
+
+            $sql .= ' AND b.name IN (' . implode(', ', $placeholders) . ')';
+        }
+
+        if ($hasVehicleFilter) {
+            $sql .= ' GROUP BY p.id, c.id, b.id, i.quantity_on_hand, i.reorder_level ';
+        }
+
+        /*
+         * Sorting
+         */
+        $sort = $filters['sort'] ?? 'relevance';
+
+        $orderBy = match ($sort) {
+            'price_asc'  => 'p.selling_price ASC, p.id ASC',
+            'price_desc' => 'p.selling_price DESC, p.id ASC',
+            'name_asc'   => 'p.name ASC, p.id ASC',
+            default      => 'p.id ASC',
+        };
+
+        $sql .= ' ORDER BY ' . $orderBy;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
     }
-
-    /*
-     * Sorting
-     */
-    $sort = $filters['sort'] ?? 'relevance';
-
-    $orderBy = match ($sort) {
-        'price_asc'  => 'p.selling_price ASC, p.id ASC',
-        'price_desc' => 'p.selling_price DESC, p.id ASC',
-        'name_asc'   => 'p.name ASC, p.id ASC',
-        default      => 'p.id ASC',
-    };
-
-    $sql .= ' ORDER BY ' . $orderBy;
-
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute($params);
-
-    return $stmt->fetchAll();
-}
 
     /**
      * Get vehicle compatibility list for a product.
