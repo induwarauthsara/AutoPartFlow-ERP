@@ -244,7 +244,6 @@ class ReportExcelExporter
         $out[] = '   <Column ss:Width="75"/>';  // Status
         $out[] = '   <Column ss:Width="95"/>';  // Subtotal
         $out[] = '   <Column ss:Width="80"/>';  // Discount
-        $out[] = '   <Column ss:Width="80"/>';  // Tax
         $out[] = '   <Column ss:Width="110"/>'; // Total
         $out[] = '   <Column ss:Width="100"/>'; // Paid
 
@@ -263,27 +262,23 @@ class ReportExcelExporter
         $out[] = '    <Cell ss:StyleID="ColHeader"><Data ss:Type="String">Status</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="ColHeader"><Data ss:Type="String">Subtotal</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="ColHeader"><Data ss:Type="String">Discount</Data></Cell>';
-        $out[] = '    <Cell ss:StyleID="ColHeader"><Data ss:Type="String">Tax (VAT)</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="ColHeader"><Data ss:Type="String">Total Amount</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="ColHeader"><Data ss:Type="String">Amount Paid</Data></Cell>';
         $out[] = '   </Row>';
 
         $totalSubtotal = 0.0;
         $totalDiscount = 0.0;
-        $totalTax      = 0.0;
         $totalAmount   = 0.0;
         $totalPaid     = 0.0;
 
         foreach ($records as $r) {
             $sub  = (float)($r['subtotal'] ?? 0);
             $disc = (float)($r['discount_amount'] ?? 0);
-            $tx   = (float)($r['tax_amount'] ?? 0);
             $tot  = (float)($r['total_amount'] ?? 0);
             $pd   = (float)($r['amount_paid'] ?? 0);
 
             $totalSubtotal += $sub;
             $totalDiscount += $disc;
-            $totalTax      += $tx;
             $totalAmount   += $tot;
             $totalPaid     += $pd;
 
@@ -301,7 +296,6 @@ class ReportExcelExporter
             $out[] = '    <Cell ss:StyleID="TextCenter"><Data ss:Type="String">' . strtoupper((string)($r['payment_status'] ?? 'paid')) . '</Data></Cell>';
             $out[] = '    <Cell ss:StyleID="Currency"><Data ss:Type="Number">' . $sub . '</Data></Cell>';
             $out[] = '    <Cell ss:StyleID="Currency"><Data ss:Type="Number">' . $disc . '</Data></Cell>';
-            $out[] = '    <Cell ss:StyleID="Currency"><Data ss:Type="Number">' . $tx . '</Data></Cell>';
             $out[] = '    <Cell ss:StyleID="CurrencyBold"><Data ss:Type="Number">' . $tot . '</Data></Cell>';
             $out[] = '    <Cell ss:StyleID="Currency"><Data ss:Type="Number">' . $pd . '</Data></Cell>';
             $out[] = '   </Row>';
@@ -312,7 +306,6 @@ class ReportExcelExporter
         $out[] = '    <Cell ss:MergeAcross="10" ss:StyleID="TotalRow"><Data ss:Type="String">GRAND TOTAL (' . count($records) . ' TRANSACTIONS):</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="TotalRow"><Data ss:Type="Number">' . $totalSubtotal . '</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="TotalRow"><Data ss:Type="Number">' . $totalDiscount . '</Data></Cell>';
-        $out[] = '    <Cell ss:StyleID="TotalRow"><Data ss:Type="Number">' . $totalTax . '</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="TotalRow"><Data ss:Type="Number">' . $totalAmount . '</Data></Cell>';
         $out[] = '    <Cell ss:StyleID="TotalRow"><Data ss:Type="Number">' . $totalPaid . '</Data></Cell>';
         $out[] = '   </Row>';

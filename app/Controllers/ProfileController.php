@@ -51,7 +51,7 @@ class ProfileController extends Controller
 
         if ($user['role_slug'] === 'shop_customer') {
             $cusStmt = $this->db->prepare(
-                'SELECT c.*, s.shop_name, s.tax_number, s.registration_no, s.credit_limit, s.credit_balance
+                'SELECT c.*, s.shop_name, s.registration_no, s.credit_limit, s.credit_balance
                  FROM customers c
                  LEFT JOIN shops s ON s.customer_id = c.id
                  WHERE (c.email = :email OR c.phone = :phone) AND c.deleted_at IS NULL
