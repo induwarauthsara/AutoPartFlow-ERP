@@ -1,7 +1,6 @@
 /**
- * Order Management list: search, status chips, date filter, status flow, delete.
+ * Order Management list: search, status chips, date filter, status flow, address editing and cancellation.
  * Business rule: Pending → Processing → Delivered. Cancelled has no next step.
- * PHP later: persist status with OrderController update; DELETE destroy.
  */
 (function () {
     'use strict';
@@ -65,7 +64,7 @@
                 '<td class="align-right"><strong>' + u.money(order.total) + '</strong></td>' +
                 '<td><div class="order-row-actions">' +
                     '<button class="sales-icon-button" type="button" aria-label="View ' + u.escapeHtml(order.id) + '"><svg class="sales-icon"><use href="#sales-icon-chevron"></use></svg></button>' +
-                    '<button class="sales-icon-button sales-icon-button--danger" type="button" data-delete-order="' + u.escapeHtml(order.id) + '" aria-label="Delete ' + u.escapeHtml(order.id) + '"><svg class="sales-icon"><use href="#sales-icon-trash"></use></svg></button>' +
+                    (order.status === 'Pending' ? '<button class="sales-icon-button sales-icon-button--danger" type="button" data-delete-order="' + u.escapeHtml(order.id) + '" aria-label="Cancel ' + u.escapeHtml(order.id) + '"><svg class="sales-icon"><use href="#sales-icon-trash"></use></svg></button>' : '') +
                 '</div></td>';
             tbody.appendChild(row);
         });
@@ -128,13 +127,14 @@
                     '<div><p class="detail-label">Customer</p><div class="detail-person"><span class="sales-avatar">' + u.escapeHtml(order.initials) + '</span><div><strong>' + u.escapeHtml(order.customer) + '</strong><span>' + u.escapeHtml(order.accountType) + '</span></div></div></div>' +
                     '<div><p class="detail-label">Sales Rep</p><div class="detail-person"><span class="sales-avatar" aria-hidden="true"><svg class="sales-icon"><use href="#sales-icon-user"></use></svg></span><div><strong>' + u.escapeHtml(order.rep) + '</strong><span>Assigned representative</span></div></div></div>' +
                 '</div>' +
+                '<div class="detail-items"><p class="detail-label">Delivery Address</p><p>' + u.escapeHtml(order.deliveryAddress || 'No delivery address recorded') + '</p></div>' +
                 '<div class="detail-items"><p class="detail-label">Order Items</p>' + itemLines +
                     '<div class="detail-total"><strong>Order Total</strong><strong>' + u.money(order.total) + '</strong></div></div>' +
                 '<div class="timeline"><p class="detail-label">Status Timeline</p>' + timelineFor(order) + '</div>' +
             '</div>' +
-            '<div class="detail-actions"><button class="sales-button sales-button--secondary" type="button" data-edit-order>Edit Order</button>' +
+            '<div class="detail-actions">' + (order.status === 'Pending' ? '<button class="sales-button sales-button--secondary" type="button" data-edit-order>Update Address</button>' : '') +
             (action ? '<button class="sales-button sales-button--primary" type="button" data-next-status="' + u.escapeHtml(action.value) + '">' + u.escapeHtml(action.label) + '</button>' : '') +
-            '<button class="sales-button sales-button--danger" type="button" data-delete-order="' + u.escapeHtml(order.id) + '">Delete</button></div>';
+            (order.status === 'Pending' ? '<button class="sales-button sales-button--danger" type="button" data-delete-order="' + u.escapeHtml(order.id) + '">Cancel Order</button>' : '') + '</div>';
         detail.classList.add('is-open');
     }
 
@@ -143,22 +143,18 @@
         renderRows();
     }
 
-    /**
-     * Remove an order from mock data after confirm.
-     * PHP later: DELETE to OrderController@destroy, then refresh this list.
-     */
-    function deleteOrder(orderId) {
+    function cancelOrder(orderId) {
         const order = data.orders.find(function (item) { return item.id === orderId; });
         if (!order) return;
         u.confirmAction(
-            'Delete order?',
-            'Remove ' + order.id + ' for ' + order.customer + '? This cannot be undone.',
-            'Delete'
+            'Cancel pending order?',
+            'Void ' + order.id + ' for ' + order.customer + '? The record will remain in order history.',
+            'Cancel Order'
         ).then(function (ok) {
             if (!ok) return;
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
             const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
-            fetch(baseUrl.replace(/\/$/, '') + '/sales/orders/delete', {
+            fetch(baseUrl.replace(/\/$/, '') + '/sales/orders/cancel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
                 body: JSON.stringify({
@@ -169,19 +165,15 @@
             }).then(function (res) { return res.json(); })
             .then(function (json) {
                 if (json.ok) {
-                    const index = data.orders.findIndex(function (item) { return item.id === orderId; });
-                    if (index !== -1) data.orders.splice(index, 1);
-                    if (state.selectedId === orderId) {
-                        state.selectedId = data.orders[0] ? data.orders[0].id : null;
-                    }
+                    order.status = 'Cancelled';
                     renderStats();
                     renderRows();
-                    u.showToast(order.id + ' deleted.');
+                    u.showToast(order.id + ' cancelled.');
                 } else {
-                    u.showToast(json.message || 'Failed to delete order.');
+                    u.showToast(json.message || 'Failed to cancel order.');
                 }
             }).catch(function () {
-                u.showToast('Network error deleting order.');
+                u.showToast('Network error cancelling order.');
             });
         });
     }
@@ -190,7 +182,7 @@
         const deleteButton = event.target.closest('[data-delete-order]');
         if (deleteButton) {
             event.stopPropagation();
-            deleteOrder(deleteButton.dataset.deleteOrder);
+            cancelOrder(deleteButton.dataset.deleteOrder);
             return;
         }
         const row = event.target.closest('[data-order-id]');
@@ -269,10 +261,36 @@
             });
         }
         if (event.target.closest('[data-edit-order]')) {
-            u.showToast('Connect Edit Order to your OrderController edit action.');
+            const order = data.orders.find(function (item) { return item.id === state.selectedId; });
+            const address = window.prompt('Enter the delivery address for ' + order.id + ':', order.deliveryAddress || '');
+            if (address === null) return;
+            if (!address.trim()) {
+                u.showToast('Delivery address is required.');
+                return;
+            }
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+            fetch(baseUrl.replace(/\/$/, '') + '/sales/orders/address', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({
+                    id: order.databaseId || 0,
+                    order_number: order.id,
+                    delivery_address: address.trim(),
+                    csrf_token: csrfToken
+                })
+            }).then(function (res) { return res.json(); })
+            .then(function (json) {
+                if (!json.ok) throw new Error(json.message || 'Failed to update the delivery address.');
+                order.deliveryAddress = address.trim();
+                renderDetail();
+                u.showToast(order.id + ' delivery address updated.');
+            }).catch(function (error) {
+                u.showToast(error.message || 'Network error updating the delivery address.');
+            });
         }
         const deleteButton = event.target.closest('[data-delete-order]');
-        if (deleteButton) deleteOrder(deleteButton.dataset.deleteOrder);
+        if (deleteButton) cancelOrder(deleteButton.dataset.deleteOrder);
     });
 
     byId('export-orders').addEventListener('click', function () {

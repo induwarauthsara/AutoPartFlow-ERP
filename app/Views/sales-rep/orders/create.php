@@ -1,3 +1,18 @@
+<?php
+$products = $products ?? [];
+$customers = $customers ?? [];
+$customerData = [];
+$categories = [];
+foreach ($customers as $customer) {
+    $customerData[(string) $customer['databaseId']] = $customer;
+}
+foreach ($products as $product) {
+    if (!empty($product['category'])) {
+        $categories[(string) $product['category']] = true;
+    }
+}
+ksort($categories);
+?>
 <main class="sales-main" data-sales-page="create">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="<?= url('sales/orders') ?>">Orders</a>
@@ -19,9 +34,9 @@
             <label for="order-customer">Customer</label>
             <select id="order-customer" name="customer_id">
                 <option value="">Select a customer...</option>
-                <option value="CUS-00001">City Auto Works — Dehiwala</option>
-                <option value="CUS-00002">Highway Garage &amp; Parts — Kadawatha</option>
-                <option value="CUS-00003">Nuwara Motors — Nuwara Eliya</option>
+                <?php foreach ($customers as $code => $customer): ?>
+                    <option value="<?= (int) $customer['databaseId'] ?>"><?= e($customer['name']) ?> — <?= e($customer['detail']) ?></option>
+                <?php endforeach; ?>
             </select>
         </div>
         <div class="customer-card__meta" id="customer-meta">
@@ -44,10 +59,9 @@
                 </div>
                 <select id="category-filter" aria-label="Filter by category">
                     <option value="all">Category: All</option>
-                    <option value="Engine">Engine</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Suspension">Suspension</option>
-                    <option value="Filtration">Filtration</option>
+                    <?php foreach (array_keys($categories) as $category): ?>
+                        <option value="<?= e($category) ?>"><?= e($category) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -76,6 +90,8 @@
                 <div class="summary-totals__grand"><span>Total</span><strong id="summary-total">Rs. 0.00</strong></div>
                 <label for="order-notes">Order notes</label>
                 <textarea id="order-notes" rows="3" placeholder="Delivery instructions or customer notes..."></textarea>
+                <label for="delivery-address">Delivery address</label>
+                <textarea id="delivery-address" rows="3" placeholder="Required when this order needs delivery"></textarea>
                 <button class="sales-button sales-button--primary sales-button--full" type="button" id="submit-order" disabled>
                     Place Order
                     <svg class="sales-icon"><use href="#sales-icon-chevron"></use></svg>
@@ -98,3 +114,9 @@
 
     <div class="sales-toast" id="sales-toast" role="status" aria-live="polite"></div>
 </main>
+<script>
+window.ORDER_MOCK_DATA = {
+    products: <?= json_encode($products, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+    customers: <?= json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>
+};
+</script>

@@ -145,6 +145,7 @@ class SalesWorkspace extends Model
                 'databaseId' => $customer['databaseId'],
                 'name' => $customer['name'],
                 'detail' => ($customer['address'] ?: 'No address') . ' · ' . ($customer['type'] === 'shop' ? 'Trade customer' : 'Walk-in customer'),
+                'address' => $customer['address'],
                 'initials' => $customer['initials'],
                 'type' => $customer['type'],
             ];
@@ -184,6 +185,7 @@ class SalesWorkspace extends Model
                 'status' => ucfirst((string) $row['status']),
                 'total' => (float) $row['total_amount'],
                 'paymentStatus' => ucfirst((string) $row['payment_status']),
+                'deliveryAddress' => $row['delivery_address'] ?? '',
                 'rep' => $row['rep_name'],
                 'items' => $items,
             ];
@@ -261,7 +263,7 @@ class SalesWorkspace extends Model
         $stmt->execute(['id' => $id]);
     }
 
-    public function createOrder(int $customerId, array $items, string $notes, ?int $salesRepId): string
+    public function createOrder(int $customerId, array $items, string $notes, ?int $salesRepId, string $deliveryAddress = ''): string
     {
         if ($customerId < 1 || !$items) {
             throw new \InvalidArgumentException('Select a customer and add at least one product.');
@@ -269,14 +271,15 @@ class SalesWorkspace extends Model
         $this->db->beginTransaction();
         try {
             $number = $this->nextNumber('order');
-            $validated = $this->validateItems($items, true);
+            $validated = $this->validateItems($items);
             $subtotal = array_sum(array_column($validated, 'line_total'));
             $order = $this->db->prepare(
-                "INSERT INTO orders (order_number, customer_id, sales_rep_id, order_source, subtotal, total_amount, notes)
-                 VALUES (:number, :customer_id, :sales_rep_id, 'rep_field', :subtotal, :total, :notes)"
+                "INSERT INTO orders (order_number, customer_id, sales_rep_id, order_source, subtotal, total_amount, delivery_address, notes)
+                 VALUES (:number, :customer_id, :sales_rep_id, 'rep_field', :subtotal, :total, :delivery_address, :notes)"
             );
             $order->execute(['number' => $number, 'customer_id' => $customerId, 'sales_rep_id' => $salesRepId,
-                'subtotal' => $subtotal, 'total' => $subtotal, 'notes' => $notes ?: null]);
+                'subtotal' => $subtotal, 'total' => $subtotal, 'delivery_address' => $deliveryAddress ?: null,
+                'notes' => $notes ?: null]);
             $orderId = (int) $this->db->lastInsertId();
             $line = $this->db->prepare(
                 'INSERT INTO order_items (order_id, product_id, quantity, unit_price, line_total)
@@ -303,7 +306,7 @@ class SalesWorkspace extends Model
 
     public function updateOrderStatus(int $id, string $status): void
     {
-        $allowed = ['processing', 'delivered', 'cancelled'];
+        $allowed = ['processing', 'delivered'];
         if (!in_array($status, $allowed, true)) {
             throw new \InvalidArgumentException('Invalid order status.');
         }
@@ -315,18 +318,29 @@ class SalesWorkspace extends Model
             if ($current === false) {
                 throw new \RuntimeException('Order not found.');
             }
-            $valid = ($current === 'pending' && in_array($status, ['processing', 'cancelled'], true)) ||
-                     ($current === 'processing' && in_array($status, ['delivered', 'cancelled'], true));
+            $valid = ($current === 'pending' && $status === 'processing') ||
+                     ($current === 'processing' && $status === 'delivered');
             if (!$valid) {
                 throw new \RuntimeException('That status change is not allowed.');
             }
             if ($status === 'delivered') {
                 $this->consumeOrderStock($id);
-            } elseif ($status === 'cancelled') {
-                $this->releaseOrderStock($id);
             }
             $stmt = $this->db->prepare('UPDATE orders SET status=:status WHERE id=:id');
             $stmt->execute(['status' => $status, 'id' => $id]);
+            if ($status === 'processing') {
+                $delivery = $this->db->prepare(
+                    "UPDATE deliveries SET status='in_transit'
+                     WHERE order_id=:id AND status='pending'"
+                );
+                $delivery->execute(['id' => $id]);
+            } elseif ($status === 'delivered') {
+                $delivery = $this->db->prepare(
+                    "UPDATE deliveries SET status='delivered', delivered_at=COALESCE(delivered_at, NOW())
+                     WHERE order_id=:id AND status IN ('pending','in_transit')"
+                );
+                $delivery->execute(['id' => $id]);
+            }
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollBack();
@@ -334,7 +348,40 @@ class SalesWorkspace extends Model
         }
     }
 
-    public function deleteOrder(int $id): void
+    public function updateOrderAddress(int $id, string $address): void
+    {
+        if ($id < 1) {
+            throw new \RuntimeException('Order not found.');
+        }
+        if ($address === '') {
+            throw new \InvalidArgumentException('Delivery address is required.');
+        }
+        $this->db->beginTransaction();
+        try {
+            $check = $this->db->prepare('SELECT status FROM orders WHERE id=:id AND deleted_at IS NULL FOR UPDATE');
+            $check->execute(['id' => $id]);
+            $status = $check->fetchColumn();
+            if ($status === false) {
+                throw new \RuntimeException('Order not found.');
+            }
+            if ($status !== 'pending') {
+                throw new \RuntimeException('Only pending orders can have their delivery address updated.');
+            }
+            $stmt = $this->db->prepare('UPDATE orders SET delivery_address=:address WHERE id=:id');
+            $stmt->execute(['address' => $address, 'id' => $id]);
+            $delivery = $this->db->prepare(
+                "UPDATE deliveries SET delivery_address=:address
+                 WHERE order_id=:id AND status='pending'"
+            );
+            $delivery->execute(['address' => $address, 'id' => $id]);
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function cancelOrder(int $id): void
     {
         $this->db->beginTransaction();
         try {
@@ -344,14 +391,17 @@ class SalesWorkspace extends Model
             if ($status === false) {
                 throw new \RuntimeException('Order not found.');
             }
-            if ($status === 'delivered') {
-                throw new \RuntimeException('Delivered orders are retained as sales history and cannot be deleted.');
+            if ($status !== 'pending') {
+                throw new \RuntimeException('Only pending orders can be cancelled.');
             }
-            if ($status !== 'cancelled') {
-                $this->releaseOrderStock($id);
-            }
-            $delete = $this->db->prepare("UPDATE orders SET status='cancelled', deleted_at=NOW() WHERE id=:id");
-            $delete->execute(['id' => $id]);
+            $this->releaseOrderStock($id);
+            $cancel = $this->db->prepare("UPDATE orders SET status='cancelled' WHERE id=:id");
+            $cancel->execute(['id' => $id]);
+            $delivery = $this->db->prepare(
+                "UPDATE deliveries SET status='returned'
+                 WHERE order_id=:id AND status='pending'"
+            );
+            $delivery->execute(['id' => $id]);
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollBack();
@@ -375,7 +425,7 @@ class SalesWorkspace extends Model
                     $customerId = (int) $this->db->lastInsertId();
                 }
             }
-            $validated = $this->validateItems($items, false);
+            $validated = $this->validateItems($items);
             $subtotal = array_sum(array_column($validated, 'line_total'));
             $discount = max(0, min($discount, $subtotal));
             $total = $subtotal - $discount;
@@ -446,7 +496,7 @@ class SalesWorkspace extends Model
         ];
     }
 
-    private function validateItems(array $items, bool $includeReserved): array
+    private function validateItems(array $items): array
     {
         $product = $this->db->prepare(
             'SELECT p.id product_id, p.selling_price unit_price, p.cost_price,
@@ -454,19 +504,23 @@ class SalesWorkspace extends Model
              FROM products p JOIN inventory i ON i.product_id=p.id
              WHERE p.id=:id AND p.deleted_at IS NULL AND p.is_active=1 ORDER BY i.id LIMIT 1 FOR UPDATE'
         );
-        $validated = [];
+        $quantities = [];
         foreach ($items as $raw) {
             $id = (int) ($raw['id'] ?? $raw['product_id'] ?? 0);
             $quantity = (int) ($raw['quantity'] ?? 0);
             if ($id < 1 || $quantity < 1) {
                 throw new \InvalidArgumentException('Every line item needs a valid product and quantity.');
             }
+            $quantities[$id] = ($quantities[$id] ?? 0) + $quantity;
+        }
+        $validated = [];
+        foreach ($quantities as $id => $quantity) {
             $product->execute(['id' => $id]);
             $row = $product->fetch();
             if (!$row) {
                 throw new \RuntimeException('One of the selected products is unavailable.');
             }
-            $available = (int) $row['quantity_on_hand'] - ($includeReserved ? (int) $row['quantity_reserved'] : 0);
+            $available = (int) $row['quantity_on_hand'] - (int) $row['quantity_reserved'];
             if ($quantity > $available) {
                 throw new \RuntimeException('Requested quantity exceeds available stock.');
             }

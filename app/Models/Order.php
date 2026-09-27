@@ -357,6 +357,15 @@ class Order extends Model
                     'unit_price' => $orderItem['unit_price'],
                     'line_total' => $orderItem['line_total'],
                 ]);
+                $reserveStmt = $this->db->prepare(
+                    'UPDATE inventory
+                     SET quantity_reserved = quantity_reserved + :quantity
+                     WHERE product_id = :product_id'
+                );
+                $reserveStmt->execute([
+                    'quantity' => $orderItem['quantity'],
+                    'product_id' => $orderItem['product_id'],
+                ]);
             }
 
             // Create the delivery record as part of the same transaction so every
@@ -533,25 +542,30 @@ class Order extends Model
             return ['success' => false, 'message' => 'Delivery address is required.'];
         }
 
-        $stmt = $this->db->prepare(
-            "UPDATE orders
-             SET delivery_address = :address
-             WHERE id = :id
-               AND customer_id = :customer_id
-               AND status = 'pending'
-               AND deleted_at IS NULL"
-        );
-        $stmt->execute([
-            'address' => $address,
-            'id' => $orderId,
-            'customer_id' => $customerId,
-        ]);
-
-        if ($stmt->rowCount() === 0) {
-            return [
-                'success' => false,
-                'message' => 'Only pending orders can be updated.'
-            ];
+        try {
+            $this->db->beginTransaction();
+            $check = $this->db->prepare(
+                'SELECT status FROM orders
+                 WHERE id=:id AND customer_id=:customer_id AND deleted_at IS NULL FOR UPDATE'
+            );
+            $check->execute(['id' => $orderId, 'customer_id' => $customerId]);
+            if ($check->fetchColumn() !== 'pending') {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Only pending orders can be updated.'];
+            }
+            $stmt = $this->db->prepare('UPDATE orders SET delivery_address=:address WHERE id=:id');
+            $stmt->execute(['address' => $address, 'id' => $orderId]);
+            $delivery = $this->db->prepare(
+                "UPDATE deliveries SET delivery_address=:address
+                 WHERE order_id=:id AND status='pending'"
+            );
+            $delivery->execute(['address' => $address, 'id' => $orderId]);
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return ['success' => false, 'message' => 'The delivery address could not be updated.'];
         }
 
         return ['success' => true, 'message' => 'Delivery address updated successfully.'];
@@ -563,33 +577,38 @@ class Order extends Model
      */
     public function cancelOrder(int $orderId, int $customerId): array
     {
-        $stmt = $this->db->prepare(
-            "UPDATE orders
-             SET status = 'cancelled'
-             WHERE id = :id
-               AND customer_id = :customer_id
-               AND status IN ('pending', 'confirmed')
-               AND deleted_at IS NULL"
-        );
-        $stmt->execute([
-            'id' => $orderId,
-            'customer_id' => $customerId,
-        ]);
+        try {
+            $this->db->beginTransaction();
+            $check = $this->db->prepare(
+                'SELECT status FROM orders
+                 WHERE id=:id AND customer_id=:customer_id AND deleted_at IS NULL FOR UPDATE'
+            );
+            $check->execute(['id' => $orderId, 'customer_id' => $customerId]);
+            if ($check->fetchColumn() !== 'pending') {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Only pending orders can be cancelled.'];
+            }
 
-        if ($stmt->rowCount() === 0) {
-            return [
-                'success' => false,
-                'message' => 'This order can no longer be cancelled.'
-            ];
+            $release = $this->db->prepare(
+                'UPDATE inventory i JOIN order_items oi ON oi.product_id=i.product_id
+                 SET i.quantity_reserved=GREATEST(0, i.quantity_reserved-oi.quantity)
+                 WHERE oi.order_id=:order_id'
+            );
+            $release->execute(['order_id' => $orderId]);
+            $stmt = $this->db->prepare("UPDATE orders SET status='cancelled' WHERE id=:id");
+            $stmt->execute(['id' => $orderId]);
+            $deliveryStmt = $this->db->prepare(
+                "UPDATE deliveries SET status='returned', updated_at=CURRENT_TIMESTAMP
+                 WHERE order_id=:order_id AND status='pending'"
+            );
+            $deliveryStmt->execute(['order_id' => $orderId]);
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return ['success' => false, 'message' => 'The order could not be cancelled.'];
         }
-
-        $deliveryStmt = $this->db->prepare(
-            "UPDATE deliveries
-             SET status = 'returned', updated_at = CURRENT_TIMESTAMP
-             WHERE order_id = :order_id
-               AND status = 'pending'"
-        );
-        $deliveryStmt->execute(['order_id' => $orderId]);
 
         return ['success' => true, 'message' => 'Order cancelled successfully.'];
     }

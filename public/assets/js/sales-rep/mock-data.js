@@ -3,7 +3,7 @@
  * Replace with PHP: pass JSON from SalesController or fetch your APIs.
  * Totals are subtotal minus discount.
  */
-window.SALES_REP_MOCK_DATA = {
+window.SALES_REP_MOCK_DATA = window.SALES_REP_MOCK_DATA || {
     weeklySales: {
         week: [
             { label: 'Mon', value: 285000 },
@@ -89,7 +89,7 @@ window.SALES_REP_MOCK_DATA = {
     ]
 };
 
-window.ORDER_MOCK_DATA = {
+window.ORDER_MOCK_DATA = window.ORDER_MOCK_DATA || {
     orders: [
         { id: 'ORD-2026-1048', customer: 'City Auto Works', initials: 'CA', accountType: 'Trade Account', date: '2026-08-05', time: '10:42 AM', status: 'Processing', total: 425000, rep: 'Sales Rep', items: [{ name: 'High-Flow Fuel Injector', sku: 'INJ-882-X', quantity: 8, total: 199200 }, { name: 'Brake Rotor FX-9', sku: 'BRK-FX9', quantity: 6, total: 225800 }] },
         { id: 'ORD-2026-1047', customer: 'Highway Garage & Parts', initials: 'HG', accountType: 'Trade Account', date: '2026-08-05', time: '9:18 AM', status: 'Pending', total: 85050, rep: 'Sales Rep', items: [{ name: 'Timing Belt Tensioner', sku: 'BLT-204-T', quantity: 3, total: 85050 }] },
@@ -112,7 +112,7 @@ window.ORDER_MOCK_DATA = {
     }
 };
 
-window.MOCK_PRODUCTS = [
+window.MOCK_PRODUCTS = window.MOCK_PRODUCTS || [
     { id: 1, code: 'PRD-00001', name: 'Front Brake Pad Set - Corolla', shortName: 'Brake Rotor FX-9', price: 4599.00, stock: 85, reorderLevel: 15, icon: 'icon-brake' },
     { id: 2, code: 'PRD-00002', name: 'Oil Filter - Universal', shortName: 'SynOil Filter V8', price: 750.00, stock: 320, reorderLevel: 30, icon: 'icon-filter' },
     { id: 3, code: 'PRD-00003', name: 'Spark Plug Iridium (Set of 4)', shortName: 'Spark Plug Set (4)', price: 4200.00, stock: 48, reorderLevel: 20, icon: 'icon-spark' },
