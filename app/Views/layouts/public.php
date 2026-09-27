@@ -94,8 +94,10 @@ $isShopCustomer = (string) ($_SESSION['role_slug'] ?? '') === 'shop_customer';
     </div>
 </footer>
 
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script src="<?= asset('js/public/catalog.js') ?>"></script>
 <script src="<?= asset('js/public/cart.js') ?>"></script>
 <script src="<?= asset('js/public/finder.js') ?>"></script>
 </body>
 </html>
+

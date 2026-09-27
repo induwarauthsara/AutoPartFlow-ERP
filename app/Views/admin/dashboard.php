@@ -99,8 +99,10 @@ td{padding:13px 12px;border-bottom:1px solid var(--slate-100);font-size:13.5px;}
     </div>
 </div>
 </body>
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script src="<?= asset('js/admin-charts.js') ?>"></script>
 <script>
+
 drawLineChart('salesChart', <?= json_encode($labels) ?>, <?= json_encode($values) ?>);
 window.addEventListener('resize', () => drawLineChart('salesChart', <?= json_encode($labels) ?>, <?= json_encode($values) ?>));
 </script>

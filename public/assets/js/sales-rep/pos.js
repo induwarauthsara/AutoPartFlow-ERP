@@ -258,13 +258,26 @@
 
     document.getElementById('discount-form').addEventListener('submit', function (e) {
         e.preventDefault();
+        const discountInput = document.getElementById('discount-value');
+        if (window.AppValidation && !window.AppValidation.validateForm(this)) {
+            return;
+        }
+        const val = parseFloat(discountInput.value) || 0;
+        const type = document.getElementById('discount-type').value;
+        if (type === 'percent' && val > 100) {
+            if (window.AppValidation) {
+                window.AppValidation.showError(discountInput, 'Percentage discount cannot exceed 100%.');
+            }
+            return;
+        }
         state.discount = {
-            type: document.getElementById('discount-type').value,
-            value: parseFloat(document.getElementById('discount-value').value) || 0
+            type: type,
+            value: val
         };
         document.getElementById('discount-modal').close();
         renderCart();
     });
+
 
     document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
         btn.addEventListener('click', function () { btn.closest('dialog').close(); });

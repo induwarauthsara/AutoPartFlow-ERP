@@ -1,12 +1,11 @@
 (function () {
     'use strict';
 
-    const data = window.INVENTORY_DATA || window.INVENTORY_MOCK_DATA || { items: [], locations: [], incomingPurchases: 0 };
+    const data = window.INVENTORY_DATA || window.INVENTORY_MOCK_DATA || { items: [], incomingPurchases: 0 };
     const page = document.querySelector('[data-sales-page="inventory"]');
     if (!page) return;
 
     const state = {
-        location: 'All Locations',
         query: '',
         statusFilter: 'all'
     };
@@ -40,8 +39,9 @@
 
     function deriveStatus(item) {
         if (item.status === 'restocking') return 'restocking';
-        if (item.qty <= Math.max(1, Math.floor(item.reorderLevel / 2))) return 'critical';
-        if (item.qty <= item.reorderLevel) return 'low';
+        const reorder = Number(item.reorderLevel) || 10;
+        if (item.qty <= Math.max(1, Math.floor(reorder / 2))) return 'critical';
+        if (item.qty <= reorder) return 'low';
         return 'optimal';
     }
 
@@ -61,59 +61,72 @@
         const query = state.query.trim().toLowerCase();
         return data.items.filter(function (item) {
             const status = deriveStatus(item);
-            const matchesLocation = state.location === 'All Locations' || item.location === state.location;
-            const matchesStatus = state.statusFilter === 'all' || status === state.statusFilter;
+            const matchesStatus = state.statusFilter === 'all' ||
+                (state.statusFilter === 'low' && (status === 'low' || status === 'critical')) ||
+                status === state.statusFilter;
             const matchesQuery = !query ||
                 item.partNo.toLowerCase().indexOf(query) !== -1 ||
                 item.name.toLowerCase().indexOf(query) !== -1 ||
-                item.bin.toLowerCase().indexOf(query) !== -1;
-            return matchesLocation && matchesStatus && matchesQuery;
+                (item.category && item.category.toLowerCase().indexOf(query) !== -1);
+            return matchesStatus && matchesQuery;
         });
     }
 
     function renderKpis() {
         const stockValue = data.items.reduce(function (sum, item) {
-            return sum + (item.qty * item.unitCost);
+            return sum + (item.qty * (item.unitCost || 0));
         }, 0);
         const lowStock = data.items.filter(function (item) {
             const status = deriveStatus(item);
             return status === 'low' || status === 'critical';
         }).length;
 
-        byId('inventory-stock-value').textContent = money(stockValue, true);
-        byId('inventory-low-stock').textContent = String(lowStock);
-        byId('inventory-incoming').textContent = String(data.incomingPurchases);
-    }
+        const valEl = byId('inventory-stock-value');
+        if (valEl) valEl.textContent = money(stockValue, true);
+        const lowEl = byId('inventory-low-stock');
+        if (lowEl) lowEl.textContent = String(lowStock);
+        const incEl = byId('inventory-incoming');
+        if (incEl) incEl.textContent = String(data.incomingPurchases ?? 0);
 
-    function renderLocations() {
-        const host = byId('inventory-locations');
-        host.innerHTML = data.locations.map(function (location) {
-            const active = location === state.location ? ' inventory-chip--active' : '';
-            return '<button class="inventory-chip' + active + '" type="button" role="tab" data-location="' +
-                escapeHtml(location) + '">' + escapeHtml(location) + '</button>';
-        }).join('');
+        const countEl = byId('inventory-item-count');
+        if (countEl) countEl.textContent = data.items.length + ' items registered';
     }
 
     function renderTable() {
         const rows = filteredItems();
         const body = byId('inventory-table-body');
         const empty = byId('inventory-empty');
+        if (!body) return;
 
         body.innerHTML = rows.map(function (item, index) {
             const status = deriveStatus(item);
-            const qtyClass = (status === 'low' || status === 'critical') ? ' inventory-qty--alert' : '';
+            const isAlert = (status === 'low' || status === 'critical');
+            const qtyClass = isAlert ? ' inventory-qty--alert' : '';
             const zebra = index % 2 === 1 ? ' inventory-row--alt' : '';
+            const threshold = item.reorderLevel ?? 10;
             return '<tr class="inventory-row' + zebra + '" data-product-id="' + item.id + '">' +
                 '<td class="inventory-part">' + escapeHtml(item.partNo) + '</td>' +
-                '<td>' + escapeHtml(item.name) + '</td>' +
-                '<td class="inventory-muted">' + escapeHtml(item.bin ? item.location + ' - ' + item.bin : item.location) + '</td>' +
+                '<td><div style="font-weight:600;">' + escapeHtml(item.name) + '</div><div style="font-size:11px;color:var(--sales-on-surface-variant,#64748b);">' + escapeHtml(item.category || 'Auto Parts') + '</div></td>' +
                 '<td class="inventory-table__qty' + qtyClass + '">' + escapeHtml(item.qty.toLocaleString('en-LK')) + '</td>' +
+                '<td class="inventory-table__threshold">' +
+                    '<div style="display:inline-flex;align-items:center;gap:6px;">' +
+                        '<span class="threshold-value" style="font-weight:600;font-variant-numeric:tabular-nums;">' + escapeHtml(threshold) + ' units</span>' +
+                        '<button class="sales-icon-button threshold-edit-btn" type="button" data-edit-threshold="' + item.id + '" title="Edit low stock threshold for ' + escapeHtml(item.name) + '" aria-label="Edit low stock threshold" style="width:26px;height:26px;padding:4px;border-radius:6px;color:var(--sales-primary,#4f5bd5);">' +
+                            '<svg class="sales-icon" viewBox="0 0 24 24" style="width:13px;height:13px;" aria-hidden="true">' +
+                                '<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"></path>' +
+                            '</svg>' +
+                        '</button>' +
+                    '</div>' +
+                '</td>' +
                 '<td><span class="inventory-status inventory-status--' + status + '">' + escapeHtml(statusLabel(status)) + '</span></td>' +
                 '<td class="inventory-muted">' + escapeHtml(item.lastMovement) + '</td>' +
                 '<td class="inventory-table__action">' +
                     '<button class="sales-button sales-button--primary sales-button--compact" type="button" data-add-stock="' + item.id + '">' +
                         '<svg class="sales-icon"><use href="#sales-icon-plus"></use></svg>' +
                         'Add Stock' +
+                    '</button>' +
+                    '<button class="sales-button sales-button--secondary sales-button--compact" type="button" data-edit-threshold="' + item.id + '" title="Manage Alert Threshold">' +
+                        'Set Alert' +
                     '</button>' +
                     '<button class="sales-icon-button sales-icon-button--danger" type="button" data-delete-stock="' + item.id + '" aria-label="Delete ' + escapeHtml(item.name) + '">' +
                         '<svg class="sales-icon" viewBox="0 0 24 24" aria-hidden="true">' +
@@ -124,7 +137,9 @@
                 '</tr>';
         }).join('');
 
-        empty.classList.toggle('hidden', rows.length > 0);
+        if (empty) {
+            empty.classList.toggle('hidden', rows.length > 0);
+        }
     }
 
     function fillProductSelect(selectedId) {
@@ -142,20 +157,19 @@
 
     function openStockDialog(productId) {
         const dialog = byId('stock-in-dialog');
+        if (!dialog) return;
         const item = data.items.find(function (row) { return String(row.id) === String(productId); });
         byId('stock-in-dialog-title').textContent = item ? 'Add Stock — ' + item.name : 'Add Stock';
         byId('stock-in-product-id').value = item ? String(item.id) : '';
         byId('stock-in-qty').value = '';
         byId('stock-in-notes').value = '';
         fillProductSelect(item ? item.id : '');
-        if (item) {
-            byId('stock-in-location').value = item.location;
-        }
         dialog.showModal();
     }
 
     function closeStockDialog() {
-        byId('stock-in-dialog').close();
+        const dialog = byId('stock-in-dialog');
+        if (dialog) dialog.close();
     }
 
     function openItemDialog() {
@@ -171,12 +185,152 @@
         if (dialog) dialog.close();
     }
 
+    function updateThresholdPreview(currentQty, threshold) {
+        const preview = byId('threshold-status-preview');
+        if (!preview) return;
+        if (isNaN(threshold) || threshold < 0) {
+            preview.style.display = 'none';
+            return;
+        }
+        preview.style.display = 'block';
+        const criticalThreshold = Math.max(1, Math.floor(threshold / 2));
+        if (currentQty <= criticalThreshold) {
+            preview.style.background = '#fee2e2';
+            preview.style.color = '#dc2626';
+            preview.style.border = '1px solid #fecaca';
+            preview.innerHTML = 'Preview: Current stock (' + currentQty + ') is &le; ' + criticalThreshold + ' &rarr; triggers <strong>CRITICAL STOCK ALERT</strong>.';
+        } else if (currentQty <= threshold) {
+            preview.style.background = '#fef3c7';
+            preview.style.color = '#b45309';
+            preview.style.border = '1px solid #fde68a';
+            preview.innerHTML = 'Preview: Current stock (' + currentQty + ') is &le; ' + threshold + ' &rarr; triggers <strong>LOW STOCK ALERT</strong>.';
+        } else {
+            preview.style.background = '#e0f2fe';
+            preview.style.color = '#0369a1';
+            preview.style.border = '1px solid #bae6fd';
+            preview.innerHTML = 'Preview: Current stock (' + currentQty + ') is above threshold (' + threshold + ') &rarr; status is <strong>OPTIMAL</strong>.';
+        }
+    }
+
+    function openThresholdDialog(productId) {
+        const dialog = byId('threshold-dialog');
+        if (!dialog) return;
+        const item = data.items.find(function (row) { return String(row.id) === String(productId); });
+        if (!item) return;
+
+        byId('threshold-product-id').value = String(item.id);
+        byId('threshold-product-name').textContent = item.name;
+        byId('threshold-product-code').textContent = item.partNo;
+        byId('threshold-current-stock').textContent = String(item.qty.toLocaleString('en-LK'));
+
+        const input = byId('threshold-level');
+        input.value = item.reorderLevel ?? 10;
+        updateThresholdPreview(item.qty, Number(input.value));
+
+        dialog.showModal();
+        input.focus();
+        input.select();
+    }
+
+    function closeThresholdDialog() {
+        const dialog = byId('threshold-dialog');
+        if (dialog) dialog.close();
+    }
+
+    const thresholdInput = byId('threshold-level');
+    if (thresholdInput) {
+        thresholdInput.addEventListener('input', function () {
+            const currentStock = Number(byId('threshold-current-stock').textContent.replace(/,/g, '')) || 0;
+            updateThresholdPreview(currentStock, Number(this.value));
+        });
+    }
+
+    async function recordThresholdUpdate() {
+        const productId = byId('threshold-product-id').value;
+        const thresholdVal = parseInt(byId('threshold-level').value, 10);
+        const submitBtn = byId('threshold-submit');
+
+        if (!productId) {
+            showToast('Invalid product selected.');
+            return false;
+        }
+        if (isNaN(thresholdVal) || thresholdVal < 0) {
+            showToast('Please enter a valid threshold (0 or greater).');
+            byId('threshold-level').focus();
+            return false;
+        }
+
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+
+        try {
+            const baseUrl = (window.APP_CONFIG && window.APP_CONFIG.baseUrl) ? window.APP_CONFIG.baseUrl : '';
+            const csrfToken = (window.APP_CONFIG && window.APP_CONFIG.csrfToken) || data.csrfToken || '';
+
+            const response = await fetch(baseUrl + '/inventory/update-threshold', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken,
+                    product_id: Number(productId),
+                    reorder_level: thresholdVal
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.ok) {
+                showToast(result.message || 'Failed to update alert threshold.');
+                return false;
+            }
+
+            const item = data.items.find(function (row) { return String(row.id) === String(productId); });
+            if (item) {
+                item.reorderLevel = thresholdVal;
+                item.status = deriveStatus(item);
+                if (result.item) {
+                    item.status = result.item.status;
+                }
+            }
+
+            if (result.summary) {
+                if (typeof result.summary.stockValue !== 'undefined') {
+                    byId('inventory-stock-value').textContent = money(result.summary.stockValue, true);
+                }
+                if (typeof result.summary.lowStock !== 'undefined') {
+                    byId('inventory-low-stock').textContent = String(result.summary.lowStock);
+                }
+            } else {
+                renderKpis();
+            }
+
+            renderTable();
+            closeThresholdDialog();
+            showToast(result.message || 'Low stock threshold updated successfully.');
+            return true;
+        } catch (err) {
+            showToast('Network error while updating alert threshold.');
+            return false;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+    }
+
     async function recordStockIn() {
         const productId = byId('stock-in-product').value;
         const qty = Number(byId('stock-in-qty').value);
-        const location = byId('stock-in-location').value;
         const notes = byId('stock-in-notes').value.trim();
         const submitBtn = byId('stock-in-submit') || byId('stock-in-form').querySelector('button[type="submit"]');
+
+        if (window.AppValidation && !window.AppValidation.validateForm(byId('stock-in-form'))) {
+            return false;
+        }
 
         if (!productId || productId === '__new__') {
             showToast('Please select a product.');
@@ -207,7 +361,6 @@
                     csrf_token: csrfToken,
                     product_id: Number(productId),
                     quantity: qty,
-                    location: location,
                     notes: notes
                 })
             });
@@ -222,7 +375,7 @@
             const item = data.items.find(function (row) { return String(row.id) === String(productId); });
             if (item && result.item) {
                 item.qty = result.item.qty;
-                item.location = result.item.location;
+                item.reorderLevel = result.item.reorderLevel;
                 item.status = result.item.status;
                 item.lastMovement = result.item.lastMovement;
             }
@@ -262,9 +415,12 @@
         const sellingPrice = parseFloat(byId('new-item-selling').value) || 0;
         const qty = parseInt(byId('new-item-qty').value, 10) || 0;
         const reorderLevel = parseInt(byId('new-item-reorder').value, 10) || 10;
-        const location = byId('new-item-location') ? byId('new-item-location').value : 'Main Warehouse';
         const notes = byId('new-item-notes').value.trim();
         const submitBtn = byId('new-item-submit');
+
+        if (window.AppValidation && !window.AppValidation.validateForm(byId('new-item-form'))) {
+            return false;
+        }
 
         if (!code) {
             showToast('Please enter a part number / SKU.');
@@ -306,7 +462,6 @@
                     selling_price: sellingPrice,
                     quantity_on_hand: qty,
                     reorder_level: reorderLevel,
-                    location: location,
                     notes: notes
                 })
             });
@@ -390,14 +545,6 @@
         }
     }
 
-    byId('inventory-locations').addEventListener('click', function (event) {
-        const button = event.target.closest('[data-location]');
-        if (!button) return;
-        state.location = button.dataset.location;
-        renderLocations();
-        renderTable();
-    });
-
     function onSearch(event) {
         state.query = event.target.value;
         renderTable();
@@ -428,8 +575,8 @@
             filterOptions.classList.add('hidden');
             filterButton.setAttribute('aria-expanded', 'false');
             showToast(option.textContent.trim() === 'All Stock'
-                ? 'Showing all statuses'
-                : 'Filtered to ' + option.textContent.trim().toLowerCase());
+                ? 'Showing all stock'
+                : 'Filtered to ' + option.textContent.trim());
             renderTable();
         });
 
@@ -438,6 +585,25 @@
                 filterOptions.classList.add('hidden');
                 filterButton.setAttribute('aria-expanded', 'false');
             }
+        });
+    }
+
+    const lowStockKpi = byId('kpi-low-stock');
+    if (lowStockKpi) {
+        lowStockKpi.addEventListener('click', function () {
+            if (state.statusFilter === 'low') {
+                state.statusFilter = 'all';
+                showToast('Showing all stock');
+            } else {
+                state.statusFilter = 'low';
+                showToast('Filtered to items with Low Stock Alerts');
+            }
+            if (filterOptions) {
+                filterOptions.querySelectorAll('[data-status-filter]').forEach(function (opt) {
+                    opt.setAttribute('aria-checked', String(opt.dataset.statusFilter === state.statusFilter));
+                });
+            }
+            renderTable();
         });
     }
 
@@ -476,6 +642,12 @@
             return;
         }
 
+        const editThresholdBtn = event.target.closest('[data-edit-threshold]');
+        if (editThresholdBtn) {
+            openThresholdDialog(editThresholdBtn.dataset.editThreshold);
+            return;
+        }
+
         const deleteButton = event.target.closest('[data-delete-stock]');
         if (deleteButton) {
             deleteItem(deleteButton.dataset.deleteStock, deleteButton);
@@ -491,6 +663,10 @@
         button.addEventListener('click', closeItemDialog);
     });
 
+    document.querySelectorAll('[data-close-threshold-dialog]').forEach(function (button) {
+        button.addEventListener('click', closeThresholdDialog);
+    });
+
     byId('stock-in-form').addEventListener('submit', function (event) {
         event.preventDefault();
         recordStockIn();
@@ -504,7 +680,14 @@
         });
     }
 
-    renderLocations();
+    const thresholdForm = byId('threshold-form');
+    if (thresholdForm) {
+        thresholdForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            recordThresholdUpdate();
+        });
+    }
+
     renderKpis();
     renderTable();
     fillProductSelect('');

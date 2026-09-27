@@ -295,7 +295,9 @@ dialog::backdrop{background:rgba(15,23,42,.45);}
     </form>
 </dialog>
 
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script>
+
 const EMPLOYEES  = <?= json_encode($employees, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 const STORE_URL  = <?= json_encode(url('admin/employees/store')) ?>;
 const UPDATE_URL = <?= json_encode(url('admin/employees/update')) ?>;

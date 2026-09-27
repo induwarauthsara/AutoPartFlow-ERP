@@ -115,6 +115,8 @@ class App
         $this->router->get('/admin/inventory/movements', 'InventoryController@movements');
         $this->router->post('/inventory/add-item', 'InventoryController@addItem');
         $this->router->post('/admin/inventory/add-item', 'InventoryController@addItem');
+        $this->router->post('/inventory/update-threshold', 'InventoryController@updateThreshold');
+        $this->router->post('/admin/inventory/update-threshold', 'InventoryController@updateThreshold');
         $this->router->post('/inventory/delete-item', 'InventoryController@deleteItem');
         $this->router->post('/admin/inventory/delete-item', 'InventoryController@deleteItem');
 

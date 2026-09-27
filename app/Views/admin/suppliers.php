@@ -139,6 +139,7 @@ body > .sidebar { top: 0; left: 0; }
     </section>
 </div>
 <div class="supplier-toast" id="supplier-toast" role="status" aria-live="polite"></div>
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script>
 (function () {
     const modal = document.getElementById('supplier-modal');
@@ -153,7 +154,11 @@ body > .sidebar { top: 0; left: 0; }
     search.addEventListener('input', () => { const query = search.value.trim().toLowerCase(); let visible = 0; document.querySelectorAll('[data-supplier-row]').forEach((row) => { const matches = !query || row.dataset.search.includes(query); row.hidden = !matches; if (matches) visible++; }); document.getElementById('supplier-empty').hidden = visible > 0; });
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (window.AppValidation && !window.AppValidation.validateForm(form)) {
+            return;
+        }
         const submit = document.getElementById('supplier-submit');
+
         const original = submit.textContent;
         submit.disabled = true;
         submit.textContent = 'Saving...';

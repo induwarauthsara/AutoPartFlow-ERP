@@ -57,8 +57,9 @@ $flash = $flash ?? null;
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="phone">Phone Number</label>
-                        <input class="form-input" id="phone" name="phone" value="<?= e($phone) ?>" placeholder="0712345678" required>
+                        <input class="form-input" id="phone" name="phone" type="tel" value="<?= e($phone) ?>" placeholder="0712345678" required>
                     </div>
+
                     <button class="btn-primary orders-lookup-btn" type="submit">
                         <span class="material-symbols-outlined">search</span>
                         Find Order

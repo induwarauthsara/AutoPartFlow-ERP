@@ -191,7 +191,6 @@ CREATE TABLE shops (
     credit_balance     DECIMAL(14,2) NOT NULL DEFAULT 0.00 COMMENT 'Outstanding credit owed',
     payment_terms_days TINYINT UNSIGNED NOT NULL DEFAULT 30,
     assigned_rep_id    INT UNSIGNED DEFAULT NULL COMMENT 'Assigned sales representative',
-    tax_number         VARCHAR(50)  DEFAULT NULL,
     deleted_at         DATETIME     DEFAULT NULL,
     created_at         TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at         TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -262,7 +261,6 @@ CREATE TABLE products (
     cost_price      DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     selling_price   DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     wholesale_price DECIMAL(12,2) DEFAULT NULL,
-    tax_rate        DECIMAL(5,2)  NOT NULL DEFAULT 0.00 COMMENT 'VAT/GST percentage',
     warranty_months TINYINT UNSIGNED DEFAULT 0,
     image_path      VARCHAR(255) DEFAULT NULL,
     specifications  JSON         DEFAULT NULL COMMENT 'Free-form specs: dimensions, material, etc.',
@@ -406,7 +404,6 @@ CREATE TABLE purchase_orders (
     expected_date   DATE         DEFAULT NULL,
     status          ENUM('draft','pending','partial','received','cancelled') NOT NULL DEFAULT 'draft',
     subtotal        DECIMAL(14,2) NOT NULL DEFAULT 0.00,
-    tax_amount      DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     discount_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     total_amount    DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     amount_paid     DECIMAL(14,2) NOT NULL DEFAULT 0.00,
@@ -431,7 +428,6 @@ CREATE TABLE purchase_order_items (
     quantity_ordered  INT UNSIGNED NOT NULL,
     quantity_received INT UNSIGNED NOT NULL DEFAULT 0,
     unit_cost         DECIMAL(12,2) NOT NULL,
-    tax_rate          DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     line_total        DECIMAL(14,2) NOT NULL,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -453,7 +449,6 @@ CREATE TABLE orders (
     order_source    ENUM('pos','shop_portal','rep_field','phone','walk_in') NOT NULL DEFAULT 'rep_field',
     subtotal        DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     discount_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
-    tax_amount      DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     total_amount    DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     payment_status  ENUM('unpaid','partial','paid','credit') NOT NULL DEFAULT 'unpaid',
     delivery_address TEXT        DEFAULT NULL,
@@ -475,7 +470,6 @@ CREATE TABLE order_items (
     quantity        INT UNSIGNED NOT NULL,
     unit_price      DECIMAL(12,2) NOT NULL,
     discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-    tax_rate        DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
     line_total      DECIMAL(14,2) NOT NULL,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_oi_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
@@ -497,7 +491,6 @@ CREATE TABLE sales (
     payment_method  ENUM('cash','card','bank_transfer','credit','mixed') NOT NULL DEFAULT 'cash',
     subtotal        DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     discount_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
-    tax_amount      DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     total_amount    DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     amount_paid     DECIMAL(14,2) NOT NULL DEFAULT 0.00,
     change_amount   DECIMAL(14,2) NOT NULL DEFAULT 0.00,
@@ -524,7 +517,6 @@ CREATE TABLE sale_items (
     unit_price      DECIMAL(12,2) NOT NULL,
     cost_price      DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Snapshot for profit calc',
     discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-    tax_rate        DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
     line_total      DECIMAL(14,2) NOT NULL,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_si_sale FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
@@ -667,7 +659,6 @@ INSERT INTO settings (setting_key, setting_value, setting_group, description) VA
 ('business_address', '123 Industrial Zone, Colombo', 'general', 'Business address'),
 ('business_phone',   '+94 11 234 5678', 'general',  'Main contact number'),
 ('business_email',   'info@smartauto.lk', 'general',  'Main contact email'),
-('tax_rate',         '18.00', 'tax',      'Default VAT/GST percentage'),
 ('currency',         'LKR', 'general',  'Currency code'),
 ('currency_symbol',  'Rs.', 'general',  'Currency display symbol'),
 ('invoice_footer',   'Thank you for your business!', 'invoice', 'Invoice footer text'),
@@ -749,15 +740,15 @@ INSERT INTO vehicle_engines (vehicle_model_id, engine_code, displacement_cc, fue
 (12, 'Theta II',1998, 'petrol', 'automatic', 2015, NULL);
 
 -- Sample products
-INSERT INTO products (product_code, barcode, name, description, category_id, brand_id, cost_price, selling_price, wholesale_price, tax_rate, warranty_months) VALUES
-('PRD-00001', '8901234567001', 'Front Brake Pad Set - Corolla',    'Ceramic brake pads for Toyota Corolla 2014-2019', 1, 4, 3200.00, 4500.00, 4000.00, 18.00, 6),
-('PRD-00002', '8901234567002', 'Oil Filter - Universal',           'Spin-on oil filter compatible with most Japanese cars', 2, 6, 450.00, 750.00, 650.00, 18.00, 0),
-('PRD-00003', '8901234567003', 'Spark Plug Iridium (Set of 4)',    'NGK iridium spark plugs set', 8, 2, 2800.00, 4200.00, 3800.00, 18.00, 12),
-('PRD-00004', '8901234567004', 'Alternator 90A - Honda Civic',     'Remanufactured alternator for Honda Civic R18', 4, 1, 12500.00, 18900.00, 17000.00, 18.00, 12),
-('PRD-00005', '8901234567005', 'Front Shock Absorber - Hilux',     'Gas-filled front shock for Toyota Hilux 2016+', 5, 6, 5800.00, 8500.00, 7800.00, 18.00, 12),
-('PRD-00006', '8901234567006', 'Air Filter - Suzuki Alto',         'Panel air filter for Suzuki Alto K10', 2, 6, 350.00, 600.00, 520.00, 18.00, 0),
-('PRD-00007', '8901234567007', 'Timing Belt Kit - Hyundai Elantra','Timing belt with tensioner and water pump', 3, 7, 8200.00, 12500.00, 11000.00, 18.00, 12),
-('PRD-00008', '8901234567008', 'Engine Oil 5W-30 (4L)',            'Semi-synthetic engine oil 4 litre pack', 7, 1, 3200.00, 4800.00, 4400.00, 18.00, 0);
+INSERT INTO products (product_code, barcode, name, description, category_id, brand_id, cost_price, selling_price, wholesale_price, warranty_months) VALUES
+('PRD-00001', '8901234567001', 'Front Brake Pad Set - Corolla',    'Ceramic brake pads for Toyota Corolla 2014-2019', 1, 4, 3200.00, 4500.00, 4000.00, 6),
+('PRD-00002', '8901234567002', 'Oil Filter - Universal',           'Spin-on oil filter compatible with most Japanese cars', 2, 6, 450.00, 750.00, 650.00, 0),
+('PRD-00003', '8901234567003', 'Spark Plug Iridium (Set of 4)',    'NGK iridium spark plugs set', 8, 2, 2800.00, 4200.00, 3800.00, 12),
+('PRD-00004', '8901234567004', 'Alternator 90A - Honda Civic',     'Remanufactured alternator for Honda Civic R18', 4, 1, 12500.00, 18900.00, 17000.00, 12),
+('PRD-00005', '8901234567005', 'Front Shock Absorber - Hilux',     'Gas-filled front shock for Toyota Hilux 2016+', 5, 6, 5800.00, 8500.00, 7800.00, 12),
+('PRD-00006', '8901234567006', 'Air Filter - Suzuki Alto',         'Panel air filter for Suzuki Alto K10', 2, 6, 350.00, 600.00, 520.00, 0),
+('PRD-00007', '8901234567007', 'Timing Belt Kit - Hyundai Elantra','Timing belt with tensioner and water pump', 3, 7, 8200.00, 12500.00, 11000.00, 12),
+('PRD-00008', '8901234567008', 'Engine Oil 5W-30 (4L)',            'Semi-synthetic engine oil 4 litre pack', 7, 1, 3200.00, 4800.00, 4400.00, 0);
 
 UPDATE sequences SET current_value = 8 WHERE seq_type = 'product_code';
 
@@ -860,7 +851,6 @@ SELECT
     COUNT(s.id) AS total_transactions,
     SUM(s.total_amount) AS gross_sales,
     SUM(s.discount_amount) AS total_discounts,
-    SUM(s.tax_amount) AS total_tax,
     SUM(s.amount_paid) AS total_collected
 FROM sales s
 WHERE s.deleted_at IS NULL

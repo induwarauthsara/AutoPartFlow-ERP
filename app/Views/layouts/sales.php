@@ -122,6 +122,7 @@
         <symbol id="icon-arrow-forward" viewBox="0 0 24 24"><path d="m12 4-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></symbol>
     </svg>
 
+    <script src="<?= asset('js/validation.js') ?>"></script>
     <script src="<?= asset('js/sales/sales-mock-data.js') ?>"></script>
     <script src="<?= asset('js/sales/sales.js') ?>"></script>
     <?php if (str_contains(($title ?? ''), 'POS')): ?>
@@ -130,3 +131,4 @@
     <?php endif; ?>
 </body>
 </html>
+

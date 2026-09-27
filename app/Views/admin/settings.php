@@ -55,9 +55,7 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:22px;border:1px solid #eef0f5;}
 .card h3{margin:0 0 4px;font-size:16px;}
 .card .desc{color:var(--slate-500);font-size:12.5px;margin:0 0 16px;}
-.form-row{display:grid;grid-template-columns:130px 1fr 1fr;gap:16px;align-items:start;}
 .grid-2f{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
-.logo-box{border:2px dashed var(--slate-300);border-radius:12px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--slate-500);}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;}
 .form-group small{display:block;color:var(--slate-500);font-size:11.5px;margin-top:4px;}
@@ -67,7 +65,7 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
 .flash.success{background:var(--green-bg);color:var(--green);}
 .flash.error{background:var(--red-bg);color:var(--red);}
 .found{outline:2px solid var(--indigo-500);outline-offset:4px;border-radius:6px;}
-@media (max-width:900px){.settings-layout{grid-template-columns:1fr;}.form-row,.grid-2f{grid-template-columns:1fr;}}
+@media (max-width:900px){.settings-layout{grid-template-columns:1fr;}.grid-2f{grid-template-columns:1fr;}}
 </style>
 <link rel="stylesheet" href="<?= asset('css/shared.css') ?>">
 <link rel="icon" href="<?= asset('images/logo-icon.png') ?>" type="image/png">
@@ -113,21 +111,13 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
                 <div>
                     <section class="card panel" data-panel="business">
                         <h3>Business Information</h3>
-                        <p class="desc">Update your company details and primary branding for external communications.</p>
-                        <div class="form-row">
-                            <div>
-                                <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;">Company Logo</label>
-                                <div class="logo-box"><img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40"></div>
-                            </div>
-                            <div>
-                                <div class="form-group"><label for="business_name">Company Name</label><input class="form-control" id="business_name" name="business_name" value="<?= $s('business_name') ?>" required maxlength="150"></div>
-                                <div class="form-group"><label for="business_email">Contact Email</label><input class="form-control" id="business_email" name="business_email" type="email" value="<?= $s('business_email') ?>" maxlength="150"></div>
-                            </div>
-                            <div>
-                                <div class="form-group"><label>&nbsp;</label></div>
-                                <div class="form-group"><label for="business_phone">Business Phone</label><input class="form-control" id="business_phone" name="business_phone" value="<?= $s('business_phone') ?>" maxlength="30"></div>
-                            </div>
+                        <p class="desc">Update your company details and contact information for external communications.</p>
+                        <div class="grid-2f">
+                            <div class="form-group"><label for="business_name">Company Name</label><input class="form-control" id="business_name" name="business_name" value="<?= $s('business_name') ?>" required maxlength="150"></div>
+                            <div class="form-group"><label for="business_email">Contact Email</label><input class="form-control" id="business_email" name="business_email" type="email" value="<?= $s('business_email') ?>" maxlength="150"></div>
+                            <div class="form-group"><label for="business_phone">Business Phone</label><input class="form-control" id="business_phone" name="business_phone" type="tel" value="<?= $s('business_phone') ?>" maxlength="30"></div>
                         </div>
+
                         <div class="form-group">
                             <label for="business_address">Primary Address</label>
                             <textarea class="form-control" id="business_address" name="business_address" rows="2" maxlength="500"><?= $s('business_address') ?></textarea>
@@ -188,8 +178,10 @@ body{margin:0;font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:va
     </div>
 </div>
 
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script>
 const form = document.getElementById('settingsForm');
+
 const tabInput = document.getElementById('activeTab');
 
 function showTab(name) {

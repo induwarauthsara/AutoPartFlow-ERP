@@ -91,8 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderOrderSummary();
 
-    // 3. Form Validation (07XXXXXXXX Sri Lankan mobile format)
-    const phoneRegex = /^(?:07\d{8}|0\d{9}|\+94\d{9})$/;
+    // 3. Form Validation (Single Source of Truth via AppValidation)
+    const phoneValidator = {
+        test: (val) => window.AppValidation?.rules?.phone?.test(val) ?? /^(?:07\d{8}|0\d{9}|\+94\d{9})$/.test(val)
+    };
 
     function validateForm() {
         let isValid = true;
@@ -115,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isValid = false;
         }
 
-        if (!phoneRegex.test(phoneVal)) {
+        if (!phoneValidator.test(phoneVal)) {
             if (phoneInput && phoneInput.type !== 'hidden') phoneInput.classList.add('border-error');
             if (phoneError) phoneError.classList.remove('hidden');
             isValid = false;
@@ -142,12 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (phoneInput && phoneInput.type !== 'hidden') {
         phoneInput.addEventListener('input', () => {
-            if (phoneRegex.test(phoneInput.value.trim().replace(/[\s\-]/g, ''))) {
+            if (phoneValidator.test(phoneInput.value.trim().replace(/[\s\-]/g, ''))) {
                 phoneInput.classList.remove('border-error');
                 phoneError?.classList.add('hidden');
             }
         });
     }
+
 
     if (addressInput) {
         addressInput.addEventListener('input', () => {

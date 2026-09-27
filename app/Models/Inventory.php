@@ -11,13 +11,6 @@ class Inventory extends Model
 {
     protected string $table = 'inventory';
 
-    /**
-     * The schema currently supports a single warehouse location.
-     */
-    public function getLocations(): array
-    {
-        return ['All Locations', 'Main Warehouse'];
-    }
 
     /**
      * Fetch every inventory item with product details and its latest stock movement.
@@ -125,13 +118,11 @@ class Inventory extends Model
     /**
      * Record stock-in adjustment for an existing product.
      */
-    public function addStock(int $productId, int $quantity, string $location = 'Main Warehouse', string $notes = '', ?int $userId = null): array
+    public function addStock(int $productId, int $quantity, string $notes = '', ?int $userId = null): array
     {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('Quantity must be greater than zero.');
         }
-
-        $location = $this->normalizeLocation($location);
 
         $this->db->beginTransaction();
         try {
@@ -202,7 +193,6 @@ class Inventory extends Model
                 'partNo'       => $product['product_code'],
                 'name'         => $product['name'],
                 'qty'          => $qtyAfter,
-                'location'     => $location,
                 'reorderLevel' => $reorderLevel,
                 'status'       => $this->deriveStatus($qtyAfter, $reorderLevel),
                 'lastMovement' => 'Just now (In)' . ($notes !== '' ? ' — ' . $notes : ''),
@@ -218,7 +208,7 @@ class Inventory extends Model
 
     public function stockIn(int $productId, int $quantity, ?float $unitCost = null, string $notes = '', ?int $userId = null): array
     {
-        return $this->addStock($productId, $quantity, 'Main Warehouse', $notes, $userId);
+        return $this->addStock($productId, $quantity, $notes, $userId);
     }
 
     public function adjustStock(int $productId, int $newQuantity, string $notes, ?int $userId): array
@@ -283,7 +273,6 @@ class Inventory extends Model
         $initialQty = max(0, (int) ($data['quantity_on_hand'] ?? $data['quantity'] ?? 0));
         $reorderLevel = max(1, (int) ($data['reorder_level'] ?? 10));
         $notes = trim((string) ($data['notes'] ?? ''));
-        $location = trim((string) ($data['location'] ?? 'Main Warehouse')) ?: 'Main Warehouse';
 
         if ($code === '') {
             throw new \InvalidArgumentException('Part number / SKU is required.');
@@ -294,8 +283,6 @@ class Inventory extends Model
         if ($categoryId <= 0) {
             throw new \InvalidArgumentException('Please select a valid category.');
         }
-
-        $location = $this->normalizeLocation($location);
 
         $this->db->beginTransaction();
         try {
@@ -373,8 +360,6 @@ class Inventory extends Model
                 'partNo'       => $code,
                 'name'         => $name,
                 'category'     => $category['name'],
-                'location'     => $location,
-                'bin'          => '',
                 'qty'          => $initialQty,
                 'reorderLevel' => $reorderLevel,
                 'status'       => $this->deriveStatus($initialQty, $reorderLevel),
@@ -482,6 +467,78 @@ class Inventory extends Model
     }
 
     /**
+     * Update the low stock alert threshold (reorder_level) for an inventory item.
+     */
+    public function updateThreshold(int $productId, int $reorderLevel): array
+    {
+        if ($productId <= 0) {
+            throw new \InvalidArgumentException('Please select a valid product.');
+        }
+        if ($reorderLevel < 0) {
+            throw new \InvalidArgumentException('Low stock alert threshold cannot be negative.');
+        }
+
+        $pStmt = $this->db->prepare("SELECT id FROM products WHERE id = :id AND deleted_at IS NULL");
+        $pStmt->execute(['id' => $productId]);
+        if (!$pStmt->fetch()) {
+            throw new \RuntimeException('Product not found in catalog.');
+        }
+
+        $invStmt = $this->db->prepare("SELECT id FROM inventory WHERE product_id = :id");
+        $invStmt->execute(['id' => $productId]);
+        $exists = $invStmt->fetch();
+
+        if ($exists) {
+            $upd = $this->db->prepare("UPDATE inventory SET reorder_level = :reorder, updated_at = NOW() WHERE product_id = :id");
+            $upd->execute(['reorder' => $reorderLevel, 'id' => $productId]);
+        } else {
+            $ins = $this->db->prepare("INSERT INTO inventory (product_id, quantity_on_hand, reorder_level) VALUES (:id, 0, :reorder)");
+            $ins->execute(['id' => $productId, 'reorder' => $reorderLevel]);
+        }
+
+        $fetchStmt = $this->db->prepare("
+            SELECT
+                p.id,
+                p.product_code,
+                p.name,
+                p.cost_price,
+                p.selling_price,
+                c.name AS category,
+                i.quantity_on_hand,
+                i.quantity_reserved,
+                i.quantity_damaged,
+                i.reorder_level,
+                i.reorder_quantity,
+                i.last_stock_in_at,
+                i.last_stock_out_at,
+                sm.movement_type AS last_movement_type,
+                sm.quantity      AS last_movement_qty,
+                sm.created_at    AS last_movement_at,
+                sm.notes         AS last_movement_notes
+            FROM products p
+            INNER JOIN inventory i ON i.product_id = p.id
+            INNER JOIN categories c ON c.id = p.category_id
+            LEFT JOIN stock_movements sm ON sm.id = (
+                SELECT sm2.id
+                FROM stock_movements sm2
+                WHERE sm2.product_id = p.id
+                ORDER BY sm2.created_at DESC, sm2.id DESC
+                LIMIT 1
+            )
+            WHERE p.id = :id
+            LIMIT 1
+        ");
+        $fetchStmt->execute(['id' => $productId]);
+        $row = $fetchStmt->fetch();
+
+        if (!$row) {
+            throw new \RuntimeException('Unable to fetch updated inventory record.');
+        }
+
+        return $this->mapItem($row);
+    }
+
+    /**
      * Map a raw database row into the shape the front-end expects.
      */
     private function mapItem(array $row): array
@@ -495,8 +552,6 @@ class Inventory extends Model
             'partNo'       => $row['product_code'],
             'name'         => $row['name'],
             'category'     => $row['category'],
-            'location'     => 'Main Warehouse',
-            'bin'          => '',
             'qty'          => $qty,
             'reorderLevel' => $reorder,
             'status'       => $this->deriveStatus($qty, $reorder),
@@ -522,17 +577,6 @@ class Inventory extends Model
         }
 
         return 'optimal';
-    }
-
-    private function normalizeLocation(string $location): string
-    {
-        $location = trim($location);
-
-        if ($location === '' || $location === 'Main Warehouse') {
-            return 'Main Warehouse';
-        }
-
-        throw new \InvalidArgumentException('The selected inventory location is not available.');
     }
 
     /**

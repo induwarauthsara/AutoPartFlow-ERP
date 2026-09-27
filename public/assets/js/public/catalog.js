@@ -547,8 +547,13 @@ document.addEventListener('DOMContentLoaded', function () {
         partForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
+            if (window.AppValidation && !window.AppValidation.validateForm(partForm)) {
+                return;
+            }
+
             const saveBtn = document.getElementById('part-modal-save');
             const originalText = saveBtn ? saveBtn.innerHTML : 'Save';
+
             if (saveBtn) {
                 saveBtn.disabled = true;
                 saveBtn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:18px;">sync</span> Saving...';

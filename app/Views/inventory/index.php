@@ -26,13 +26,13 @@
             <strong id="inventory-stock-value">Rs. <?= number_format((float) ($inventorySummary['stockValue'] ?? 0), 2) ?></strong>
             <small class="positive"><svg class="sales-icon"><use href="#sales-icon-trend"></use></svg>+5.2% from last month</small>
         </article>
-        <article class="sales-card kpi-card inventory-kpi--alert">
+        <article class="sales-card kpi-card inventory-kpi--alert inventory-kpi--clickable" id="kpi-low-stock" style="cursor:pointer;" title="Click to filter low and critical stock items">
             <div class="kpi-card__top">
                 <span>Low Stock Alerts</span>
                 <svg class="sales-icon inventory-icon--error"><use href="#sales-icon-warning"></use></svg>
             </div>
             <strong id="inventory-low-stock"><?= (int) ($inventorySummary['lowStock'] ?? 0) ?></strong>
-            <small class="warning">Action required today</small>
+            <small class="warning">Click to filter alerts</small>
         </article>
         <article class="sales-card kpi-card">
             <div class="kpi-card__top">
@@ -45,8 +45,10 @@
     </section>
 
     <section class="inventory-toolbar sales-card">
-        <div class="inventory-locations" id="inventory-locations" role="tablist" aria-label="Warehouse locations">
-            <!-- Rendered by inventory.js -->
+        <div class="inventory-toolbar__status-info" id="inventory-status-info" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sales-on-surface-variant,#64748b);">
+            <span style="font-weight:600;color:var(--sales-on-surface,#0f172a);">Stock Overview</span>
+            <span>&bull;</span>
+            <span id="inventory-item-count"><?= count($inventoryItems ?? []) ?> items registered</span>
         </div>
         <div class="inventory-toolbar__actions">
             <div class="inventory-filter-menu">
@@ -59,7 +61,7 @@
                 <div class="inventory-filter-options hidden" id="inventory-filter-options" role="menu" aria-label="Filter inventory by stock status">
                     <button type="button" role="menuitemradio" aria-checked="true" data-status-filter="all">All Stock</button>
                     <button type="button" role="menuitemradio" aria-checked="false" data-status-filter="optimal">Optimal Stock</button>
-                    <button type="button" role="menuitemradio" aria-checked="false" data-status-filter="low">Low Stock</button>
+                    <button type="button" role="menuitemradio" aria-checked="false" data-status-filter="low">Low Stock Alerts</button>
                     <button type="button" role="menuitemradio" aria-checked="false" data-status-filter="critical">Critical Stock</button>
                     <button type="button" role="menuitemradio" aria-checked="false" data-status-filter="restocking">Restocking</button>
                 </div>
@@ -79,7 +81,7 @@
         <div class="sales-card__header">
             <div>
                 <h2>Detailed Inventory</h2>
-                <p>On-hand quantity and latest stock movement</p>
+                <p>On-hand quantity, low stock thresholds, and stock movements</p>
             </div>
             <button class="sales-icon-button" type="button" aria-label="More inventory options">
                 <svg class="sales-icon"><use href="#sales-icon-more"></use></svg>
@@ -91,8 +93,8 @@
                     <tr>
                         <th>Part No.</th>
                         <th>Item Name</th>
-                        <th>Location</th>
-                        <th class="inventory-table__qty">Qty</th>
+                        <th class="inventory-table__qty">On Hand</th>
+                        <th class="inventory-table__threshold">Low Stock Threshold</th>
                         <th>Status</th>
                         <th>Last Movement</th>
                         <th class="inventory-table__action">Action</th>
@@ -132,23 +134,14 @@
                 </label>
                 <div class="form-grid">
                     <label>
-                        Quantity In
-                        <input type="number" id="stock-in-qty" name="quantity" min="1" step="1" required>
+                        Quantity In <span style="color:#dc2626;">*</span>
+                        <input type="number" id="stock-in-qty" name="quantity" min="1" step="1" required placeholder="Units to add">
                     </label>
                     <label>
-                        Location
-                        <select id="stock-in-location" name="location">
-                            <?php foreach (($inventoryLocations ?? ['All Locations', 'Main Warehouse']) as $location): ?>
-                                <?php if ($location === 'All Locations') { continue; } ?>
-                                <option value="<?= e($location) ?>"><?= e($location) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        Unit Cost (Rs.)
+                        <input type="number" id="stock-in-cost" name="unit_cost" step="0.01" min="0" placeholder="Defaults to product cost">
                     </label>
                 </div>
-                <label>
-                    Unit Cost (Rs.)
-                    <input type="number" id="stock-in-cost" name="unit_cost" step="0.01" min="0" placeholder="Defaults to product cost">
-                </label>
                 <label>
                     Notes
                     <textarea id="stock-in-notes" name="notes" rows="3" maxlength="255" placeholder="Optional supplier receipt or reference note"></textarea>
@@ -208,19 +201,10 @@
                         <input type="number" id="new-item-qty" name="quantity_on_hand" min="0" step="1" value="0" placeholder="0">
                     </label>
                     <label>
-                        Reorder Alert Level
-                        <input type="number" id="new-item-reorder" name="reorder_level" min="1" step="1" value="10" placeholder="10">
+                        Low Stock Alert Threshold <span style="color:#dc2626;">*</span>
+                        <input type="number" id="new-item-reorder" name="reorder_level" min="1" step="1" value="10" placeholder="10" required>
                     </label>
                 </div>
-                <label>
-                    Location
-                    <select id="new-item-location" name="location">
-                        <?php foreach (($inventoryLocations ?? ['All Locations', 'Main Warehouse']) as $location): ?>
-                            <?php if ($location === 'All Locations') { continue; } ?>
-                            <option value="<?= e($location) ?>"><?= e($location) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
                 <label>
                     Notes / Description
                     <textarea id="new-item-notes" name="notes" rows="2" maxlength="255" placeholder="Optional reference, supplier or receiving note"></textarea>
@@ -229,6 +213,42 @@
             <div class="customer-dialog__actions">
                 <button class="sales-button sales-button--secondary" type="button" data-close-item-dialog>Cancel</button>
                 <button class="sales-button sales-button--primary" type="submit" id="new-item-submit">Save Item to Inventory</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Set Low Stock Alert Threshold Dialog -->
+    <dialog class="customer-dialog sales-dialog" id="threshold-dialog" aria-labelledby="threshold-dialog-title">
+        <form class="customer-form" id="threshold-form" method="dialog">
+            <div class="customer-dialog__header">
+                <div>
+                    <p class="sales-eyebrow">Stock Alert Settings</p>
+                    <h2 id="threshold-dialog-title">Manage Low Stock Alert Threshold</h2>
+                </div>
+                <button class="sales-icon-button" type="button" data-close-threshold-dialog aria-label="Close">
+                    <svg class="sales-icon"><use href="#sales-icon-close"></use></svg>
+                </button>
+            </div>
+            <div class="customer-dialog__body">
+                <input type="hidden" id="threshold-product-id" name="product_id">
+                <div style="background:var(--sales-surface-container, #f1f5f9);padding:12px 14px;border-radius:8px;margin-bottom:14px;border:1px solid var(--sales-outline-variant, #e2e8f0);">
+                    <div style="font-weight:700;font-size:14px;color:var(--sales-on-surface,#0f172a);" id="threshold-product-name">Product Name</div>
+                    <div style="font-size:12px;color:var(--sales-on-surface-variant,#64748b);margin-top:3px;">
+                        Part No: <span id="threshold-product-code" style="font-weight:600;">-</span> &bull; Current On-Hand: <strong id="threshold-current-stock" style="color:var(--sales-primary, #0b1220);">0</strong> units
+                    </div>
+                </div>
+                <label>
+                    Low Stock Alert Threshold (Units) <span style="color:#dc2626;">*</span>
+                    <input type="number" id="threshold-level" name="reorder_level" min="1" step="1" required placeholder="e.g. 10">
+                    <small style="display:block;color:var(--sales-on-surface-variant,#64748b);font-size:11.5px;margin-top:5px;line-height:1.4;">
+                        When on-hand quantity is at or below this threshold, the product will trigger a <strong>Low Stock Alert</strong> and appear in alerts.
+                    </small>
+                </label>
+                <div id="threshold-status-preview" style="display:none;margin-top:12px;padding:9px 12px;border-radius:6px;font-size:12.5px;font-weight:600;"></div>
+            </div>
+            <div class="customer-dialog__actions">
+                <button class="sales-button sales-button--secondary" type="button" data-close-threshold-dialog>Cancel</button>
+                <button class="sales-button sales-button--primary" type="submit" id="threshold-submit">Save Alert Threshold</button>
             </div>
         </form>
     </dialog>
@@ -301,7 +321,6 @@
     <?php
     $inventoryData = [
         'incomingPurchases' => (int) ($inventorySummary['incomingPurchases'] ?? ($kpis['incoming_purchases'] ?? 0)),
-        'locations'         => $inventoryLocations ?? ['All Locations', 'Main Warehouse'],
         'items'             => $inventoryItems ?? [],
         'categories'        => $categories ?? [],
         'csrfToken'         => csrf_token(),

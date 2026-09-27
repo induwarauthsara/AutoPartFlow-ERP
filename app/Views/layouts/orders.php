@@ -105,7 +105,9 @@
         <symbol id="icon-check" viewBox="0 0 24 24"><path d="m9.5 16.2-4.2-4.2 1.4-1.4 2.8 2.8 7.8-7.8L18.7 7l-9.2 9.2Z"/></symbol>
     </svg>
 
+    <script src="<?= asset('js/validation.js') ?>"></script>
     <script src="<?= asset('js/sales/orders-mock-data.js') ?>"></script>
     <script src="<?= asset('js/sales/orders.js') ?>"></script>
 </body>
 </html>
+

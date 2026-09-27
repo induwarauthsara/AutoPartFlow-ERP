@@ -267,6 +267,284 @@ tr:hover td { background: #fcfdff; }
     .seasonal-metrics-grid { grid-template-columns: 1fr; }
     .content { padding: 16px; }
 }
+
+.print-only-header, .print-only-footer { display: none; }
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm 15mm 15mm 15mm;
+    }
+
+    *, *:before, *:after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    html, body {
+        background: #fff !important;
+        color: #0f172a !important;
+        font-size: 10pt !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Completely hide navigation sidebar, topbar, buttons, filter forms, etc. */
+    aside.sidebar,
+    .sidebar,
+    #admin-sidebar,
+    .sales-sidebar,
+    .topbar,
+    .head-actions,
+    .period-bar,
+    #filterForm,
+    .filter-panel,
+    .pagination,
+    .modal-overlay,
+    .btn-sm-action,
+    .chip-remove,
+    .chip--clear,
+    a[href]:after {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Reset app-shell and main so it does not flex-split or push down */
+    .app-shell {
+        display: block !important;
+        width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .main {
+        display: block !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .content {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Print Header & Footer */
+    .print-only-header {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2pt solid #002045;
+        padding-bottom: 8pt;
+        margin-bottom: 12pt;
+    }
+    .print-only-header .print-brand {
+        display: flex;
+        align-items: center;
+        gap: 8pt;
+    }
+    .print-only-header h2 {
+        margin: 0;
+        font-size: 16pt;
+        font-weight: 800;
+        color: #002045;
+    }
+    .print-only-header p {
+        margin: 2pt 0 0;
+        font-size: 8.5pt;
+        color: #64748b;
+    }
+    .print-only-meta {
+        text-align: right;
+        font-size: 8pt;
+        color: #475569;
+        line-height: 1.4;
+    }
+
+    .print-only-footer {
+        display: block !important;
+        margin-top: 14pt;
+        padding-top: 6pt;
+        border-top: 1pt solid #cbd5e1;
+        font-size: 8pt;
+        color: #64748b;
+        text-align: center;
+    }
+
+    /* Head & Titles */
+    .page-head {
+        margin-bottom: 10pt !important;
+    }
+    .page-head h1 {
+        font-size: 15pt !important;
+        color: #002045 !important;
+        margin: 0 0 2pt !important;
+    }
+    .page-head p {
+        font-size: 8.5pt !important;
+        color: #475569 !important;
+    }
+    .period-badge-sub {
+        font-size: 8pt !important;
+        padding: 2pt 6pt !important;
+        background: #eef4ff !important;
+        border: 1pt solid #bfdbfe !important;
+        color: #1e3a5f !important;
+        margin-top: 4pt !important;
+    }
+
+    /* Active filter chips */
+    .filter-chips {
+        margin-bottom: 8pt !important;
+        gap: 4pt !important;
+    }
+    .chip {
+        font-size: 7.5pt !important;
+        padding: 2pt 6pt !important;
+        background: #f8fafc !important;
+        border: 1pt solid #cbd5e1 !important;
+    }
+
+    /* 4 Metric KPI Cards */
+    .grid-4 {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8pt !important;
+        margin-bottom: 10pt !important;
+        page-break-inside: avoid;
+    }
+    .card {
+        border: 1pt solid #cbd5e1 !important;
+        border-radius: 6pt !important;
+        padding: 8pt 10pt !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    .stat-icon {
+        width: 20pt !important;
+        height: 20pt !important;
+        font-size: 8pt !important;
+        margin-bottom: 4pt !important;
+        background: #eef4ff !important;
+        color: #002045 !important;
+    }
+    .stat-value {
+        font-size: 13pt !important;
+        font-weight: 800 !important;
+    }
+    .stat-label {
+        font-size: 7.5pt !important;
+        margin: 2pt 0 4pt !important;
+    }
+    .stat-badge {
+        font-size: 7pt !important;
+        padding: 1.5pt 4pt !important;
+    }
+
+    /* Seasonal Intel Box */
+    .seasonal-intel-box {
+        border: 1.5pt solid #c084fc !important;
+        border-left: 4pt solid #6b21a8 !important;
+        background: #faf5ff !important;
+        padding: 8pt 10pt !important;
+        margin-bottom: 10pt !important;
+        page-break-inside: avoid;
+    }
+    .seasonal-intel-title {
+        font-size: 10.5pt !important;
+    }
+    .seasonal-metrics-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6pt !important;
+        margin-bottom: 6pt !important;
+    }
+    .seasonal-metric-tile {
+        background: #fff !important;
+        border: 1pt solid #e9d5ff !important;
+        padding: 4pt 6pt !important;
+    }
+    .seasonal-metric-val {
+        font-size: 11pt !important;
+    }
+    .part-pill {
+        font-size: 7pt !important;
+        padding: 1.5pt 4pt !important;
+    }
+
+    /* Grid 2 Charts */
+    .grid-2 {
+        display: grid !important;
+        grid-template-columns: 1.5fr 1fr !important;
+        gap: 8pt !important;
+        margin-bottom: 10pt !important;
+        page-break-inside: avoid;
+    }
+    .bars-container {
+        height: 120pt !important;
+        padding-top: 8pt !important;
+    }
+    .bar {
+        background: #002045 !important;
+    }
+    .bar.bar--seasonal {
+        background: #6b21a8 !important;
+    }
+    .bar.bar--comparison {
+        background: #94a3b8 !important;
+    }
+    .bar-fill {
+        background: #002045 !important;
+    }
+    .bar-fill.seasonal-fill {
+        background: #6b21a8 !important;
+    }
+
+    /* Tables */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 7.5pt !important;
+    }
+    th {
+        background: #f1f5f9 !important;
+        color: #1e293b !important;
+        font-size: 7pt !important;
+        font-weight: 700 !important;
+        padding: 4pt 5pt !important;
+        border-bottom: 1.5pt solid #cbd5e1 !important;
+    }
+    td {
+        padding: 4pt 5pt !important;
+        border-bottom: 0.75pt solid #e2e8f0 !important;
+        font-size: 7.5pt !important;
+    }
+    tr {
+        page-break-inside: avoid !important;
+    }
+    thead {
+        display: table-header-group !important;
+    }
+}
 </style>
 </head>
 <body>
@@ -283,6 +561,22 @@ tr:hover td { background: #fcfdff; }
         </header>
 
         <div class="content">
+            <!-- Print Only Header -->
+            <div class="print-only-header">
+                <div class="print-brand">
+                    <img src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="38" height="38" style="object-fit:contain;">
+                    <div>
+                        <h2>AutoPartFlow ERP</h2>
+                        <p>Business Intelligence &amp; Financial Analytics Report</p>
+                    </div>
+                </div>
+                <div class="print-only-meta">
+                    <div><strong>Printed On:</strong> <?= date('d M Y, H:i') ?></div>
+                    <div><strong>Generated By:</strong> <?= e($_SESSION['full_name'] ?? 'System Administrator') ?></div>
+                    <div><strong>Period:</strong> <?= e($periodLabel) ?></div>
+                </div>
+            </div>
+
             <!-- Page Header -->
             <div class="page-head">
                 <div>
@@ -917,6 +1211,11 @@ tr:hover td { background: #fcfdff; }
                     </div>
                 <?php endif; ?>
             </div>
+            
+            <!-- Print Only Footer -->
+            <div class="print-only-footer">
+                AutoPartFlow ERP · Official Business Intelligence &amp; Financial Analytics Report · Printed on <?= date('d M Y, H:i') ?> · Confidential Business Document
+            </div>
         </div>
     </div>
 </div>
@@ -934,8 +1233,10 @@ tr:hover td { background: #fcfdff; }
     </div>
 </div>
 
+<script src="<?= asset('js/validation.js') ?>"></script>
 <script>
 function toggleCustomSeason(val) {
+
     const el = document.getElementById('customSeasonFields');
     if (el) {
         el.style.display = (val === 'custom') ? 'grid' : 'none';

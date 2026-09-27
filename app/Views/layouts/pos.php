@@ -18,7 +18,9 @@
         - POST /api/sales             → confirmSale() in pos.js
         - GET  /api/customers/trade   → populate #trade-account options
     -->
+    <script src="<?= asset('js/validation.js') ?>"></script>
     <script src="<?= asset('js/sales/mock-data.js') ?>"></script>
     <script src="<?= asset('js/sales/pos.js') ?>"></script>
 </body>
 </html>
+

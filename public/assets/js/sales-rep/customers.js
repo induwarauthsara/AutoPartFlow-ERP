@@ -97,9 +97,12 @@
     }
 
     /**
-     * Phone required. Email optional but must look like an email if filled.
+     * Customer modal validation (powered by single source of truth AppValidation).
      */
     function validateForm() {
+        if (window.AppValidation && form) {
+            return window.AppValidation.validateForm(form);
+        }
         const phone = byId('customer-form-phone').value.trim();
         const email = byId('customer-form-email').value.trim();
         const nameOk = setError('customer-form-name', byId('customer-form-name').value.trim() ? '' : 'Name is required.');
@@ -107,6 +110,7 @@
         const emailOk = setError('customer-form-email', (!email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? '' : 'Enter a valid email or leave blank.');
         return nameOk && phoneOk && emailOk;
     }
+
 
     /**
      * Remove a customer from mock data after confirm.
