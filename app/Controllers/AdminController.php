@@ -575,6 +575,10 @@ class AdminController extends Controller
     /** POST /admin/employees/store */
     public function employeeStore(): void
     {
+        if (!verify_csrf()) {
+            $this->employeeBack('error', 'Your session expired. Refresh the page and try again.');
+        }
+
         $d = $this->employeeInput();
         $this->validateEmployee($d, true, null);
 
@@ -628,6 +632,10 @@ class AdminController extends Controller
     /** POST /admin/employees/update */
     public function employeeUpdate(): void
     {
+        if (!verify_csrf()) {
+            $this->employeeBack('error', 'Your session expired. Refresh the page and try again.');
+        }
+
         $id = (int) ($_POST['id'] ?? 0);
         $find = $this->db->prepare(
             "SELECT e.id, e.user_id, u.role_id FROM employees e JOIN users u ON u.id = e.user_id
@@ -695,6 +703,10 @@ class AdminController extends Controller
     /** POST /admin/employees/delete */
     public function employeeDelete(): void
     {
+        if (!verify_csrf()) {
+            $this->employeeBack('error', 'Your session expired. Refresh the page and try again.');
+        }
+
         $id = (int) ($_POST['id'] ?? 0);
         $find = $this->db->prepare("SELECT user_id FROM employees WHERE id = ? AND deleted_at IS NULL");
         $find->execute([$id]);

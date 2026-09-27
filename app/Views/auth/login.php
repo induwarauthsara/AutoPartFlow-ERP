@@ -31,10 +31,7 @@
             </div>
 
             <div class="form-group">
-                <div class="label-row">
-                    <label for="password">Password</label>
-                    <a href="#" class="forgot-link">Forgot password?</a>
-                </div>
+                <label for="password">Password</label>
                 <div class="input-with-icon">
                     <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -48,13 +45,6 @@
                         required
                     >
                 </div>
-            </div>
-
-            <div class="form-options">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="remember" checked>
-                    <span>Remember me on this device</span>
-                </label>
             </div>
 
             <button type="submit" class="btn-auth-submit">

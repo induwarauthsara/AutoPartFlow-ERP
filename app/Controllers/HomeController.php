@@ -94,6 +94,7 @@ class HomeController extends Controller
         $_SESSION['role_id']    = $user['role_id'];
         $_SESSION['role_slug']  = $user['role_slug'];
         $_SESSION['full_name']  = $user['full_name'];
+        $_SESSION['email']      = $user['email'];
         $_SESSION['customer_id'] = null;
 
         // A shop-customer account is linked to its customer record at login.
@@ -141,8 +142,8 @@ class HomeController extends Controller
         $phone = trim((string) $this->input('phone', ''));
         $password = (string) $this->input('password', '');
         $confirmation = (string) $this->input('password_confirmation', '');
-        // Public registration is customer-only. Staff/admin accounts must be created by authorized staff.
-        $roleSlug = 'shop_customer';
+        $roleSlug = trim((string) $this->input('role_slug', 'shop_customer'));
+        $allowedRoles = ['owner', 'sales_rep', 'store_manager', 'shop_customer'];
 
         if ($fullName === '' || $username === '' || $email === '' || $password === '') {
             $this->setFlash('error', 'Name, username, email and password are required.');
@@ -154,6 +155,10 @@ class HomeController extends Controller
         }
         if (!preg_match('/^[A-Za-z0-9._-]{3,60}$/', $username)) {
             $this->setFlash('error', 'Username must be 3–60 characters using letters, numbers, dots, dashes or underscores.');
+            $this->redirect('/register');
+        }
+        if (!in_array($roleSlug, $allowedRoles, true)) {
+            $this->setFlash('error', 'Choose a valid account type.');
             $this->redirect('/register');
         }
         if (strlen($password) < 8 || $password !== $confirmation) {
@@ -169,22 +174,12 @@ class HomeController extends Controller
 
         try {
             $db->beginTransaction();
-            // Customer registration must work with an existing project database too.
-            // This adds the missing ROLE DATA only; it does not alter database/schema.sql
-            // or create/alter any table.
             $role = $db->prepare('SELECT id FROM roles WHERE slug = :slug LIMIT 1');
             $role->execute(['slug' => $roleSlug]);
             $roleId = (int) ($role->fetchColumn() ?: 0);
 
             if ($roleId === 0) {
-                $createRole = $db->prepare(
-                    "INSERT INTO roles (name, slug, description, permissions)
-                     VALUES ('Shop Customer', 'shop_customer', 'B2B portal: catalog, orders', :permissions)"
-                );
-                $createRole->execute([
-                    'permissions' => json_encode(['catalog' => true, 'orders' => true], JSON_UNESCAPED_SLASHES),
-                ]);
-                $roleId = (int) $db->lastInsertId();
+                throw new \RuntimeException('The selected account type is not configured. Import the latest database schema and try again.');
             }
 
             $insert = $db->prepare(
@@ -275,6 +270,8 @@ class HomeController extends Controller
         $_SESSION['role_id']   = $roleId;
         $_SESSION['role_slug'] = $roleSlug;
         $_SESSION['full_name'] = $fullName;
+        $_SESSION['email']     = $email;
+        $_SESSION['customer_id'] = $roleSlug === 'shop_customer' ? $customerId : null;
 
         $roleLabel = match ($roleSlug) {
             'owner' => 'Business Owner',

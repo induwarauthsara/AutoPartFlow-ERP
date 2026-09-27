@@ -42,8 +42,12 @@ class Order extends Model
             $stmt = $this->db->prepare(
                 "SELECT c.id, c.customer_code, c.customer_type, c.name, c.phone, c.email, c.address
                  FROM customers c
-                 INNER JOIN users u ON u.id = :user_id AND u.email = c.email
+                 INNER JOIN users u ON u.id = :user_id
                  WHERE c.id = :customer_id
+                   AND (
+                       u.email = c.email
+                       OR (u.phone IS NOT NULL AND u.phone != '' AND u.phone = c.phone)
+                   )
                    AND c.customer_type = 'shop'
                    AND c.deleted_at IS NULL
                    AND c.is_active = 1
@@ -84,8 +88,7 @@ class Order extends Model
             "SELECT c.id, c.customer_code, c.customer_type, c.name, c.phone, c.email, c.address
              FROM customers c
              INNER JOIN users u ON u.id = :user_id AND u.phone IS NOT NULL AND u.phone != '' AND u.phone = c.phone
-             WHERE u.id = :user_id
-               AND u.deleted_at IS NULL
+             WHERE u.deleted_at IS NULL
                AND c.customer_type = 'shop'
                AND c.deleted_at IS NULL
                AND c.is_active = 1

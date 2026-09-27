@@ -3,7 +3,7 @@
         <div class="auth-card-header">
             <img class="app-logo" src="<?= asset('images/logo-icon.png') ?>" alt="AutoPartFlow" width="40" height="40">
             <h2>Create your account</h2>
-            <p>Create your customer account to order parts and manage your orders.</p>
+            <p>Create an account for the workspace you need to use.</p>
         </div>
 
         <form method="POST" action="<?= url('register') ?>" class="auth-form">

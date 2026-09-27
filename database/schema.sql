@@ -666,7 +666,7 @@ INSERT INTO settings (setting_key, setting_value, setting_group, description) VA
 
 -- Default role seed users (passwords: admin123, sales123, store123, customer123)
 INSERT INTO users (id, role_id, username, email, password_hash, full_name, phone) VALUES
-(1, 1, 'admin',        'admin@smartauto.lk',    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+94 77 000 0001'),
+(1, 1, 'admin',        'admin@smartauto.lk',    '$2y$10$GLUwO3APErocxRuEW9DmV.XSAun4CxjgBLCCIAa524B6FKjjDSBre', 'System Administrator', '+94 77 000 0001'),
 (2, 2, 'salesrep',     'sales@smartauto.lk',    '$2y$10$3lE7etljcCJny6YNXONCAe3B3TLFVEsI19SunzOvRNTkeC0aGJZMq', 'Sunil Perera',         '+94 77 000 0002'),
 (3, 3, 'storemanager', 'store@smartauto.lk',    '$2y$10$5aMskCJvrPv3Mcf3B/n5Qelnnez3fTIJ8r.XhvoeMz0T2O9UcEy2S', 'Kamal Fernando',       '+94 77 000 0003'),
 (4, 4, 'shopcustomer', 'customer@smartauto.lk', '$2y$10$cVni8gJI7slnbjY.MVikuuDcvUaYfGVqS6.KpHi67V/7tjMjJj.ye', 'City Auto Works',      '+94 77 111 0001');
