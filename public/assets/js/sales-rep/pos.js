@@ -1,6 +1,6 @@
 /**
  * Sales Rep POS: search, walk-in vs trade, cart, discount, checkout, invoice.
- * Totals: subtotal minus discount. PHP later: POST /api/sales.
+ * Totals and stock changes are confirmed by the server before an invoice is shown.
  */
 (function () {
     'use strict';
@@ -122,6 +122,10 @@
         const product = MOCK_PRODUCTS.find(function (p) { return p.id === productId; });
         if (!product) return;
         const existing = state.cart.find(function (item) { return item.id === productId; });
+        if (existing && existing.quantity >= product.stock) {
+            announce('No more stock is available for ' + product.shortName + '.');
+            return;
+        }
         if (existing) existing.quantity += 1;
         else state.cart.push({ id: product.id, code: product.code, shortName: product.shortName, price: product.price, quantity: 1 });
         renderCart();
@@ -131,7 +135,8 @@
     function updateQuantity(productId, delta) {
         const item = state.cart.find(function (i) { return i.id === productId; });
         if (!item) return;
-        item.quantity += delta;
+        const product = MOCK_PRODUCTS.find(function (p) { return p.id === productId; });
+        item.quantity = Math.min(product ? product.stock : item.quantity + delta, item.quantity + delta);
         if (item.quantity <= 0) state.cart = state.cart.filter(function (i) { return i.id !== productId; });
         renderCart();
     }
@@ -167,32 +172,58 @@
             return;
         }
         const items = state.cart.map(function (item) { return Object.assign({}, item); });
-        const invoiceNumber = 'INV-' + String(Date.now()).slice(-6);
         const customerLabel = state.customerType === 'walking'
             ? 'Walk-in Retail Customer'
             : document.getElementById('trade-account').options[document.getElementById('trade-account').selectedIndex].text;
-        let rows = '';
-        items.forEach(function (item) {
-            rows += '<tr><td>' + u.escapeHtml(item.shortName) + '</td><td>' + item.quantity + '</td><td>' + u.money(item.price * item.quantity) + '</td></tr>';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+        const button = document.getElementById('btn-confirm-sale');
+        button.disabled = true;
+        button.textContent = 'Saving Sale...';
+
+        fetch(baseUrl.replace(/\/$/, '') + '/sales/pos/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({
+                customer_id: state.customerType === 'trade' ? Number(state.tradeAccountId) : null,
+                items: items.map(function (item) { return { product_id: item.id, quantity: item.quantity }; }),
+                discount: totals.discountAmount,
+                payment_method: paymentMethod,
+                amount_paid: paid,
+                csrf_token: csrfToken
+            })
+        }).then(function (response) { return response.json(); })
+        .then(function (json) {
+            if (!json.ok) throw new Error(json.message || 'The sale could not be completed.');
+            const sale = json.sale;
+            let rows = '';
+            items.forEach(function (item) {
+                rows += '<tr><td>' + u.escapeHtml(item.shortName) + '</td><td>' + item.quantity + '</td><td>' + u.money(item.price * item.quantity) + '</td></tr>';
+            });
+            document.getElementById('invoice-preview').innerHTML =
+                '<div class="invoice-preview__header">' + document.querySelector('.app-logo').outerHTML + '<h3>AutoPartFlow Spare Parts</h3><p>Sales Representative Invoice</p><p>Tel: +94 11 234 5678</p></div>' +
+                '<div class="invoice-preview__meta"><p><strong>Invoice:</strong> ' + u.escapeHtml(sale.invoiceNumber) + '</p>' +
+                '<p><strong>Date:</strong> ' + new Date().toLocaleString('en-LK') + '</p>' +
+                '<p><strong>Customer:</strong> ' + u.escapeHtml(customerLabel) + '</p>' +
+                '<p><strong>Payment:</strong> ' + u.escapeHtml(paymentMethod.toUpperCase()) + '</p></div>' +
+                '<table class="invoice-preview__table"><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+                '<p class="invoice-preview__total">Subtotal: ' + u.money(sale.subtotal) + '</p>' +
+                '<p class="invoice-preview__total">Discount: - ' + u.money(sale.discount) + '</p>' +
+                '<p class="invoice-preview__total">Total: ' + u.money(sale.total) + '</p>' +
+                '<p class="invoice-preview__total">Paid: ' + u.money(sale.paid) + '</p>' +
+                '<p class="invoice-preview__total">Change: ' + u.money(sale.change) + '</p>' +
+                '<p style="text-align:center;margin-top:16px">Thank you for your business.</p>';
+            document.getElementById('checkout-modal').close();
+            document.getElementById('invoice-modal').showModal();
+            state.cart = [];
+            state.discount = { type: 'percent', value: 0 };
+            renderCart();
+        }).catch(function (error) {
+            u.showToast(error.message || 'Network error while completing the sale.');
+        }).finally(function () {
+            button.disabled = false;
+            button.textContent = 'Confirm & Print Invoice';
         });
-        document.getElementById('invoice-preview').innerHTML =
-            '<div class="invoice-preview__header">' + document.querySelector('.app-logo').outerHTML + '<h3>AutoPartFlow Spare Parts</h3><p>Sales Representative Invoice</p><p>Tel: +94 11 234 5678</p></div>' +
-            '<div class="invoice-preview__meta"><p><strong>Invoice:</strong> ' + invoiceNumber + '</p>' +
-            '<p><strong>Date:</strong> ' + new Date().toLocaleString('en-LK') + '</p>' +
-            '<p><strong>Customer:</strong> ' + u.escapeHtml(customerLabel) + '</p>' +
-            '<p><strong>Payment:</strong> ' + paymentMethod.toUpperCase() + '</p></div>' +
-            '<table class="invoice-preview__table"><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-            '<p class="invoice-preview__total">Subtotal: ' + u.money(totals.subtotal) + '</p>' +
-            '<p class="invoice-preview__total">Discount: - ' + u.money(totals.discountAmount) + '</p>' +
-            '<p class="invoice-preview__total">Total: ' + u.money(totals.total) + '</p>' +
-            '<p class="invoice-preview__total">Paid: ' + u.money(paid) + '</p>' +
-            '<p class="invoice-preview__total">Change: ' + u.money(Math.max(0, paid - totals.total)) + '</p>' +
-            '<p style="text-align:center;margin-top:16px">Thank you for your business.</p>';
-        document.getElementById('checkout-modal').close();
-        document.getElementById('invoice-modal').showModal();
-        state.cart = [];
-        state.discount = { type: 'percent', value: 0 };
-        renderCart();
     }
 
     document.getElementById('product-search').addEventListener('input', function (e) {

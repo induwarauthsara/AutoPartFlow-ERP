@@ -949,6 +949,7 @@
 
     const CSRF_TOKEN = <?= json_encode(csrf_token()) ?>;
     const BASE_URL = <?= json_encode(url()) ?>;
+    const RAW_AUDIT = <?= json_encode($activityLogs ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
     // Persistent audit log in client storage
     const AUDIT_STORAGE_KEY = 'apf_user_audit_log_v2';
@@ -970,7 +971,7 @@
         users: RAW_USERS,
         roles: RAW_ROLES,
         selectedRoleSlug: null,
-        log: loadAuditLog()
+        log: RAW_AUDIT.concat(loadAuditLog()).sort((a, b) => Number(b.time || 0) - Number(a.time || 0))
     };
 
     let deletingId = null;

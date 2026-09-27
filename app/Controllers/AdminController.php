@@ -64,6 +64,7 @@ class AdminController extends Controller
             'title' => 'User Management - AutoPartFlow',
             'rows' => $rows,
             'roles' => $roles,
+            'activityLogs' => $userModel->recentActivity(),
         ], null);
     }
 

@@ -32,6 +32,27 @@ class User extends Model
         return $this->db->query("SELECT id, name, slug, description FROM roles ORDER BY id ASC")->fetchAll();
     }
 
+    public function recentActivity(int $limit = 100): array
+    {
+        $limit = max(1, min($limit, 200));
+        $stmt = $this->db->query(
+            "SELECT al.id, al.action, al.description, al.created_at,
+                    COALESCE(u.full_name, 'System') AS actor
+             FROM activity_logs al
+             LEFT JOIN users u ON u.id = al.user_id
+             WHERE al.module = 'users'
+             ORDER BY al.created_at DESC
+             LIMIT {$limit}"
+        );
+        return array_map(static fn(array $row): array => [
+            'id' => (int) $row['id'],
+            'type' => (string) $row['action'],
+            'actor' => (string) $row['actor'],
+            'text' => (string) $row['description'],
+            'time' => strtotime((string) $row['created_at']) * 1000,
+        ], $stmt->fetchAll());
+    }
+
     public function findUser(int $id): ?array
     {
         $stmt = $this->db->prepare(

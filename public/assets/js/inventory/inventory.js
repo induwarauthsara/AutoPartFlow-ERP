@@ -128,6 +128,8 @@
                     '<button class="sales-button sales-button--secondary sales-button--compact" type="button" data-edit-threshold="' + item.id + '" title="Manage Alert Threshold">' +
                         'Set Alert' +
                     '</button>' +
+                    '<button class="sales-button sales-button--secondary sales-button--compact" type="button" data-adjust-stock="' + item.id + '">Adjust</button>' +
+                    '<button class="sales-button sales-button--danger sales-button--compact" type="button" data-writeoff-stock="' + item.id + '">Write Off</button>' +
                     '<button class="sales-icon-button sales-icon-button--danger" type="button" data-delete-stock="' + item.id + '" aria-label="Delete ' + escapeHtml(item.name) + '">' +
                         '<svg class="sales-icon" viewBox="0 0 24 24" aria-hidden="true">' +
                             '<path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2v7h2v-7H9Zm4 0v7h2v-7h-2Z" fill="currentColor"></path>' +
@@ -235,6 +237,52 @@
     function closeThresholdDialog() {
         const dialog = byId('threshold-dialog');
         if (dialog) dialog.close();
+    }
+
+    function openAdjustDialog(productId) {
+        const item = data.items.find(function (row) { return String(row.id) === String(productId); });
+        const dialog = byId('stock-adjust-dialog');
+        if (!item || !dialog) return;
+        byId('adjust-product-id').value = String(item.id);
+        byId('adjust-product-name').textContent = item.partNo + ' — ' + item.name;
+        byId('adjust-qty').value = String(item.qty);
+        byId('adjust-notes').value = '';
+        dialog.showModal();
+    }
+
+    function closeAdjustDialog() {
+        const dialog = byId('stock-adjust-dialog');
+        if (dialog) dialog.close();
+    }
+
+    function openWriteoffDialog(productId) {
+        const item = data.items.find(function (row) { return String(row.id) === String(productId); });
+        const dialog = byId('stock-writeoff-dialog');
+        if (!item || !dialog) return;
+        byId('writeoff-product-id').value = String(item.id);
+        byId('writeoff-product-name').textContent = item.partNo + ' — ' + item.name;
+        byId('writeoff-current-onhand').textContent = String(item.qty);
+        byId('writeoff-qty').value = '';
+        byId('writeoff-qty').max = String(item.qty);
+        byId('writeoff-reason').value = '';
+        dialog.showModal();
+    }
+
+    function closeWriteoffDialog() {
+        const dialog = byId('stock-writeoff-dialog');
+        if (dialog) dialog.close();
+    }
+
+    function applyServerInventory(result) {
+        if (Array.isArray(result.items)) {
+            data.items = result.items;
+        }
+        if (result.summary && typeof result.summary.incomingPurchases !== 'undefined') {
+            data.incomingPurchases = result.summary.incomingPurchases;
+        }
+        renderKpis();
+        renderTable();
+        fillProductSelect('');
     }
 
     const thresholdInput = byId('threshold-level');
@@ -404,6 +452,81 @@
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalBtnText;
+        }
+    }
+
+    async function recordAdjustment() {
+        const productId = Number(byId('adjust-product-id').value);
+        const quantity = Number(byId('adjust-qty').value);
+        const notes = byId('adjust-notes').value.trim();
+        const submitBtn = byId('stock-adjust-form').querySelector('button[type="submit"]');
+        if (!productId || !Number.isInteger(quantity) || quantity < 0 || !notes) {
+            showToast('Enter a non-negative physical count and an audit reason.');
+            return false;
+        }
+        submitBtn.disabled = true;
+        try {
+            const baseUrl = (window.APP_CONFIG && window.APP_CONFIG.baseUrl) ? window.APP_CONFIG.baseUrl : '';
+            const csrfToken = (window.APP_CONFIG && window.APP_CONFIG.csrfToken) || data.csrfToken || '';
+            const response = await fetch(baseUrl + '/inventory/adjust', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({ csrf_token: csrfToken, product_id: productId, quantity: quantity, notes: notes })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) {
+                showToast(result.message || 'Failed to reconcile the inventory count.');
+                return false;
+            }
+            applyServerInventory(result);
+            closeAdjustDialog();
+            showToast(result.message || 'Inventory count reconciled.');
+            return true;
+        } catch (err) {
+            showToast('Network error while reconciling inventory.');
+            return false;
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function recordWriteoff() {
+        const productId = Number(byId('writeoff-product-id').value);
+        const quantity = Number(byId('writeoff-qty').value);
+        const reason = byId('writeoff-reason').value.trim();
+        const item = data.items.find(function (row) { return Number(row.id) === productId; });
+        const submitBtn = byId('stock-writeoff-form').querySelector('button[type="submit"]');
+        if (!productId || !Number.isInteger(quantity) || quantity < 1 || !reason) {
+            showToast('Enter a positive damaged quantity and a reason.');
+            return false;
+        }
+        if (item && quantity > item.qty) {
+            showToast('Write-off quantity cannot exceed on-hand stock.');
+            return false;
+        }
+        submitBtn.disabled = true;
+        try {
+            const baseUrl = (window.APP_CONFIG && window.APP_CONFIG.baseUrl) ? window.APP_CONFIG.baseUrl : '';
+            const csrfToken = (window.APP_CONFIG && window.APP_CONFIG.csrfToken) || data.csrfToken || '';
+            const response = await fetch(baseUrl + '/inventory/write-off', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({ csrf_token: csrfToken, product_id: productId, quantity: quantity, reason: reason })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) {
+                showToast(result.message || 'Failed to write off damaged stock.');
+                return false;
+            }
+            applyServerInventory(result);
+            closeWriteoffDialog();
+            showToast(result.message || 'Damaged stock written off.');
+            return true;
+        } catch (err) {
+            showToast('Network error while writing off stock.');
+            return false;
+        } finally {
+            submitBtn.disabled = false;
         }
     }
 
@@ -653,6 +776,17 @@
             deleteItem(deleteButton.dataset.deleteStock, deleteButton);
             return;
         }
+
+        const adjustButton = event.target.closest('[data-adjust-stock]');
+        if (adjustButton) {
+            openAdjustDialog(adjustButton.dataset.adjustStock);
+            return;
+        }
+
+        const writeoffButton = event.target.closest('[data-writeoff-stock]');
+        if (writeoffButton) {
+            openWriteoffDialog(writeoffButton.dataset.writeoffStock);
+        }
     });
 
     document.querySelectorAll('[data-close-stock-dialog]').forEach(function (button) {
@@ -665,6 +799,14 @@
 
     document.querySelectorAll('[data-close-threshold-dialog]').forEach(function (button) {
         button.addEventListener('click', closeThresholdDialog);
+    });
+
+    document.querySelectorAll('[data-close-adjust-dialog]').forEach(function (button) {
+        button.addEventListener('click', closeAdjustDialog);
+    });
+
+    document.querySelectorAll('[data-close-writeoff-dialog]').forEach(function (button) {
+        button.addEventListener('click', closeWriteoffDialog);
     });
 
     byId('stock-in-form').addEventListener('submit', function (event) {
@@ -687,6 +829,16 @@
             recordThresholdUpdate();
         });
     }
+
+    byId('stock-adjust-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        recordAdjustment();
+    });
+
+    byId('stock-writeoff-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        recordWriteoff();
+    });
 
     renderKpis();
     renderTable();

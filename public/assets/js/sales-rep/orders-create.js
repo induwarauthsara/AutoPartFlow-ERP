@@ -1,6 +1,6 @@
 /**
  * Customer Order Entry (New Order Request).
- * Order total equals line subtotal. PHP later: POST cart to OrderController@store.
+ * Order total equals line subtotal and is persisted through the sales API.
  */
 (function () {
     'use strict';
@@ -138,6 +138,9 @@
         }
         meta.innerHTML = '<span class="sales-avatar">' + u.escapeHtml(customer.initials) + '</span><div><strong>' +
             u.escapeHtml(customer.name) + '</strong><span>' + u.escapeHtml(customer.detail) + '</span></div>';
+        if (!byId('delivery-address').value && customer.address) {
+            byId('delivery-address').value = customer.address;
+        }
     });
 
     byId('save-draft').addEventListener('click', function () {
@@ -163,8 +166,32 @@
     });
     document.querySelector('[data-dialog-close]').addEventListener('click', function () { dialog.close(); });
     byId('confirm-order').addEventListener('click', function () {
-        dialog.close();
-        u.showToast('Frontend ready. POST this order payload in your OrderController.');
+        const button = this;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const baseUrl = document.querySelector('meta[name="base-url"]')?.content || '/';
+        button.disabled = true;
+        button.textContent = 'Saving...';
+        fetch(baseUrl.replace(/\/$/, '') + '/sales/orders/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify({
+                customer_id: Number(byId('order-customer').value),
+                items: cart.map(function (item) { return { product_id: item.id, quantity: item.quantity }; }),
+                notes: byId('order-notes').value,
+                delivery_address: byId('delivery-address').value,
+                csrf_token: csrfToken
+            })
+        }).then(function (response) { return response.json(); })
+        .then(function (json) {
+            if (!json.ok) throw new Error(json.message || 'The order could not be saved.');
+            localStorage.removeItem('autopartflow-order-draft');
+            u.showToast('Order ' + json.orderNumber + ' created successfully.');
+            window.setTimeout(function () { window.location.href = json.redirect; }, 500);
+        }).catch(function (error) {
+            button.disabled = false;
+            button.textContent = 'Confirm Order';
+            u.showToast(error.message || 'Network error while saving the order.');
+        });
     });
 
     renderProducts();

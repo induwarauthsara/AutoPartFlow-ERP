@@ -74,7 +74,9 @@ class App
         $this->router->post('/sales/customers/delete', 'SalesController@deleteCustomer');
         $this->router->post('/sales/orders/save', 'SalesController@saveOrder');
         $this->router->post('/sales/orders/status', 'SalesController@updateOrderStatus');
-        $this->router->post('/sales/orders/delete', 'SalesController@deleteOrder');
+        $this->router->post('/sales/orders/address', 'SalesController@updateOrderAddress');
+        $this->router->post('/sales/orders/cancel', 'SalesController@cancelOrder');
+        $this->router->post('/sales/orders/delete', 'SalesController@cancelOrder');
         $this->router->post('/sales/pos/complete', 'SalesController@completeSale');
 
         // Admin & BI Workspace

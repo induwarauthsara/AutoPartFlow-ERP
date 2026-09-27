@@ -1,3 +1,7 @@
+<?php
+$products = $products ?? [];
+$customers = $customers ?? [];
+?>
 <main class="sales-main" data-sales-page="pos">
     <p class="pos-compact-title">New Sale</p>
 
@@ -28,9 +32,11 @@
                     <label class="field-label" for="trade-account">Trade Account Customer</label>
                     <select id="trade-account" class="field-select">
                         <option value="">Choose a registered trade shop customer...</option>
-                        <option value="CUS-00001">City Auto Works — Dehiwala</option>
-                        <option value="CUS-00002">Highway Garage &amp; Parts — Kadawatha</option>
-                        <option value="CUS-00003">Nuwara Motors — Nuwara Eliya</option>
+                        <?php foreach ($customers as $customer): ?>
+                            <?php if (($customer['type'] ?? '') === 'shop'): ?>
+                                <option value="<?= (int) $customer['databaseId'] ?>"><?= e($customer['name']) ?> — <?= e($customer['detail']) ?></option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </section>
@@ -91,3 +97,6 @@
 <?php require APP_PATH . '/Views/sales-rep/pos/_modals.php'; ?>
 
 <div class="sales-toast" id="sales-toast" role="status" aria-live="polite"></div>
+<script>
+window.MOCK_PRODUCTS = <?= json_encode($products, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+</script>

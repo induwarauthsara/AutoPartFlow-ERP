@@ -91,7 +91,8 @@ class SalesController extends Controller
                 (int) ($data['customer_id'] ?? 0),
                 is_array($data['items'] ?? null) ? $data['items'] : [],
                 trim((string) ($data['notes'] ?? '')),
-                $this->salesRepId
+                $this->salesRepId,
+                trim((string) ($data['delivery_address'] ?? ''))
             );
             return ['ok' => true, 'orderNumber' => $number, 'redirect' => url('sales/orders')];
         });
@@ -109,14 +110,26 @@ class SalesController extends Controller
         });
     }
 
-    public function deleteOrder(): void
+    public function updateOrderAddress(): void
     {
         $this->api(function (array $data): array {
             $id = (int) ($data['id'] ?? 0);
             if ($id === 0 && !empty($data['order_number'])) {
                 $id = $this->workspace->orderIdByNumber((string) $data['order_number']);
             }
-            $this->workspace->deleteOrder($id);
+            $this->workspace->updateOrderAddress($id, trim((string) ($data['delivery_address'] ?? '')));
+            return ['ok' => true];
+        });
+    }
+
+    public function cancelOrder(): void
+    {
+        $this->api(function (array $data): array {
+            $id = (int) ($data['id'] ?? 0);
+            if ($id === 0 && !empty($data['order_number'])) {
+                $id = $this->workspace->orderIdByNumber((string) $data['order_number']);
+            }
+            $this->workspace->cancelOrder($id);
             return ['ok' => true];
         });
     }

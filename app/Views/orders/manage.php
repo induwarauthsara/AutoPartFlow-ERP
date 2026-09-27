@@ -119,7 +119,7 @@ $flash = $flash ?? null;
             <?php
                 $status = strtolower((string) $order['status']);
                 $canEdit = $status === 'pending';
-                $canCancel = in_array($status, ['pending', 'confirmed'], true);
+                $canCancel = $status === 'pending';
             ?>
             <section class="orders-card orders-detail-card">
                 <div class="orders-card__header">
