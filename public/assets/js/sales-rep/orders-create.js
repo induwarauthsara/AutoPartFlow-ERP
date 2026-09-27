@@ -1,6 +1,6 @@
 /**
  * Customer Order Entry (New Order Request).
- * Order total equals line subtotal (no tax). PHP later: POST cart to OrderController@store.
+ * Order total equals line subtotal. PHP later: POST cart to OrderController@store.
  */
 (function () {
     'use strict';

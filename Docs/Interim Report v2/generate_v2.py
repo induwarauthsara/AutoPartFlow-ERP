@@ -536,7 +536,7 @@ def generate_docx():
     add_bullet("Dispatched order assigned to delivery agent -> delivery status tracked -> customer signs proof of delivery -> order marked Completed.", "Workflow 7 (Delivery Management): ")
     add_bullet("Business Owner selects reporting period -> queries `view_daily_sales_summary` -> renders gross revenue, margin analysis, and sales charts.", "Workflow 8 (Financial Reporting & Analytics): ")
     add_bullet("Admin logs staff clock-in/out -> tracks working hours -> evaluates monthly sales performance targets against actual POS revenues.", "Workflow 9 (Employee Roster & Attendance): ")
-    add_bullet("Admin modifies system parameters, tax rates, currency formatting, and role permission policies.", "Workflow 10 (System Configuration): ")
+    add_bullet("Admin modifies system parameters, currency formatting, and role permission policies.", "Workflow 10 (System Configuration): ")
 
     # -----------------------------------------------------------------------
     # 6. CURRENT DEVELOPMENT PROGRESS
@@ -1130,7 +1130,7 @@ def generate_pdf():
     story.append(Paragraph("• <b>Workflow 7 (Delivery Management):</b> Dispatched order assigned to delivery agent -> delivery status tracked -> customer signs proof of delivery -> order marked Completed.", bullet_style))
     story.append(Paragraph("• <b>Workflow 8 (Financial Reporting & Analytics):</b> Business Owner selects reporting period -> queries `view_daily_sales_summary` -> renders gross revenue, margin analysis, and sales charts.", bullet_style))
     story.append(Paragraph("• <b>Workflow 9 (Employee Roster & Attendance):</b> Admin logs staff clock-in/out -> tracks working hours -> evaluates monthly sales performance targets against actual POS revenues.", bullet_style))
-    story.append(Paragraph("• <b>Workflow 10 (System Configuration):</b> Admin modifies system parameters, tax rates, currency formatting, and role permission policies.", bullet_style))
+    story.append(Paragraph("• <b>Workflow 10 (System Configuration):</b> Admin modifies system parameters, currency formatting, and role permission policies.", bullet_style))
 
     # 6. CURRENT DEVELOPMENT PROGRESS
     story.append(Paragraph("6. CURRENT DEVELOPMENT PROGRESS", h1_style))
